@@ -1,0 +1,51 @@
+
+/* Método de pago */
+.pago-opcion {
+  background: white;
+  padding: 12px;
+  text-align: center;
+  border-radius: 14px;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.pago-opcion img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+}
+.pago-opcion.selected {
+  border-color: #ff3b3b;
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
+  transform: scale(1.04);
+}
+
+.wallet-box {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #eee;
+    min-width: 180px;
+    transition: .2s ease;
+    border-left: 4px solid #0c942a;
+}
+
+.wallet-box:hover {
+    transform: scale(1.03);
+}
+
+/* Tarjeta flotante */
+.wallet-floating {
+    position: fixed;
+    top: 60px;
+    right: 15px;
+    z-index: 999;
+}
+
+/* Ajuste responsive */
+@media (max-width: 576px) {
+    .wallet-floating {
+        top: 10px;
+        right: 10px;
+        transform: scale(0.9);
+    }
+}

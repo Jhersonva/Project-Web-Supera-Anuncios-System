@@ -1,0 +1,56 @@
+/* css/styles.css */
+
+/* GENERAL */
+body {
+  background: #f5f5f5;
+  padding-bottom: 70px;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* BOTÓN FLOTANTE */
+.btn-float {
+  position: fixed;
+  bottom: 80px; 
+  right: 20px;
+  z-index: 9999;
+}
+
+/* Menú inferior */
+.bottom-nav {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    border-top: 1px solid #e5e5e5;
+}
+
+.bottom-nav a {
+    text-decoration: none;
+    color: #444;
+    font-size: 12px;
+}
+
+.bottom-nav i {
+    font-size: 18px;
+}
+
+.nav-item-active {
+    color: #007bff;
+}
+
+.nav-item-active {
+  color: red !important;
+}
+
+/* -------- CARRUSEL PROFESIONAL -------- */
+.hero-img {
+  width: 100%;
+  height: 340px;      /* SE VE GRANDE Y CLARA EN MÓVIL */
+  object-fit: cover;
+}
+
+@media(min-width: 768px) {
+  .hero-img {
+    height: 700px;    /* GRANDE EN ESCRITORIO */   
+  }
+}

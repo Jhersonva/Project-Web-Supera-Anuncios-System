@@ -1,0 +1,32 @@
+.recarga-card {
+        border-radius: 14px;
+        padding: 16px;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin-bottom: 18px;
+    }
+
+    .recarga-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .tag-metodo {
+        padding: 4px 10px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        font-weight: bold;
+        background: #f4f4f4;
+    }
+
+    .recarga-btns button {
+        width: 48%;
+        margin-top: 6px;
+    }
+
+    @media (min-width: 768px) {
+        .recarga-card { padding: 20px; }
+        .recarga-btns button { width: 160px; }
+    }
