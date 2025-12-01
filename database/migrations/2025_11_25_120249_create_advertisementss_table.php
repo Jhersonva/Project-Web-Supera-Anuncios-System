@@ -13,6 +13,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('user_id')->nullable();
             $table->string('title');
             $table->text('description')->nullable();
+            $table->string('contact_location')->nullable();
             $table->decimal('amount', 10, 2)->nullable(0);
             $table->unsignedInteger('days_active')->default(1);
             $table->dateTime('expires_at')->nullable();

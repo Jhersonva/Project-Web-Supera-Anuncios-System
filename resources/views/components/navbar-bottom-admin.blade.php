@@ -14,11 +14,11 @@
         <i class="fa-solid fa-table-cells-large"></i><br>Soli. Anuncios
     </a>
 
-    <!-- PUBLICACIONES -->
+    <!-- PUBLICACIONES
     <a href="" 
        class="text-center {{ request()->routeIs('admin.publicaciones') ? 'nav-item-active' : '' }}">
         <i class="fa-solid fa-bullhorn"></i><br>Publicaciones
-    </a>
+    </a>-->
 
     <!-- SOLICITUD DE RECARGAS -->
     <a href="{{ route('admin.reload-request.index') }}"

@@ -13,7 +13,9 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->decimal('monto', 10, 2);
             $table->enum('metodo_pago', ['yape', 'plin', 'bcp', 'interbank']);
-            $table->string('img_cap_pago', 200)->nullable();
+            $table->string('img_cap_pago')->nullable();
+            $table->string('operation_number');
+            $table->text('reject_message')->nullable();
             $table->enum('status', ['pendiente', 'aceptado', 'rechazado'])->default('pendiente');
             $table->timestamps();
         });

@@ -26,7 +26,7 @@ body {
         font-weight: 600;
     }
 
-    .status-aprobado { background: #d4f7d8; color: #1e8c2f; }
+    .status-aceptado { background: #d4f7d8; color: #1e8c2f; }
     .status-pendiente { background: #fff5c2; color: #927700; }
     .status-rechazado { background: #ffd7d7; color: #9c1c1c; }
     .status-expirado  { background: #dcdcdc; color: #5a5a5a; }

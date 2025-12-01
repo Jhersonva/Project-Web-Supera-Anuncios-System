@@ -11,6 +11,8 @@ class Recharge extends Model
         'monto',
         'metodo_pago',
         'img_cap_pago',
+        'operation_number',
+        'reject_message',
         'status',
     ];
 

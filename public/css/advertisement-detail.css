@@ -1,0 +1,21 @@
+.detalle-img {
+    width: 80%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 12px;
+    display: block;
+    margin: 0 auto; /* Garantiza que se centre */
+}
+
+@media (min-width: 768px) {
+    .detalle-img {
+        width: 70%;
+        height: 380px;
+    }
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    filter: invert(100%) sepia(100%) saturate(0%) hue-rotate(0deg) brightness(200%);
+}
+

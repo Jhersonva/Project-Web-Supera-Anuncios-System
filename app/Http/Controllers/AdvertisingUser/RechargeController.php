@@ -26,10 +26,27 @@ class RechargeController extends Controller
             'img_cap_pago' => 'nullable|image|max:4096',
         ]);
 
-        // Subir imagen si existe
         $rutaImagen = null;
+
+        // SUBIR IMAGEN MANUALMENTE COMO ANUNCIOS
         if ($request->hasFile('img_cap_pago')) {
-            $rutaImagen = $request->file('img_cap_pago')->store('comprobantes', 'public');
+
+            // Carpeta donde se guardarán las recargas
+            $uploadPath = public_path('images/recharges');
+
+            // Crear carpeta si no existe
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0777, true);
+            }
+
+            // Nombre único
+            $filename = time() . '_' . uniqid() . '.' . $request->img_cap_pago->getClientOriginalExtension();
+
+            // Mover archivo
+            $request->img_cap_pago->move($uploadPath, $filename);
+
+            // Guardar ruta relativa a la base del public
+            $rutaImagen = 'images/recharges/' . $filename;
         }
 
         Recharge::create([
@@ -42,4 +59,5 @@ class RechargeController extends Controller
 
         return redirect()->back()->with('success', 'Tu solicitud de recarga fue enviada. Espera la aprobación del administrador.');
     }
+
 }

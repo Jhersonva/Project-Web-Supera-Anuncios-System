@@ -6,6 +6,11 @@
 
 <div class="container mt-5 mb-5">
 
+    {{-- IZQUIERDA: BOTÓN VOLVER --}}
+    <a href="{{ route('admin.config') }}" class="text-dark">
+        <i class="fa-solid fa-arrow-left fs-5"></i>
+    </a>
+
     <h3 class="fw-bold mb-3 text-center">Administración de Categorías</h3>
     <p class="text-secondary text-center mb-4">
         Aquí puedes ver todas las categorías, sub-categorías y los campos que pertenecen a cada una.

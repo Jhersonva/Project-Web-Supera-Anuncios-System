@@ -1,4 +1,4 @@
-// admin.recargas.js
+// js/admin-reload-request.js
 
 // Obtener solicitudes (solo 1 por ahora)
 let solicitudes = JSON.parse(localStorage.getItem("recargas")) || [];

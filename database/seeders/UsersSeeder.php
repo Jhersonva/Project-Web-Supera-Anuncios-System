@@ -40,12 +40,28 @@ class UsersSeeder extends Seeder
                 'locality' => 'Arequipa',
                 'whatsapp' => '900000002',
                 'call_phone' => '900000002',
-                'contact_email' => 'user@user.com',
+                'contact_email' => 'usuario@usuario.com',
                 'address' => 'Calle Secundaria 456',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
 
+            // EMPLOYEE
+            [
+                'role_id' => 3,
+                'full_name' => 'Empleado Ejemplo',
+                'email' => 'empleado@empleado.com',
+                'password' => Hash::make('12345678'),
+                'dni' => '00000003',
+                'phone' => '900000003',
+                'locality' => 'Cusco',
+                'whatsapp' => '900000003',
+                'call_phone' => '900000003',
+                'contact_email' => 'empleado@empleado.com',
+                'address' => 'Av. Secundaria 789',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
     }
 }

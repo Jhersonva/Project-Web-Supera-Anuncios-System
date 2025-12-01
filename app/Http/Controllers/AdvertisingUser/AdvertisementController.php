@@ -23,4 +23,17 @@ class AdvertisementController extends Controller
 
         return view('advertising_user.my_ads.index', compact('ads'));
     }
+
+    public function show($slug, $id)
+    {
+        $ad = Advertisement::with([
+            'category',
+            'subcategory',
+            'images',
+            'fields_values.field',
+            'user'
+        ])->findOrFail($id);
+
+        return view('public.advertisement-detail', compact('ad'));
+    }
 }

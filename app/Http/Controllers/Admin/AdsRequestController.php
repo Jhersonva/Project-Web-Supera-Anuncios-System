@@ -15,7 +15,7 @@ class AdsRequestController extends Controller
     public function index()
     {
         $ads = Advertisement::where('status', 'pendiente')
-            ->with(['user', 'category', 'subcategory'])
+            ->with(['user', 'category', 'subcategory', 'images'])
             ->latest()
             ->get();
 

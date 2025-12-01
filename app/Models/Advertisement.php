@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Advertisement extends Model
 {
@@ -16,6 +17,7 @@ class Advertisement extends Model
         'user_id',
         'title',
         'description',
+        'contact_location',
         'amount',
         'days_active',
         'expires_at',
@@ -70,5 +72,17 @@ class Advertisement extends Model
     {
         return $this->hasOne(AdvertisementImage::class, 'advertisementss_id')
                     ->where('is_main', true);
+    }
+
+     // Accesor para obtener slug
+    public function getSlugAttribute()
+    {
+        return Str::slug($this->title);
+    }
+
+    // Accesor para obtener URL completa
+    public function getDetailUrlAttribute()
+    {
+        return url("/detalle-anuncio/{$this->slug}/{$this->id}");
     }
 }

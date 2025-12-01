@@ -45,4 +45,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Recharge::class);
     }
+
+    public function cashBox()
+    {
+        return $this->hasOne(CashBox::class, 'user_id');
+    }
+
+    public function cashMovements()
+    {
+        return $this->hasMany(CashMovement::class, 'employee_id');
+    }
 }

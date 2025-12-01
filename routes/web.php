@@ -9,6 +9,10 @@ use App\Http\Controllers\Admin\ReloadRequestController;
 use App\Http\Controllers\Admin\ConfigController;
 use App\Http\Controllers\Admin\CategoryConfigController;
 use App\Http\Controllers\Admin\AdsRequestController;
+use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\ClientController;
+use App\Http\Controllers\Admin\CashBoxController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -22,14 +26,43 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/api/ads', function () {
-    return \App\Models\Advertisement::where('published', 1)
+    $adsUrgent = \App\Models\Advertisement::where('published', 1)
         ->where('status', 'aceptado')
-        ->with(['category', 'subcategory', 'images' => function ($q) {
-            $q->where('is_main', 1);
-        }])
-        ->latest()
-        ->get();
+        ->where('urgent_publication', 1)
+        ->with(['category', 'subcategory', 'images'])
+        ->get()
+        ->shuffle()
+        ->take(10)
+        ->map(function($ad){
+            $ad->full_url = $ad->detail_url; // agrega URL amigable
+            return $ad;
+        });
+
+    $adsNormal = \App\Models\Advertisement::where('published', 1)
+        ->where('status', 'aceptado')
+        ->where('urgent_publication', 0)
+        ->with(['category', 'subcategory', 'images'])
+        ->get()
+        ->shuffle()
+        ->take(20)
+        ->map(function($ad){
+            $ad->full_url = $ad->detail_url; 
+            return $ad;
+        });
+
+    return response()->json([
+        'urgent' => $adsUrgent->values(),
+        'normal' => $adsNormal->values()
+    ]);
 });
+
+
+
+Route::get('/ad/{id}', [AdvertisementController::class, 'show'])
+        ->name('public.ad.show');
+
+        Route::get('/detalle-anuncio/{slug}/{id}', [AdvertisementController::class, 'show'])
+    ->name('public.ad.detail');
 
 /*
 |--------------------------------------------------------------------------
@@ -123,9 +156,27 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/config', [ConfigController::class, 'index'])
         ->name('admin.config');
     
-    // Administracion de categorias
-    Route::get('/config/categorias', [CategoryConfigController::class, 'index'])
-        ->name('admin.config.categories');
+        // Administracion de categorias
+        Route::get('/config/categorias', [CategoryConfigController::class, 'index'])
+            ->name('admin.config.categories');
+
+        // Gestión de empleados
+        Route::get('/config/employees', [EmployeeController::class, 'index'])
+            ->name('admin.config.employees');
+
+            // Gestión de Clientes
+        Route::get('/config/clients', [ClientController::class, 'index'])
+            ->name('admin.config.clients');
+
+        // Caja
+        Route::get('/cash', [CashBoxController::class, 'index'])
+            ->name('admin.cash.index');
+        Route::post('/cash/open', [CashBoxController::class, 'open'])->name('admin.cash.open');
+        Route::post('/cash/{id}/movement', [CashBoxController::class, 'addMovement'])->name('admin.cash.movement');
+        Route::post('/cash/{id}/close', [CashBoxController::class, 'close'])->name('admin.cash.close');
+        Route::get('/cash/{id}', [CashBoxController::class, 'show'])->name('admin.cash.show');
+
+
 
     // Solicitudes de anuncios
     Route::get('/ads-requests', [AdsRequestController::class, 'index'])

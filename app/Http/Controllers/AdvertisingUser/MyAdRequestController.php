@@ -49,7 +49,6 @@ class MyAdRequestController extends Controller
      */
     public function store(Request $request)
     {
-        // VALIDACIÓN
         $request->validate([
             'category_id' => 'required|exists:ad_categories,id',
             'subcategory_id' => 'required|exists:ad_subcategories,id',
@@ -59,42 +58,36 @@ class MyAdRequestController extends Controller
             'days_active' => 'required|integer|min:1',
         ]);
 
-        // CASTEAR SIEMPRE PARA EVITAR ERROR DE CARBON
         $days = (int)$request->input('days_active');
 
-        // CALCULAR FECHA DE EXPIRACIÓN
         $expiresAt = now()->addDays($days);
 
         $user = auth()->user();
 
-        // OBTENER SUBCATEGORÍA
         $subcategory = AdSubcategory::findOrFail($request->subcategory_id);
         $basePrice = (float)$subcategory->price;
 
-        // COSTO FINAL
         $finalPrice = $basePrice * $days;
 
-        // VERIFICAR SALDO
         if ($user->virtual_wallet < $finalPrice) {
             return back()->with('error', 'No tienes saldo suficiente para esta publicación.');
         }
 
-        // DESCONTAR SALDO
         $user->virtual_wallet -= $finalPrice;
         $user->save();
 
-        // CREAR ANUNCIO
         $ad = Advertisement::create([
             'ad_categories_id' => $request->category_id,
             'ad_subcategories_id' => $request->subcategory_id,
             'user_id' => $user->id,
             'title' => $request->title,
             'description' => $request->description,
+            'contact_location' => $request->contact_location,
             'amount' => $request->amount,
             'days_active' => $days,
             'expires_at' => $expiresAt,
             'published' => 0,
-            'urgent_publication' => 0,
+            'urgent_publication' => $request->has('urgent_publication'),
             'status' => 'pendiente',
         ]);
 

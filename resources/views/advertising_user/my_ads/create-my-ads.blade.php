@@ -57,13 +57,17 @@
             <textarea name="description" class="form-control" rows="4" placeholder="Describe tu anuncio"></textarea>
         </div>
 
+        <div class="field-card d-none" id="contactLocationContainer">
+            <label class="fw-semibold">Ubicación de contacto</label>
+            <input type="text" name="contact_location" class="form-control" placeholder="Ej: Lima, Perú">
+        </div>
+
         <div class="field-card d-none" id="amountContainer">
             <label class="fw-semibold">Monto / Precio / Sueldo *</label>
             <input type="number" step="0.01" min="0" name="amount" class="form-control" required>
         </div>
 
         <div class="field-card d-none" id="costContainer">
-
             <label class="fw-semibold">Días de publicación *</label>
             <input type="number" min="1" name="days_active" id="days_active" class="form-control" required>
             <small class="text-muted">Indica cuántos días deseas que tu anuncio esté activo.</small>
@@ -76,10 +80,23 @@
 
             <label class="fw-semibold mt-2">Fecha de expiración</label>
             <input type="text" id="expiresAt" class="form-control" readonly>
-
         </div>
 
+        <!-- PUBLICACIÓN URGENTE (Afuera, independiente) -->
+        <div class="field-card d-none" id="urgentContainer">
+            <label class="fw-semibold">¿Publicación urgente?</label>
 
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="urgent_publication" name="urgent_publication" value="1">
+                <label class="form-check-label" for="urgent_publication">
+                    Activar publicación urgente
+                </label>
+            </div>
+
+            <small class="text-muted">
+                Si activas esta opción, tu anuncio será marcado como "Urgente" y estara entre los primeros anuncios.
+            </small>
+        </div>
 
         <div class="field-card d-none" id="imagesContainer">
             <label class="fw-semibold">Imágenes (máx 5)</label>
@@ -197,15 +214,17 @@ document.addEventListener("DOMContentLoaded", () => {
     function showMainFields() {
         document.getElementById('titleContainer').classList.remove('d-none');
         document.getElementById('descriptionContainer').classList.remove('d-none');
+        document.getElementById('contactLocationContainer').classList.remove('d-none');
         document.getElementById('amountContainer').classList.remove('d-none');
         document.getElementById('imagesContainer').classList.remove('d-none');
         document.getElementById('submitBtn').classList.remove('d-none');
+        document.getElementById('costContainer').classList.remove('d-none');
+        document.getElementById('urgentContainer').classList.remove('d-none');
 
         // Eliminar esta línea porque NO existe:
         // document.getElementById('daysActiveContainer').classList.remove('d-none');
 
         // En su lugar debes mostrar el contenedor correcto:
-        document.getElementById('costContainer').classList.remove('d-none');
     }
 
 });

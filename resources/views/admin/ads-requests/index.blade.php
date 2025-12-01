@@ -40,11 +40,26 @@
 }
 
 .action-btn {
-    width: 48%;
-    padding: 6px 0;
+    width: 150px;
+    padding: 10px;
     font-size: 0.9rem;
     border-radius: 8px;
 }
+
+.custom-badge {
+    display: flex;
+    color: white;
+    justify-content: center;
+    align-items: center;
+    min-width: 130px;     /* ancho uniforme */
+    height: 38px;         /* altura uniforme */
+    padding: 0 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 8px;
+    white-space: nowrap;  /* evita que el texto salte de línea */
+}
+
 
 /* ----------- WEB ----------- */
 @media (min-width: 768px) {
@@ -58,9 +73,9 @@
 
 </style>
 
-<div class="container mt-5 pt-4 mb-5">
+<div class="container mt-5 mb-5">
 
-    <h4 class="fw-semibold mb-3 text-center">Solicitudes de Publicación</h4>
+    <h4 class="fw-bold mb-3 text-center">Solicitudes de Publicación</h4>
 
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
@@ -75,33 +90,63 @@
     @else
         @foreach($ads as $ad)
             <div class="ad-card shadow-sm">
-                <div class="d-flex justify-content-between align-items-start">
-                    <span class="badge badge-cat">{{ $ad->category->name }}</span>
-                    <span class="badge badge-subcat">{{ $ad->subcategory->name }}</span>
+                
+                <div class="d-flex justify-content-between align-items-center gap-2 mt-2">
+
+                    <span class="badge-cat custom-badge">
+                        {{ $ad->category->name }}
+                    </span>
+
+                    @if($ad->urgent_publication == 1)
+                        <span class="badge bg-danger custom-badge">
+                            🚨 Urgente
+                        </span>
+                    @else
+                        <span class="badge bg-secondary custom-badge">
+                            ℹ️ Irrelevante
+                        </span>
+                    @endif
+
+                    <span class="badge-subcat custom-badge">
+                        {{ $ad->subcategory->name }}
+                    </span>
+
+                </div>
+
+
+                <div class="ad-banner mt-2">
+                    @php
+                        $img = $ad->images->first()
+                            ? asset($ad->images->first()->image)
+                            : asset('images/no-image.png');
+                    @endphp
+
+                    <img src="{{ $img }}" 
+                        alt="Imagen del anuncio"
+                        style="width: 100%; height: 280px; object-fit: cover; border-radius: 10px;">
                 </div>
 
                 <p class="ad-title mt-2">{{ $ad->title }}</p>
+                <p class="ad-desc">{{ $ad->description }}</p>
 
                 <p class="ad-meta">
                     <i class="fa-solid fa-user"></i> {{ $ad->user->full_name }} <br>
                     <i class="fa-solid fa-clock"></i> 
                     {{ $ad->created_at->format('d/m/Y H:i') }} <br>
                     <i class="fa-solid fa-tag"></i> 
-                    <strong>S/. {{ number_format($ad->price, 2) }}</strong>
+                    <strong>S/. {{ number_format($ad->amount, 2) }}</strong>
                 </p>
 
-                <div class="d-flex justify-content-between mt-2">
-                    
-                    <form action="{{ route('admin.ads-requests.approve', $ad->id) }}" 
-                          method="POST" class="w-50 me-2">
+                
+                <div class="d-flex justify-content-center gap-3 mt-2">
+                    <form action="{{ route('admin.ads-requests.approve', $ad->id) }}" method="POST">
                         @csrf
                         <button class="btn btn-success action-btn">
                             <i class="fa-solid fa-check"></i> Aprobar
                         </button>
                     </form>
 
-                    <form action="{{ route('admin.ads-requests.reject', $ad->id) }}" 
-                          method="POST" class="w-50">
+                    <form action="{{ route('admin.ads-requests.reject', $ad->id) }}" method="POST">
                         @csrf
                         <button class="btn btn-danger action-btn">
                             <i class="fa-solid fa-xmark"></i> Rechazar
