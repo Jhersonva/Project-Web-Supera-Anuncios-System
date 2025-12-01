@@ -20,6 +20,7 @@ return new class extends Migration {
             $table->boolean('published')->default(false);
             $table->unsignedTinyInteger('stars')->default(0); 
             $table->boolean('urgent_publication')->default(false); 
+            $table->decimal('urgent_price', 10, 2)->nullable();
             $table->enum('status', ['pendiente', 'aceptado', 'rechazado', 'expirado'])->default('pendiente');
             $table->timestamps();
         });

@@ -72,10 +72,11 @@
             <input type="number" min="1" name="days_active" id="days_active" class="form-control" required>
             <small class="text-muted">Indica cuántos días deseas que tu anuncio esté activo.</small>
 
+            <br>
             <label class="fw-semibold">Costo por día</label>
             <input type="text" id="pricePerDay" class="form-control mb-2" readonly>
 
-            <label class="fw-semibold mt-2">Costo total</label>
+            <label class="fw-semibold mt-2">Costo total: Dia x Precio SubCategoria</label>
             <input type="text" id="totalCost" class="form-control mb-2" readonly>
 
             <label class="fw-semibold mt-2">Fecha de expiración</label>
@@ -96,7 +97,31 @@
             <small class="text-muted">
                 Si activas esta opción, tu anuncio será marcado como "Urgente" y estara entre los primeros anuncios.
             </small>
+
+            <small class="text-danger fw-bold">
+                Precio por publicación urgente: S/. {{ number_format($urgentPrice, 2) }}
+            </small>
         </div>
+
+        {{-- RESUMEN DE COSTO Y SALDO --}}
+        <div class="field-card d-none" id="summaryContainer">
+            <h5 class="fw-bold mb-3">Resumen de Pago</h5>
+
+            <div class="d-flex justify-content-between">
+                <span class="fw-semibold">Costo total:</span>
+                <span id="summaryTotalCost" class="fw-bold text-danger">S/. 0.00</span>
+            </div>
+
+            <div class="d-flex justify-content-between mt-2">
+                <span class="fw-semibold">Tu saldo:</span>
+                <span class="fw-bold text-success">S/. {{ number_format(auth()->user()->virtual_wallet, 2) }}</span>
+            </div>
+
+            <small class="text-muted d-block mt-2">
+                El costo se actualiza según los días y si activas la publicación urgente.
+            </small>
+        </div>
+
 
         <div class="field-card d-none" id="imagesContainer">
             <label class="fw-semibold">Imágenes (máx 5)</label>
@@ -209,6 +234,33 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("expiresAt").value = `${yyyy}-${mm}-${dd}`;
         });
 
+        // ---- PRECIO URGENTE ----
+        let urgentPrice = {{ $urgentPrice }};
+
+        // escucha el cambio del switch de urgente
+        document.getElementById("urgent_publication").addEventListener("change", updateTotalCost);
+        // escucha cambios en días
+        document.getElementById("days_active").addEventListener("input", updateTotalCost);
+
+        function updateTotalCost() {
+
+            const days = parseInt(document.getElementById("days_active").value);
+
+            if (!days || days <= 0) {
+                document.getElementById("totalCost").value = "";
+                document.getElementById("summaryTotalCost").textContent = "S/. 0.00";
+                return;
+            }
+
+            let total = subcatPrice * days;
+
+            if (document.getElementById("urgent_publication").checked) {
+                total += urgentPrice;
+            }
+
+            document.getElementById("totalCost").value = `S/. ${total.toFixed(2)}`;
+            document.getElementById("summaryTotalCost").textContent = `S/. ${total.toFixed(2)}`; // ← nuevo
+        }
 
     // -------------------- MOSTRAR CAMPOS OBLIGATORIOS --------------------
     function showMainFields() {
@@ -220,11 +272,8 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('submitBtn').classList.remove('d-none');
         document.getElementById('costContainer').classList.remove('d-none');
         document.getElementById('urgentContainer').classList.remove('d-none');
+        document.getElementById('summaryContainer').classList.remove('d-none');
 
-        // Eliminar esta línea porque NO existe:
-        // document.getElementById('daysActiveContainer').classList.remove('d-none');
-
-        // En su lugar debes mostrar el contenedor correcto:
     }
 
 });

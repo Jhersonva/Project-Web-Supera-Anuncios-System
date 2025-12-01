@@ -24,6 +24,7 @@ class Advertisement extends Model
         'published',
         'stars',
         'urgent_publication',
+        'urgent_price',
         'status',
     ];
 
@@ -32,6 +33,7 @@ class Advertisement extends Model
         'price'               => 'decimal:2',
         'published'           => 'boolean',
         'urgent_publication'  => 'boolean',
+        'urgent_price'        => 'decimal:2',
         'stars'               => 'integer',
         'days_active'         => 'integer',
         'expires_at'          => 'datetime',

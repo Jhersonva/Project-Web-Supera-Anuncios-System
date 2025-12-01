@@ -9,6 +9,7 @@ use App\Models\FieldSubcategoryAd;
 use App\Models\ValueFieldAd;
 use App\Models\Advertisement;
 use App\Models\AdvertisementImage;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 
@@ -21,7 +22,9 @@ class MyAdRequestController extends Controller
     {
         $categories = AdCategory::all();
 
-        return view('advertising_user.my_ads.create-my-ads', compact('categories'));
+        $urgentPrice = \App\Models\Setting::get('urgent_publication_price', 5.00);
+
+        return view('advertising_user.my_ads.create-my-ads', compact('categories', 'urgentPrice'));
     }
 
     /**
@@ -67,7 +70,13 @@ class MyAdRequestController extends Controller
         $subcategory = AdSubcategory::findOrFail($request->subcategory_id);
         $basePrice = (float)$subcategory->price;
 
-        $finalPrice = $basePrice * $days;
+        $urgentPrice = 0;
+
+        if ($request->urgent_publication == 1) {
+            $urgentPrice = (float)\App\Models\Setting::get('urgent_publication_price', 5.00);
+        }
+
+        $finalPrice = ($basePrice * $days) + $urgentPrice;
 
         if ($user->virtual_wallet < $finalPrice) {
             return back()->with('error', 'No tienes saldo suficiente para esta publicación.');
@@ -88,6 +97,7 @@ class MyAdRequestController extends Controller
             'expires_at' => $expiresAt,
             'published' => 0,
             'urgent_publication' => $request->has('urgent_publication'),
+            'urgent_price' => $urgentPrice,
             'status' => 'pendiente',
         ]);
 
@@ -129,6 +139,4 @@ class MyAdRequestController extends Controller
             ->route('my-ads.index')
             ->with('success', 'Tu solicitud fue enviada. El administrador debe aprobarla.');
     }
-
-
 }

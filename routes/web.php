@@ -7,11 +7,14 @@ use App\Http\Controllers\AdvertisingUser\RechargeController;
 
 use App\Http\Controllers\Admin\ReloadRequestController;
 use App\Http\Controllers\Admin\ConfigController;
-use App\Http\Controllers\Admin\CategoryConfigController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\SubcategoryController;
+use App\Http\Controllers\Admin\FieldController;
 use App\Http\Controllers\Admin\AdsRequestController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\CashBoxController;
+use App\Http\Controllers\Admin\UrgentPriceController;
 
 
 /*
@@ -153,12 +156,28 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         ->name('admin.reload-request.reject');
 
     // Configuración
-    Route::get('/config', [ConfigController::class, 'index'])
-        ->name('admin.config');
+    Route::get('/config', [ConfigController::class, 'index'])->name('admin.config');
+
+        // Administracion de categorias
+        Route::post('/config/urgent-price/update', [UrgentPriceController::class, 'update'])
+        ->name('admin.config.urgent-price.update');
     
         // Administracion de categorias
-        Route::get('/config/categorias', [CategoryConfigController::class, 'index'])
-            ->name('admin.config.categories');
+        Route::get('/config/categorias', [CategoryController::class, 'index'])->name('admin.config.categories');
+        Route::post('/config/categorias/store', [CategoryController::class, 'store'])->name('admin.config.categories.store');
+        Route::put('/config/categorias/update/{id}', [CategoryController::class, 'update'])->name('admin.config.categories.update');
+        Route::delete('/config/categorias/delete/{id}', [CategoryController::class, 'destroy'])->name('admin.config.categories.destroy');
+
+        // Subcategorías
+        Route::post('/config/sub/store', [SubcategoryController::class, 'store'])->name('admin.config.subcategories.store');
+        Route::put('/config/sub/update/{id}', [SubcategoryController::class, 'update'])->name('admin.config.subcategories.update');
+        Route::delete('/config/sub/delete/{id}', [SubcategoryController::class, 'destroy'])->name('admin.config.subcategories.destroy');
+
+        // Campos
+        Route::post('/config/field/store', [FieldController::class, 'store'])->name('admin.config.fields.store');
+        Route::put('/config/field/update/{id}', [FieldController::class, 'update'])->name('admin.config.fields.update');
+        Route::delete('/config/field/delete/{id}', [FieldController::class, 'destroy'])->name('admin.config.fields.destroy');
+
 
         // Gestión de empleados
         Route::get('/config/employees', [EmployeeController::class, 'index'])->name('admin.config.employees');
