@@ -11,8 +11,14 @@
         Aquí podrás administrar ajustes avanzados del sistema.
     </p>
 
+    @php
+        $role = auth()->user()->role_id;
+    @endphp
+
     <div class="row">
 
+    {{-- SOLO ADMIN (1): Categorías, Personal --}}
+    @if($role == 1)
     <!-- CARD: GESTIÓN DE CATEGORÍAS -->
     <div class="col-md-6">
         <div class="card shadow-sm border-0 p-3 mb-4" style="border-radius: 16px;">
@@ -40,9 +46,10 @@
 
         </div>
     </div>
+    @endif
 
-
-
+    {{-- ADMIN (1) Y EMPLOYEE (3): Clientes --}}
+    @if(in_array($role, [1, 3]))
     <!-- CARD: GESTIÓN DE CLIENTES -->
     <div class="col-md-6">
         <div class="card shadow-sm border-0 p-3 mb-4" style="border-radius: 16px;">
@@ -64,13 +71,17 @@
             </p>
 
             <a href="{{ route('admin.config.clients') }}" class="btn btn-primary w-100 fw-semibold py-2">
-
                 Administrar clientes
                 <i class="fa-solid fa-chevron-right ms-2"></i>
             </a>
         </div>
     </div>
+    @endif
 
+
+
+    {{-- SOLO ADMIN (1): Gestión de Personal --}}
+    @if($role == 1)
     <!-- CARD: GESTIÓN DE PERSONAL -->
     <div class="col-md-6">
         <div class="card shadow-sm border-0 p-3 mb-4" style="border-radius: 16px;">
@@ -98,7 +109,12 @@
 
         </div>
     </div>
+    @endif
 
+
+
+    {{-- ADMIN (1) Y EMPLOYEE (3): Caja --}}
+    @if(in_array($role, [1, 3]))
     <!-- CARD: GESTIÓN DE CAJA -->
     <div class="col-md-6">
         <div class="card shadow-sm border-0 p-3 mb-4" style="border-radius: 16px;">
@@ -119,13 +135,14 @@
                 Control total de ingresos, egresos, arqueos de caja y reportes diarios.
             </p>
 
-            <a href="{{ route('admin.config.cash') }}" class="btn btn-success w-100 fw-semibold py-2 text-white">
+            <a href="{{ route('admin.config.cash.index') }}" class="btn btn-success w-100 fw-semibold py-2 text-white">
                 Administrar caja
                 <i class="fa-solid fa-chevron-right ms-2"></i>
             </a>
 
         </div>
     </div>
+    @endif
 
 </div>
 

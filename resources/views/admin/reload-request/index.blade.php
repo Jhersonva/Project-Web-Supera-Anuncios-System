@@ -60,7 +60,6 @@
         <div class="header-user">
             <div>
                 <h5 class="fw-bold m-0">{{ $r->user->full_name }}</h5>
-                
             </div>
 
             {{-- ESTADO --}}
@@ -128,9 +127,7 @@
     </div>
 
 
-    {{-- ========================================= --}}
     {{-- MODAL APROBAR --}}
-    {{-- ========================================= --}}
     <div class="modal fade" id="approveModal{{ $r->id }}" tabindex="-1">
         <div class="modal-dialog">
             <form method="POST" action="{{ route('admin.reload-request.approve', $r->id) }}">
@@ -161,9 +158,7 @@
     </div>
 
 
-    {{-- ========================================= --}}
     {{-- MODAL RECHAZAR --}}
-    {{-- ========================================= --}}
     <div class="modal fade" id="rejectModal{{ $r->id }}" tabindex="-1">
         <div class="modal-dialog">
             <form method="POST" action="{{ route('admin.reload-request.reject', $r->id) }}">

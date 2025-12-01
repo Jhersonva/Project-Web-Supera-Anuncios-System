@@ -14,8 +14,8 @@ class AdminMiddleware
             return redirect()->route('login');
         }
 
-        // Asegúrate que el admin tenga role_id = 1
-        if (Auth::user()->role_id != 1) {
+        // Asegúrate que el admin tenga role_id = 1 y 3
+        if (!in_array(Auth::user()->role_id, [1, 3])) {
             return redirect()->route('home')->with('error', 'Acceso denegado.');
         }
 

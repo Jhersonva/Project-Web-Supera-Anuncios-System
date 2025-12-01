@@ -8,7 +8,7 @@
 
 <div class="container mt-4 mb-5">
 
-    <a href="{{ route('admin.cash.index') }}" class="btn btn-light mb-3">
+    <a href="{{ route('admin.config.cash.index') }}" class="btn btn-light mb-3">
         <i class="fa-solid fa-arrow-left"></i> Volver
     </a>
 
@@ -32,7 +32,7 @@
 
         <!-- CERRAR CAJA -->
         @if($cashBox->status === 'open')
-        <form action="{{ route('admin.cash.close', $cashBox->id) }}" method="POST" class="mt-3">
+        <form action="{{ route('admin.config.cash.close', $cashBox->id) }}" method="POST" class="mt-3">
             @csrf
             <button class="btn btn-danger fw-semibold w-100">
                 <i class="fa-solid fa-lock me-2"></i> Cerrar Caja
@@ -78,7 +78,7 @@
     <div class="card shadow-sm border-0 p-3 mt-4" style="border-radius: 14px;">
         <h5 class="fw-bold mb-3">Registrar Movimiento</h5>
 
-        <form action="{{ route('admin.cash.movement', $cashBox->id) }}" method="POST">
+        <form action="{{ route('admin.config.cash.movement', $cashBox->id) }}" method="POST">
             @csrf
 
             <label class="fw-semibold">Tipo:</label>
@@ -88,7 +88,7 @@
             </select>
 
             <label class="fw-semibold">Monto:</label>
-            <input type="number" name="amount" min="0.1" class="form-control mb-3" required>
+            <input type="number" name="amount" min="1" class="form-control mb-3" required>
 
             <label class="fw-semibold">Descripción:</label>
             <textarea name="description" class="form-control mb-3"></textarea>
@@ -99,7 +99,6 @@
         </form>
     </div>
     @endif
-
 </div>
 
 @endsection

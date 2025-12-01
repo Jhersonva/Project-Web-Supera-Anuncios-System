@@ -8,7 +8,15 @@
 
 <div class="container mt-4 mb-5">
 
-    <h3 class="fw-bold text-center mb-4">Gestión de Caja</h3>
+    {{-- IZQUIERDA: BOTÓN VOLVER --}}
+    <a href="{{ route('admin.config') }}" class="text-dark">
+        <i class="fa-solid fa-arrow-left fs-5"></i>
+    </a>
+
+    <h4 class="fw-bold mb-3 text-center">Gestión de Caja</h4>
+    <p class="text-secondary text-center mb-4">
+        Aquí podrás administrar el ingrese y egreso de dinero, como tambien el historial de movimientos.
+    </p>
 
     <!-- BOTÓN ABRIR CAJA (Admin o Employee) -->
     @php
@@ -51,7 +59,7 @@
         <p class="m-0"><strong>Saldo Actual:</strong> S/. {{ number_format($box->current_balance, 2) }}</p>
 
         <div class="mt-3 text-end">
-            <a href="{{ route('admin.cash.show', $box->id) }}"
+            <a href="{{ route('admin.config.cash.show', $box->id) }}"
                 class="btn btn-primary fw-semibold px-3">
                 Ver detalle <i class="fa-solid fa-arrow-right ms-1"></i>
             </a>
@@ -66,7 +74,7 @@
 <!-- MODAL ABRIR CAJA -->
 <div class="modal fade" id="openCashModal" tabindex="-1">
     <div class="modal-dialog">
-        <form action="{{ route('admin.cash.open') }}" method="POST" class="modal-content">
+        <form action="{{ route('admin.config.cash.open') }}" method="POST" class="modal-content">
             @csrf
 
             <div class="modal-header">

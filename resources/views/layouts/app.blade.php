@@ -29,12 +29,14 @@
     </main>
 
     {{-- SI LA VISTA TIENE UN NAV INFERIOR PERSONALIZADO, MOSTRARLO --}}
-    @if(View::hasSection('custom-bottom-nav'))
-        @yield('custom-bottom-nav')
+    @if(auth()->check() && in_array(auth()->user()->role->name, ['admin', 'employee']))
+        @include('components.navbar-bottom-admin')
+
+    {{-- NAV NORMAL PARA PUBLICADORES --}}
     @else
-        {{-- NAV INFERIOR POR DEFECTO --}}
         @include('components.navbar-bottom')
     @endif
+
 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

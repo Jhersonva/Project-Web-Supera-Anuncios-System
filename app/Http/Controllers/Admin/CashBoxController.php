@@ -139,6 +139,6 @@ class CashBoxController extends Controller
             abort(403);
         }
 
-        return view('admin.cash.show', compact('cashBox', 'user'));
+        return view('admin.config.cash.show', compact('cashBox', 'user'));
     }
 }

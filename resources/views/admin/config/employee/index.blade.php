@@ -38,7 +38,7 @@
         <i class="fa-solid fa-arrow-left fs-5"></i>
     </a>
 
-    <h3 class="fw-bold text-center mb-2">Gestión de Empleados</h3>
+    <h4 class="fw-bold text-center mb-2">Gestión de Empleados</h4>
     <p class="text-muted text-center mb-4">
         Administrar los usuarios que cuentan con rol de empleado.
     </p>

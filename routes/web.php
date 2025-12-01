@@ -136,7 +136,7 @@ Route::middleware(['auth'])->prefix('advertising')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| RUTAS PRIVADAS — SOLO admin
+| RUTAS PRIVADAS — SOLO admin y employee
 |--------------------------------------------------------------------------
 */
 
@@ -161,20 +161,17 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
             ->name('admin.config.categories');
 
         // Gestión de empleados
-        Route::get('/config/employees', [EmployeeController::class, 'index'])
-            ->name('admin.config.employees');
+        Route::get('/config/employees', [EmployeeController::class, 'index'])->name('admin.config.employees');
 
             // Gestión de Clientes
-        Route::get('/config/clients', [ClientController::class, 'index'])
-            ->name('admin.config.clients');
+            Route::get('/config/clients', [ClientController::class, 'index'])->name('admin.config.clients');
 
-        // Caja
-        Route::get('/cash', [CashBoxController::class, 'index'])
-            ->name('admin.cash.index');
-        Route::post('/cash/open', [CashBoxController::class, 'open'])->name('admin.cash.open');
-        Route::post('/cash/{id}/movement', [CashBoxController::class, 'addMovement'])->name('admin.cash.movement');
-        Route::post('/cash/{id}/close', [CashBoxController::class, 'close'])->name('admin.cash.close');
-        Route::get('/cash/{id}', [CashBoxController::class, 'show'])->name('admin.cash.show');
+            // Caja
+            Route::get('/config/cash', [CashBoxController::class, 'index'])->name('admin.config.cash.index');
+            Route::post('/config/cash/open', [CashBoxController::class, 'open'])->name('admin.config.cash.open');
+            Route::post('/config/cash/{id}/movement', [CashBoxController::class, 'addMovement'])->name('admin.config.cash.movement');
+            Route::post('/config/cash/{id}/close', [CashBoxController::class, 'close'])->name('admin.config.cash.close');
+            Route::get('/config/cash/{id}', [CashBoxController::class, 'show'])->name('admin.config.cash.show');
 
 
 
