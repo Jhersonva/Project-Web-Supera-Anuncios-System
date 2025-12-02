@@ -51,7 +51,7 @@
 
       <p class="mt-3 text-center">
         ¿No tienes una cuenta?
-        <a href="{{ url('/register') }}" class="fw-semibold">Crear Cuenta</a>
+        <a href="{{ url('/auth/register') }}" class="fw-semibold">Crear Cuenta</a>
       </p>
 
     </form>

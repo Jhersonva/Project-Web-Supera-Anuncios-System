@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PublicController;
+
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\AdvertisingUser\AdvertisementController;
 use App\Http\Controllers\AdvertisingUser\RechargeController;
@@ -59,7 +61,8 @@ Route::get('/api/ads', function () {
     ]);
 });
 
-
+Route::get('/contact/{id}', [PublicController::class, 'contact'])
+    ->name('public.contact');
 
 Route::get('/ad/{id}', [AdvertisementController::class, 'show'])
         ->name('public.ad.show');
@@ -159,20 +162,16 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/config', [ConfigController::class, 'index'])->name('admin.config');
 
         // Administracion de categorias
-        Route::post('/config/urgent-price/update', [UrgentPriceController::class, 'update'])
-        ->name('admin.config.urgent-price.update');
-    
+        Route::post('/config/urgent-price/update', [UrgentPriceController::class, 'update'])->name('admin.config.urgent-price.update');
         // Administracion de categorias
         Route::get('/config/categorias', [CategoryController::class, 'index'])->name('admin.config.categories');
         Route::post('/config/categorias/store', [CategoryController::class, 'store'])->name('admin.config.categories.store');
         Route::put('/config/categorias/update/{id}', [CategoryController::class, 'update'])->name('admin.config.categories.update');
         Route::delete('/config/categorias/delete/{id}', [CategoryController::class, 'destroy'])->name('admin.config.categories.destroy');
-
         // Subcategorías
         Route::post('/config/sub/store', [SubcategoryController::class, 'store'])->name('admin.config.subcategories.store');
         Route::put('/config/sub/update/{id}', [SubcategoryController::class, 'update'])->name('admin.config.subcategories.update');
         Route::delete('/config/sub/delete/{id}', [SubcategoryController::class, 'destroy'])->name('admin.config.subcategories.destroy');
-
         // Campos
         Route::post('/config/field/store', [FieldController::class, 'store'])->name('admin.config.fields.store');
         Route::put('/config/field/update/{id}', [FieldController::class, 'update'])->name('admin.config.fields.update');
@@ -181,16 +180,24 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
         // Gestión de empleados
         Route::get('/config/employees', [EmployeeController::class, 'index'])->name('admin.config.employees');
+        Route::get('/config/employees/create', [EmployeeController::class, 'create'])->name('admin.config.employees.create');
+        Route::post('/config/employees/store', [EmployeeController::class, 'store'])->name('admin.config.employees.store');
+        Route::get('/config/employees/edit/{employee}', [EmployeeController::class, 'edit'])->name('admin.config.employees.edit');
+        Route::put('/config/employees/update/{employee}', [EmployeeController::class, 'update'])->name('admin.config.employees.update');
+        Route::put('/config/employees/toggle/{employee}', [EmployeeController::class, 'toggle'])->name('admin.config.employees.toggle');
 
-            // Gestión de Clientes
-            Route::get('/config/clients', [ClientController::class, 'index'])->name('admin.config.clients');
+        // Gestión de Clientes
+        Route::get('/config/clients', [ClientController::class, 'index'])->name('admin.config.clients');
+        Route::get('/config/clients/{client}/edit', [ClientController::class, 'edit'])->name('admin.config.clients.edit');
+        Route::put('/config/clients/{client}', [ClientController::class, 'update'])->name('admin.config.clients.update');
+        Route::put('/config/clients/{client}/toggle', [ClientController::class, 'toggleStatus'])->name('admin.config.clients.toggle');
 
-            // Caja
-            Route::get('/config/cash', [CashBoxController::class, 'index'])->name('admin.config.cash.index');
-            Route::post('/config/cash/open', [CashBoxController::class, 'open'])->name('admin.config.cash.open');
-            Route::post('/config/cash/{id}/movement', [CashBoxController::class, 'addMovement'])->name('admin.config.cash.movement');
-            Route::post('/config/cash/{id}/close', [CashBoxController::class, 'close'])->name('admin.config.cash.close');
-            Route::get('/config/cash/{id}', [CashBoxController::class, 'show'])->name('admin.config.cash.show');
+        // Caja
+        Route::get('/config/cash', [CashBoxController::class, 'index'])->name('admin.config.cash.index');
+        Route::post('/config/cash/open', [CashBoxController::class, 'open'])->name('admin.config.cash.open');
+        Route::post('/config/cash/{id}/movement', [CashBoxController::class, 'addMovement'])->name('admin.config.cash.movement');
+        Route::post('/config/cash/{id}/close', [CashBoxController::class, 'close'])->name('admin.config.cash.close');
+        Route::get('/config/cash/{id}', [CashBoxController::class, 'show'])->name('admin.config.cash.show');
 
 
 

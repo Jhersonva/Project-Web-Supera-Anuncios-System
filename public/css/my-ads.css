@@ -1,79 +1,142 @@
+/* BASE */
 body {
-        background: #f7f7f7;
-        font-family: 'Inter', sans-serif;
-    }
+    background: #f5f6f8;
+    font-family: 'Inter', sans-serif;
+}
 
-    .ad-card {
-        background: #fff;
-        border-radius: 14px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        min-height: 350px;
-        display: flex;
-        flex-direction: column;
-    }
+/* GRID RESPONSIVO */
+.ad-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.5rem;
+}
 
-    .ad-img {
-        width: 100%;
-        height: 180px;
-        object-fit: cover;
-    }
+/* CARD */
+.ad-card {
+    background: #ffffff;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+    min-height: 350px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #ececec;
+    transition: 0.28s ease;
+}
 
-    .status-badge {
-        font-size: 0.75rem;
-        border-radius: 6px;
-        padding: 3px 8px;
-        font-weight: 600;
-    }
+.ad-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 26px rgba(0,0,0,0.07);
+}
 
-    .status-aceptado { background: #d4f7d8; color: #1e8c2f; }
-    .status-pendiente { background: #fff5c2; color: #927700; }
-    .status-rechazado { background: #ffd7d7; color: #9c1c1c; }
-    .status-expirado  { background: #dcdcdc; color: #5a5a5a; }
+/* IMAGEN */
+.ad-img-container {
+    position: relative;
+    height: 180px;
+    width: 100%;
+    overflow: hidden;
+}
 
-    .ad-actions button {
-        border: none;
-        background: #f0f0f0;
-        border-radius: 6px;
-        padding: 6px 10px;
-        font-size: 0.85rem;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
+.ad-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: 0.35s ease;
+}
 
-    .view-btn {
-        background: #e7f1ff;
-        color: #0d6efd;
-    }
+.ad-card:hover .ad-img {
+    transform: scale(1.06);
+}
 
-    /* GRID RESPONSIVO */
-    .ad-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
+/* BADGE DE ESTADO (NUEVO) */
+.status-tag,
+.status-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    backdrop-filter: blur(4px);
+    color: #fff;
+}
 
-    @media (min-width: 576px) {
-        .ad-grid { grid-template-columns: repeat(2, 1fr); }
-    }
+/* Estados modernos */
+.status-aceptado { background: rgba(32, 132, 69, 0.9); }
+.status-pendiente { background: rgba(255, 193, 7, 0.9); }
+.status-rechazado { background: rgba(220, 53, 69, 0.9); }
+.status-expirado  { background: rgba(108, 117, 125, 0.9); }
 
-    @media (min-width: 768px) {
-        .ad-grid { grid-template-columns: repeat(3, 1fr); }
-    }
+/* ACCIONES */
+.ad-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
 
-    @media (min-width: 992px) {
-        .ad-grid { grid-template-columns: repeat(4, 1fr); }
-    }
+.ad-btn,
+.ad-actions button {
+    border: none;
+    padding: 7px 12px;
+    font-size: 0.85rem;
+    border-radius: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: 0.25s;
+}
 
-    @media (min-width: 1200px) {
-        .ad-grid { grid-template-columns: repeat(5, 1fr); }
-    }
+/* Botón editar */
+.ad-btn.edit,
+.edit-btn {
+    background: #f3f3f3;
+    color: #333;
+}
+.ad-btn.edit:hover {
+    background: #e7e7e7;
+}
 
-    /* Botón crear anuncio */
-    .btn-float {
-        position: fixed;
-        bottom: 80px;
-        right: 20px;
-        z-index: 999;
-    }
+/* Botón ver */
+.ad-btn.view,
+.view-btn {
+    background: #dc3545;
+    color: #fff;
+}
+.ad-btn.view:hover {
+    background: #bb2d3b;
+}
+
+/* Icono estadísticas */
+.ad-icon.stats {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #555;
+    transition: 0.25s;
+}
+.ad-icon.stats:hover {
+    background: #dcdcdc;
+}
+
+/* FLOTANTE CREAR ANUNCIO */
+.btn-float {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    z-index: 999;
+    border-radius: 50px !important;
+    box-shadow: 0 4px 12px rgba(255, 50, 50, 0.4);
+    transition: 0.25s;
+}
+
+.btn-float:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 18px rgba(255, 50, 50, 0.6);
+}

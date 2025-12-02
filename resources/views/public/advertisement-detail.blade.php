@@ -59,7 +59,7 @@
     </p>
 
     {{-- UBICACIÓN --}}
-    <p><i class="fa-solid fa-location-dot text-danger"></i> {{ $ad->city ?? 'Sin ubicación' }}</p>
+    <p><i class="fa-solid fa-location-dot text-danger"></i> {{ $ad->contact_location ?? 'Sin ubicación' }}</p>
 
     {{-- CATEGORÍA --}}
     <p><i class="fa-solid fa-tag"></i> 

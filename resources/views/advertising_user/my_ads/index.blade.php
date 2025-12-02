@@ -9,7 +9,8 @@
 <div class="container mt-5 mb-5 pb-5">
 
     <!-- BOTÓN CREAR ANUNCIO -->
-    <button onclick="location.href='{{ route('my-ads.createAd') }}'" class="btn btn-danger shadow btn-float d-flex align-items-center gap-2 px-3 py-2 rounded-pill">
+    <button onclick="location.href='{{ route('my-ads.createAd') }}'" 
+        class="btn btn-danger shadow btn-float d-flex align-items-center gap-2 px-3 py-2 rounded-pill">
         <i class="fa-solid fa-plus"></i>
         <span>Crear Anuncio</span>
     </button>
@@ -25,33 +26,37 @@
 
         @forelse ($ads as $ad)
 
-        <div class="ad-card">
-            <img src="{{ $ad->mainImage ? asset($ad->mainImage->image) : asset('assets/default-ad.png') }}" class="ad-img"alt="Imagen del anuncio">
-            <div class="p-3 d-flex flex-column justify-content-between" style="flex: 1;">
+        <div class="ad-card shadow-sm">
+            <div class="ad-img-container">
+                <img src="{{ $ad->mainImage ? asset($ad->mainImage->image) : asset('assets/default-ad.png') }}"
+                     alt="Imagen del anuncio" class="ad-img">
+                <span class="status-tag status-{{ strtolower($ad->status) }}">
+                    {{ ucfirst($ad->status) }}
+                </span>
+            </div>
+
+            <div class="p-3 d-flex flex-column justify-content-between">
+
                 <div>
-                    <h6 class="fw-bold m-0">{{ $ad->title }}</h6>
-                    <p class="m-0 text-secondary small">{{ $ad->location }}</p>
-
-                    <div class="mt-2">
-                        <span class="status-badge status-{{ strtolower($ad->status) }}">
-                            {{ ucfirst($ad->status) }}
-                        </span>
-                    </div>
+                    <h6 class="fw-bold m-0 text-truncate">{{ $ad->title }}</h6>
+                    <p class="m-0 text-secondary small text-truncate">{{ $ad->location }}</p>
                 </div>
 
-                <div class="ad-actions d-flex justify-content-between mt-3">
-                    <button class="edit-btn">
+                <!-- Acciones -->
+                <div class="ad-actions mt-3 d-flex justify-content-between">
+                    <a href="#" class="ad-btn edit">
                         <i class="fa-solid fa-pen"></i> Editar
-                    </button>
+                    </a>
 
-                    <button class="view-btn">
+                    <a href="#" class="ad-btn view">
                         <i class="fa-solid fa-eye"></i> Ver
-                    </button>
+                    </a>
 
-                    <button class="stats-btn">
+                    <a href="#" class="ad-icon stats">
                         <i class="fa-solid fa-chart-column"></i>
-                    </button>
+                    </a>
                 </div>
+
             </div>
         </div>
 

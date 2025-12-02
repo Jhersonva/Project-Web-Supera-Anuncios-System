@@ -6,34 +6,9 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-<style>
-    .card-employee {
-        background: #fff;
-        border-radius: 16px;
-        padding: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        transition: .2s ease-in-out;
-    }
-    .card-employee:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 22px rgba(0,0,0,0.12);
-    }
-    .profile-icon {
-        width: 55px;
-        height: 55px;
-        border-radius: 50%;
-        background: #ffc107;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: #fff;
-        font-size: 22px;
-    }
-</style>
+<div class="container mt-5 mb-5">
 
-<div class="container mt-4 mb-5">
-
-    {{-- IZQUIERDA: BOTÓN VOLVER --}}
+    {{-- BOTÓN VOLVER --}}
     <a href="{{ route('admin.config') }}" class="text-dark">
         <i class="fa-solid fa-arrow-left fs-5"></i>
     </a>
@@ -43,46 +18,181 @@
         Administrar los usuarios que cuentan con rol de empleado.
     </p>
 
+    {{-- BOTÓN CREAR EMPLEADO --}}
+    <div class="text-end mb-3">
+        <a href="{{ route('admin.config.employees.create') }}" class="btn btn-success">
+            <i class="fa-solid fa-user-plus me-2"></i> Crear Empleado
+        </a>
+    </div>
+
+    @if(session('success'))
+        <div class="alert alert-success text-center">{{ session('success') }}</div>
+    @endif
+
     @if($employees->count() == 0)
         <div class="alert alert-warning text-center">
             No hay empleados registrados.
         </div>
     @endif
 
-    <div class="row">
-        @foreach ($employees as $emp)
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card-employee">
+    <div class="card shadow-sm border-0 p-4" style="border-radius: 16px;">
 
-                <div class="d-flex align-items-center mb-3">
-                    <div class="profile-icon me-3">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
+        {{-- ICONO Y TÍTULO --}}
+        <div class="d-flex align-items-center mb-4">
+            <div class="bg-warning text-white p-3 rounded-circle me-3"
+                style="width: 60px; height: 60px; display:flex; align-items:center; justify-content:center;">
+                <i class="fa-solid fa-user-tie fa-lg"></i>
+            </div>
 
-                    <div>
-                        <h5 class="fw-bold m-0">{{ $emp->full_name }}</h5>
-                        <small class="text-muted">{{ $emp->email }}</small>
-                    </div>
-                </div>
-
-                <p class="m-0"><strong>DNI:</strong> {{ $emp->dni }}</p>
-                <p class="m-0"><strong>Teléfono:</strong> {{ $emp->phone }}</p>
-                <p class="m-0"><strong>Localidad:</strong> {{ $emp->locality }}</p>
-
-                <hr>
-
-                <p class="m-0"><strong>WhatsApp:</strong> {{ $emp->whatsapp }}</p>
-                <p class="m-0"><strong>Llamadas:</strong> {{ $emp->call_phone }}</p>
-                <p class="m-0"><strong>Email de contacto:</strong> {{ $emp->contact_email }}</p>
-
-                <hr>
-
-                <p class="m-0"><strong>Dirección:</strong> {{ $emp->address }}</p>
-
+            <div>
+                <h5 class="fw-bold m-0">Empleados Registrados</h5>
+                <small class="text-muted">Usuarios con rol de empleado</small>
             </div>
         </div>
-        @endforeach
-    </div>
 
+        {{-- ========================= --}}
+        {{--   VISTA ESCRITORIO (TABLA) --}}
+        {{-- ========================= --}}
+        <div class="table-responsive desktop-table">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>DNI</th>
+                        <th>Teléfono</th>
+                        <th>Localidad</th>
+                        <th>WhatsApp</th>
+                        <th>Llamadas</th>
+                        <th>Email Contacto</th>
+                        <th>Dirección</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach ($employees as $emp)
+                        <tr>
+                            <td class="fw-semibold">{{ $emp->full_name }}</td>
+                            <td>{{ $emp->email }}</td>
+                            <td>{{ $emp->dni }}</td>
+                            <td>{{ $emp->phone }}</td>
+                            <td>{{ $emp->locality }}</td>
+                            <td>{{ $emp->whatsapp }}</td>
+                            <td>{{ $emp->call_phone }}</td>
+                            <td>{{ $emp->contact_email }}</td>
+                            <td>{{ $emp->address }}</td>
+
+                            <td>
+                                @if($emp->is_active)
+                                    <span class="badge bg-success">Activo</span>
+                                @else
+                                    <span class="badge bg-danger">Inactivo</span>
+                                @endif
+                            </td>
+
+                            <td>
+
+                                {{-- BOTÓN EDITAR --}}
+                                <a href="{{ route('admin.config.employees.edit', $emp) }}" class="btn btn-sm btn-primary mb-1">
+                                    Editar
+                                </a>
+
+                                {{-- BOTÓN ACTIVAR / DESACTIVAR --}}
+                                <form action="{{ route('admin.config.employees.toggle', $emp) }}"
+                                      method="POST" class="d-inline">
+                                    @csrf
+                                    @method('PUT')
+
+                                    @if($emp->is_active)
+                                        <button class="btn btn-sm btn-warning">
+                                            Desactivar
+                                        </button>
+                                    @else
+                                        <button class="btn btn-sm btn-success">
+                                            Activar
+                                        </button>
+                                    @endif
+                                </form>
+
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+
+            </table>
+        </div>
+
+        {{-- ======================= --}}
+        {{-- VISTA MÓVIL (CARDS) --}}
+        {{-- ======================= --}}
+        <div class="mobile-card">
+            @foreach ($employees as $emp)
+                <div class="card mb-3 shadow-sm border-0" style="border-radius: 14px;">
+                    <div class="card-body">
+
+                        <div class="d-flex align-items-center mb-3">
+                            <h6 class="fw-bold m-0">{{ $emp->full_name }}</h6>
+                        </div>
+
+                        <div class="small mb-3">
+                            <div><strong>Email:</strong> {{ $emp->email }}</div>
+                            <div><strong>DNI:</strong> {{ $emp->dni }}</div>
+                            <div><strong>Teléfono:</strong> {{ $emp->phone }}</div>
+                            <div><strong>Localidad:</strong> {{ $emp->locality }}</div>
+                            <div><strong>WhatsApp:</strong> {{ $emp->whatsapp }}</div>
+                            <div><strong>Llamadas:</strong> {{ $emp->call_phone }}</div>
+                            <div><strong>Email contacto:</strong> {{ $emp->contact_email }}</div>
+                            <div><strong>Dirección:</strong> {{ $emp->address }}</div>
+                            <div class="mt-2">
+                                <strong>Estado:</strong>
+                                @if($emp->is_active)
+                                    <span class="badge bg-success">Activo</span>
+                                @else
+                                    <span class="badge bg-danger">Inactivo</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+
+                            {{-- EDITAR --}}
+                            <a href="{{ route('admin.config.employees.edit', $emp) }}"
+                                class="btn btn-primary btn-sm w-100">
+                                Editar
+                            </a>
+
+                            {{-- ACTIVAR / DESACTIVAR --}}
+                            <form action="{{ route('admin.config.employees.toggle', $emp) }}"
+                                  method="POST" class="w-100">
+                                @csrf
+                                @method('PUT')
+                                @if($emp->is_active)
+                                    <button class="btn btn-warning btn-sm w-100">Desactivar</button>
+                                @else
+                                    <button class="btn btn-success btn-sm w-100">Activar</button>
+                                @endif
+                            </form>
+
+                        </div>
+
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+    </div>
 </div>
+
+<style>
+@media (max-width: 768px) {
+    .desktop-table { display: none !important; }
+    .mobile-card { display: block !important; }
+}
+@media (min-width: 769px) {
+    .mobile-card { display: none !important; }
+}
+</style>
+
 @endsection

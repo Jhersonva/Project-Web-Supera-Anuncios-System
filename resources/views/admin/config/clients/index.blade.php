@@ -35,37 +35,142 @@
             <p class="text-center text-muted">No existen clientes registrados.</p>
         @else
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Email</th>
-                            <th>Teléfono</th>
-                            <th>Localidad</th>
-                            <th>DNI</th>
-                            <th>Registrado</th>
-                        </tr>
-                    </thead>
+                @if ($clients->isEmpty())
+                    <p class="text-center text-muted">No existen clientes registrados.</p>
+                @else
 
-                    <tbody>
+                    {{-- ========================= --}}
+                    {{-- VISTA ESCRITORIO (TABLA) --}}
+                    {{-- ========================= --}}
+                    <div class="table-responsive desktop-table">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Email</th>
+                                    <th>Teléfono</th>
+                                    <th>Localidad</th>
+                                    <th>DNI</th>
+                                    <th>Registrado</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach ($clients as $client)
+                                    <tr>
+                                        <td class="fw-semibold">{{ $client->full_name }}</td>
+                                        <td>{{ $client->email }}</td>
+                                        <td>{{ $client->phone }}</td>
+                                        <td>{{ $client->locality }}</td>
+                                        <td>{{ $client->dni }}</td>
+                                        <td>{{ $client->created_at->format('d/m/Y') }}</td>
+                                        <td>
+                                            @if($client->is_active)
+                                                <span class="badge bg-success">Activo</span>
+                                            @else
+                                                <span class="badge bg-danger">Desactivado</span>
+                                            @endif
+                                        </td>
+
+                                        <td>
+                                            <a href="{{ route('admin.config.clients.edit', $client) }}" class="btn btn-sm btn-primary mb-1">
+                                                Editar
+                                            </a>
+
+                                            <form action="{{ route('admin.config.clients.toggle', $client) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                @method('PUT')
+
+                                                @if($client->is_active)
+                                                    <button class="btn btn-sm btn-warning">Desactivar</button>
+                                                @else
+                                                    <button class="btn btn-sm btn-success">Activar</button>
+                                                @endif
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+
+                        </table>
+                    </div>
+
+
+                    {{-- ======================= --}}
+                    {{-- VISTA MÓVIL (CARDS) --}}
+                    {{-- ======================= --}}
+                    <div class="mobile-card">
                         @foreach ($clients as $client)
-                            <tr>
-                                <td class="fw-semibold">{{ $client->full_name }}</td>
-                                <td>{{ $client->email }}</td>
-                                <td>{{ $client->phone }}</td>
-                                <td>{{ $client->locality }}</td>
-                                <td>{{ $client->dni }}</td>
-                                <td>{{ $client->created_at->format('d/m/Y') }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
+                            <div class="card mb-3 shadow-sm border-0" style="border-radius: 14px;">
+                                <div class="card-body">
 
-                </table>
+                                    <h6 class="fw-bold mb-1">{{ $client->full_name }}</h6>
+                                    <p class="text-muted mb-2">{{ $client->email }}</p>
+
+                                    <div class="small mb-3">
+                                        <div><strong>Teléfono:</strong> {{ $client->phone }}</div>
+                                        <div><strong>Localidad:</strong> {{ $client->locality }}</div>
+                                        <div><strong>DNI:</strong> {{ $client->dni }}</div>
+                                        <div><strong>Registrado:</strong> {{ $client->created_at->format('d/m/Y') }}</div>
+                                        <div>
+                                            <strong>Estado:</strong>
+                                            @if($client->is_active)
+                                                <span class="badge bg-success">Activo</span>
+                                            @else
+                                                <span class="badge bg-danger">Desactivado</span>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex gap-2">
+                                        <a href="{{ route('admin.config.clients.edit', $client) }}"
+                                        class="btn btn-primary btn-sm w-100">
+                                            Editar
+                                        </a>
+
+                                        <form action="{{ route('admin.config.clients.toggle', $client) }}"
+                                            method="POST" class="w-100">
+                                            @csrf
+                                            @method('PUT')
+
+                                            @if($client->is_active)
+                                                <button class="btn btn-warning btn-sm w-100">Desactivar</button>
+                                            @else
+                                                <button class="btn btn-success btn-sm w-100">Activar</button>
+                                            @endif
+                                        </form>
+                                    </div>
+
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                @endif
             </div>
         @endif
-
     </div>
-
 </div>
+
+<style>
+@media (max-width: 768px) {
+    .desktop-table {
+        display: none !important;
+    }
+
+    .mobile-card {
+        display: block !important;
+    }
+}
+@media (min-width: 769px) {
+    .mobile-card {
+        display: none !important;
+    }
+}
+</style>
+
+
 
 @endsection

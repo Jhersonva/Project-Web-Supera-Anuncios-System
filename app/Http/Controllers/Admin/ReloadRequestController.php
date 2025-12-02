@@ -14,8 +14,19 @@ class ReloadRequestController extends Controller
 {
     public function index()
     {
-        $recharges = Recharge::orderBy('created_at', 'desc')->get();
-        return view('admin.reload-request.index', compact('recharges'));
+        // Recargas pendientes
+        $rechargesPendientes = Recharge::where('status', 'pendiente')
+            ->with('user')
+            ->latest()
+            ->get();
+
+        // Historial (aceptadas o rechazadas)
+        $rechargesHistorial = Recharge::whereIn('status', ['aceptado', 'rechazado'])
+            ->with('user')
+            ->latest()
+            ->get();
+
+        return view('admin.reload-request.index', compact('rechargesPendientes', 'rechargesHistorial'));
     }
 
     public function approve(Request $request, $id)

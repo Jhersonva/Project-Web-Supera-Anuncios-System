@@ -47,12 +47,6 @@ body {
   color: red !important;
 }
 
-/* -------- CARRUSEL PROFESIONAL -------- */
-.hero-img {
-  width: 100%;
-  height: 340px;      /* SE VE GRANDE Y CLARA EN MÓVIL */
-  object-fit: cover;
-}
 
 @media(min-width: 768px) {
   .hero-img {

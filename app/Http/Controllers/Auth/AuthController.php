@@ -53,6 +53,7 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
+        // Intento de login
         if (!Auth::attempt($request->only('email', 'password'))) {
             return response()->json([
                 'message' => 'Credenciales incorrectas'
@@ -61,18 +62,25 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        // obtenemos el nombre del rol
+        // Verificar si el usuario está activo
+        if (!$user->is_active) {
+            Auth::logout(); // Cerrar sesión inmediatamente
+
+            return response()->json([
+                'message' => 'Tu cuenta está desactivada. Comunícate con soporte o con el administrador.'
+            ], 403);
+        }
+
+        // Rol del usuario
         $roleName = $user->role->name;
 
-        // Redirección según rol
-        $redirect = ($roleName === 'advertising_user')
-                    ? route('home')
-                    : route('home'); 
+        // Redirección según rol (por ahora igual)
+        $redirect = route('home');
 
         return response()->json([
-            'message' => 'Inicio de sesión correcto',
-            'user'    => $user,
-            'role'    => $roleName,
+            'message'  => 'Inicio de sesión correcto',
+            'user'     => $user,
+            'role'     => $roleName,
             'redirect' => $redirect
         ]);
     }

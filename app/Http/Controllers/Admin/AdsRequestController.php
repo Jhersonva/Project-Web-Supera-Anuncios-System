@@ -14,12 +14,19 @@ class AdsRequestController extends Controller
      */
     public function index()
     {
-        $ads = Advertisement::where('status', 'pendiente')
+        // Pendientes
+        $adsPendientes = Advertisement::where('status', 'pendiente')
             ->with(['user', 'category', 'subcategory', 'images'])
             ->latest()
             ->get();
 
-        return view('admin.ads-requests.index', compact('ads'));
+        // Historial (ya aprobados o rechazados)
+        $adsHistorial = Advertisement::whereIn('status', ['aceptado', 'rechazado'])
+            ->with(['user', 'category', 'subcategory', 'images'])
+            ->latest()
+            ->get();
+
+        return view('admin.ads-requests.index', compact('adsPendientes', 'adsHistorial'));
     }
 
     /**

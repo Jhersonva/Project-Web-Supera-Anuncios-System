@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('contact_email', 150)->nullable(); 
             $table->string('address', 200)->nullable();  
             $table->decimal('virtual_wallet', 10, 2)->default(0);   
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }
