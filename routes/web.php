@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\CashBoxController;
 use App\Http\Controllers\Admin\UrgentPriceController;
+use App\Http\Controllers\Admin\PaymentMethodController;
 
 
 /*
@@ -82,6 +83,10 @@ Route::post('/chat/start/{ad}', [ChatController::class, 'startConversation'])
 Route::get('/chat', [ChatController::class, 'index'])
     ->name('chat.index')
     ->middleware('auth');
+
+Route::get('/chat/check-new', [ChatController::class, 'checkNewConversations'])
+        ->middleware('auth')
+        ->name('chat.check-new');
 
 Route::get('/chat/{id}', [ChatController::class, 'show'])
     ->name('chat.show')
@@ -163,6 +168,8 @@ Route::middleware(['auth'])->prefix('advertising')->group(function () {
 
     Route::post('/recharges', [RechargeController::class, 'store'])
         ->name('recharges.store');
+
+
 });
 
 /*
@@ -235,5 +242,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
     Route::post('/ads-requests/{id}/reject', [AdsRequestController::class, 'reject'])
         ->name('admin.ads-requests.reject');
+
+    // Metodos de Pago
+    Route::get('/config/payment-methods', [PaymentMethodController::class, 'index'])->name('admin.config.payment_methods.index');
+    Route::get('/config/payment-methods/create', [PaymentMethodController::class, 'create'])->name('admin.config.payment_methods.create');
+    Route::post('/config/payment-methods/store', [PaymentMethodController::class, 'store'])->name('admin.config.payment_methods.store');
+    Route::get('/config/payment-methods/edit/{id}', [PaymentMethodController::class, 'edit'])->name('admin.config.payment_methods.edit');
+    Route::post('/config/payment-methods/update/{id}', [PaymentMethodController::class, 'update'])->name('admin.config.payment_methods.update');
+    Route::delete('/config/payment-methods/delete/{id}', [PaymentMethodController::class, 'destroy'])->name('admin.config.payment_methods.delete');
 
 });

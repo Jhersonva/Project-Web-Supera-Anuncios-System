@@ -9,16 +9,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('messages', function (Blueprint $table) {
-        $table->id();
+            $table->id();
 
-        $table->foreignId('conversation_id')->constrained('conversations')->cascadeOnDelete();
-        $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('conversation_id')->constrained('conversations')->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
 
-        $table->text('message');
-        $table->boolean('is_read')->default(false);
+            $table->text('message');
+            $table->boolean('is_read')->default(false);
 
-        $table->timestamps();
-    });
+            $table->timestamps();
+        });
     }
 
     public function down(): void

@@ -104,4 +104,23 @@ class ChatController extends Controller
         ]);
     }
 
+    // Obtener nuevas conversaciones
+    public function checkNewConversations(Request $request)
+    {
+        $lastConversationId = $request->last_id;
+        $userId = auth()->id();
+
+        // Enviar SOLO conversaciones nuevas
+        $newConversations = Conversation::where('id', '>', $lastConversationId)
+            ->where(function($q) use ($userId) {
+                $q->where('sender_id', $userId)
+                ->orWhere('receiver_id', $userId);
+            })
+            ->with(['sender', 'receiver', 'advertisement'])
+            ->get();
+
+        return response()->json([
+            'conversations' => $newConversations
+        ]);
+    }
 }

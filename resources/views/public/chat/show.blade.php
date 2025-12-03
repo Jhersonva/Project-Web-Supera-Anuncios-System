@@ -127,11 +127,29 @@
         const btn = this.querySelector('button'); 
         const message = document.getElementById('msgInput').value;
 
-        if (!message.trim()) return; 
+        if (!message.trim()) return;
 
-        // Deshabilitar el botón mientras se envía
         btn.disabled = true;
 
+        const html = `
+            <div class="d-flex justify-content-end">
+                <div class="msg msg-right">
+                    ${message}
+                    <br>
+                    <small class="text-muted" style="font-size: 11px;">
+                        ${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                    </small>
+                </div>
+            </div>
+        `;
+        chatBox.innerHTML += html;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        lastMessageId++; 
+
+        document.getElementById('msgInput').value = "";
+
+        // Enviar al servidor
         fetch(`/chat/{{ $conversation->id }}/send`, {
             method: 'POST',
             headers: {
@@ -140,12 +158,8 @@
             },
             body: JSON.stringify({ message }),
         })
-        .then(() => {
-            document.getElementById('msgInput').value = "";
-            loadMessages(); 
-        })
         .finally(() => {
-            btn.disabled = false; 
+            btn.disabled = false;
         });
     });
 
@@ -158,7 +172,7 @@
             .then(res => res.json())
             .then(data => {
 
-                if (data.messages.length > 0) {
+                if (data.messages.length > 0) { 
 
                     data.messages.forEach(msg => {
                         lastMessageId = msg.id;
@@ -192,6 +206,4 @@
     // Refrescar cada 2 segundos
     setInterval(loadMessages, 2000);
 </script>
-
-
 @endsection

@@ -9,7 +9,7 @@ class Recharge extends Model
     protected $fillable = [
         'user_id',
         'monto',
-        'metodo_pago',
+        'payment_method_id',
         'img_cap_pago',
         'operation_number',
         'reject_message',
@@ -23,5 +23,10 @@ class Recharge extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function paymentMethod()
+    {
+        return $this->belongsTo(PaymentMethod::class);
     }
 }

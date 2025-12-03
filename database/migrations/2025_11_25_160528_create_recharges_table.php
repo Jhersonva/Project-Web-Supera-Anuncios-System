@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->decimal('monto', 10, 2);
-            $table->enum('metodo_pago', ['yape', 'plin', 'bcp', 'interbank']);
+            $table->foreignId('payment_method_id')->nullable()->constrained('payment_methods')->nullOnDelete();
             $table->string('img_cap_pago')->nullable();
             $table->string('operation_number')->nullable();
             $table->text('reject_message')->nullable();
