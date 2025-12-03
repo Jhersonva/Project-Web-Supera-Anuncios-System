@@ -30,17 +30,17 @@
             <i class="fa-solid fa-user"></i> Publicado por: {{ $ad->user->full_name }}
         </p>
 
-        <div class="mt-3">
-            <label for="message" class="form-label">Mensaje para el anunciante:</label>
-            <textarea id="message" class="form-control" rows="4" placeholder="Escribe tu mensaje aquí..."></textarea>
-        </div>
+        <label for="message" class="form-label">Mensaje para el anunciante:</label>
+        <form action="{{ route('chat.start', $ad->id) }}" method="POST">
+            @csrf
+            <textarea name="message" class="form-control" rows="4" required></textarea>
 
-        <div class="text-center mt-3">
-            <button class="btn btn-primary">
-                <i class="fa-solid fa-paper-plane me-2"></i> Enviar Mensaje
-            </button>
-        </div>
-
+            <div class="text-center mt-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-paper-plane me-2"></i> Enviar Mensaje
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 

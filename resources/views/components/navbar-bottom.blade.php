@@ -30,6 +30,11 @@
                     <i class="fa-solid fa-dollar-sign"></i><br>Recargar
                 </a>
 
+                <a href="{{ route('chat.index') }}" 
+                    class="text-center {{ request()->routeIs('chat.*') ? 'nav-item-active' : '' }}">
+                    <i class="fa-solid fa-comments fs-4"></i><br>Chat
+                </a>
+
             </div>
         @endif
     @endauth

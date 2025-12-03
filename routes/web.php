@@ -2,10 +2,15 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PublicController;
+use App\Http\Controllers\ChatController;
 
-use App\Http\Controllers\Auth\AuthController;
+
 use App\Http\Controllers\AdvertisingUser\AdvertisementController;
 use App\Http\Controllers\AdvertisingUser\RechargeController;
+
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Api\ChatApiController;
+
 
 use App\Http\Controllers\Admin\ReloadRequestController;
 use App\Http\Controllers\Admin\ConfigController;
@@ -61,14 +66,34 @@ Route::get('/api/ads', function () {
     ]);
 });
 
-Route::get('/contact/{id}', [PublicController::class, 'contact'])
-    ->name('public.contact');
+// Contactar al anunciante
+Route::get('/contact/{id}', [PublicController::class, 'contact'])->name('public.contact');
 
-Route::get('/ad/{id}', [AdvertisementController::class, 'show'])
-        ->name('public.ad.show');
+// Ver anuncio público
+Route::get('/ad/{id}', [AdvertisementController::class, 'show'])->name('public.ad.show');
+Route::get('/detalle-anuncio/{slug}/{id}', [AdvertisementController::class, 'show'])->name('public.ad.detail');
 
-        Route::get('/detalle-anuncio/{slug}/{id}', [AdvertisementController::class, 'show'])
-    ->name('public.ad.detail');
+
+// Crear conversación desde anuncio
+Route::post('/chat/start/{ad}', [ChatController::class, 'startConversation'])
+    ->name('chat.start')
+    ->middleware('auth');
+
+Route::get('/chat', [ChatController::class, 'index'])
+    ->name('chat.index')
+    ->middleware('auth');
+
+Route::get('/chat/{id}', [ChatController::class, 'show'])
+    ->name('chat.show')
+    ->middleware('auth');
+
+Route::post('/chat/{id}/send', [ChatController::class, 'sendMessage'])
+    ->name('chat.send')
+    ->middleware('auth');
+    
+Route::get('/chat/{id}/messages', [ChatController::class, 'getMessages'])
+    ->name('chat.messages')
+    ->middleware('auth');
 
 /*
 |--------------------------------------------------------------------------

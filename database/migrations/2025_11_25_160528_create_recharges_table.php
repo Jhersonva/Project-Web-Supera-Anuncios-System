@@ -14,7 +14,7 @@ return new class extends Migration
             $table->decimal('monto', 10, 2);
             $table->enum('metodo_pago', ['yape', 'plin', 'bcp', 'interbank']);
             $table->string('img_cap_pago')->nullable();
-            $table->string('operation_number');
+            $table->string('operation_number')->nullable();
             $table->text('reject_message')->nullable();
             $table->enum('status', ['pendiente', 'aceptado', 'rechazado'])->default('pendiente');
             $table->timestamps();
