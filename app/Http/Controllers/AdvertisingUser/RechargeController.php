@@ -17,7 +17,7 @@ class RechargeController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $paymentMethods = PaymentMethod::where('activo', true)->get();
+        $paymentMethods = PaymentMethod::where('active', true)->get();
 
         return view('advertising_user.recharges.index', compact('recharges', 'paymentMethods'));
     }

@@ -8,18 +8,12 @@ use Illuminate\Http\Request;
 
 class PaymentMethodController extends Controller
 {
-    /* -----------------------------------------------------
-       LISTA GENERAL — Para panel de administración
-    ----------------------------------------------------- */
     public function index()
     {
         $methods = PaymentMethod::orderBy('id', 'desc')->get();
         return view('admin.config.payment_methods.index', compact('methods'));
     }
 
-    /* -----------------------------------------------------
-       FORMULARIO CREAR
-    ----------------------------------------------------- */
     public function create()
     {
         return view('admin.config.payment_methods.create');
@@ -28,45 +22,52 @@ class PaymentMethodController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nombre' => 'required|string|max:255',
-            'tipo'   => 'nullable|string|max:255',
-            'numero' => 'nullable|string|max:255',
-            'cuenta' => 'nullable|string|max:255',
-            'cci'    => 'nullable|string|max:255',
-            'qr'     => 'nullable|image|max:4096',
+            'name_method'        => 'required|string|max:255',
+            'type'               => 'nullable|string|max:255',
+            'holder_name'        => 'nullable|string|max:255',
+            'cell_phone_number'  => 'nullable|string|max:255',
+            'account_number'     => 'nullable|string|max:255',
+            'cci'                => 'nullable|string|max:255',
+            'qr'                 => 'nullable|image|max:4096',
+            'logo'               => 'nullable|image|max:4096',
         ]);
 
         $rutaQr = null;
+        $rutaLogo = null;
 
+        $uploadPath = public_path('images/payment_methods');
+        if (!file_exists($uploadPath)) mkdir($uploadPath, 0777, true);
+
+        // QR
         if ($request->hasFile('qr')) {
-            $uploadPath = public_path('images/payment_methods');
-
-            if (!file_exists($uploadPath)) {
-                mkdir($uploadPath, 0777, true);
-            }
-
-            $filename = time() . '_' . uniqid() . '.' . $request->qr->getClientOriginalExtension();
+            $filename = time().'_qr_'.uniqid().'.'.$request->qr->getClientOriginalExtension();
             $request->qr->move($uploadPath, $filename);
-            $rutaQr = 'images/payment_methods/' . $filename;
+            $rutaQr = 'images/payment_methods/'.$filename;
+        }
+
+        // LOGO
+        if ($request->hasFile('logo')) {
+            $filename = time().'_logo_'.uniqid().'.'.$request->logo->getClientOriginalExtension();
+            $request->logo->move($uploadPath, $filename);
+            $rutaLogo = 'images/payment_methods/'.$filename;
         }
 
         PaymentMethod::create([
-            'nombre' => $request->nombre,
-            'tipo'   => $request->tipo,
-            'numero' => $request->numero,
-            'cuenta' => $request->cuenta,
-            'cci'    => $request->cci,
-            'qr'     => $rutaQr,
-            'activo' => $request->has('activo'),
+            'name_method'        => $request->name_method,
+            'type'               => $request->type,
+            'holder_name'        => $request->holder_name,
+            'cell_phone_number'  => $request->cell_phone_number,
+            'account_number'     => $request->account_number,
+            'cci'                => $request->cci,
+            'qr'                 => $rutaQr,
+            'logo'               => $rutaLogo,
+            'active'             => $request->has('active'),
         ]);
 
         return redirect()->route('admin.config.payment_methods.index')
             ->with('success', 'Método de pago creado correctamente.');
     }
 
-    /* -----------------------------------------------------
-       EDITAR
-    ----------------------------------------------------- */
     public function edit($id)
     {
         $method = PaymentMethod::findOrFail($id);
@@ -78,61 +79,74 @@ class PaymentMethodController extends Controller
         $method = PaymentMethod::findOrFail($id);
 
         $request->validate([
-            'nombre' => 'required|string|max:255',
-            'tipo'   => 'nullable|string|max:255',
-            'numero' => 'nullable|string|max:255',
-            'cuenta' => 'nullable|string|max:255',
-            'cci'    => 'nullable|string|max:255',
-            'qr'     => 'nullable|image|max:4096',
+            'name_method'        => 'required|string|max:255',
+            'type'               => 'nullable|string|max:255',
+            'holder_name'        => 'nullable|string|max:255',
+            'cell_phone_number'  => 'nullable|string|max:255',
+            'account_number'     => 'nullable|string|max:255',
+            'cci'                => 'nullable|string|max:255',
+            'qr'                 => 'nullable|image|max:4096',
+            'logo'               => 'nullable|image|max:4096',
         ]);
 
         $rutaQr = $method->qr;
+        $rutaLogo = $method->logo;
 
+        $uploadPath = public_path('images/payment_methods');
+        if (!file_exists($uploadPath)) mkdir($uploadPath, 0777, true);
+
+        // QR
         if ($request->hasFile('qr')) {
-            $uploadPath = public_path('images/payment_methods');
 
-            if (!file_exists($uploadPath)) {
-                mkdir($uploadPath, 0777, true);
+            if ($method->qr && file_exists(public_path($method->qr))) {
+                unlink(public_path($method->qr));
             }
 
-            $filename = time() . '_' . uniqid() . '.' . $request->qr->getClientOriginalExtension();
+            $filename = time().'_qr_'.uniqid().'.'.$request->qr->getClientOriginalExtension();
             $request->qr->move($uploadPath, $filename);
-            $rutaQr = 'images/payment_methods/' . $filename;
+            $rutaQr = 'images/payment_methods/'.$filename;
+        }
+
+        // LOGO
+        if ($request->hasFile('logo')) {
+
+            if ($method->logo && file_exists(public_path($method->logo))) {
+                unlink(public_path($method->logo));
+            }
+
+            $filename = time().'_logo_'.uniqid().'.'.$request->logo->getClientOriginalExtension();
+            $request->logo->move($uploadPath, $filename);
+            $rutaLogo = 'images/payment_methods/'.$filename;
         }
 
         $method->update([
-            'nombre' => $request->nombre,
-            'tipo'   => $request->tipo,
-            'numero' => $request->numero,
-            'cuenta' => $request->cuenta,
-            'cci'    => $request->cci,
-            'qr'     => $rutaQr,
-            'activo' => $request->has('activo'),
+            'name_method'        => $request->name_method,
+            'type'               => $request->type,
+            'holder_name'        => $request->holder_name,
+            'cell_phone_number'  => $request->cell_phone_number,
+            'account_number'     => $request->account_number,
+            'cci'                => $request->cci,
+            'qr'                 => $rutaQr,
+            'logo'               => $rutaLogo,
+            'active'             => $request->has('active'),
         ]);
 
         return redirect()->route('admin.config.payment_methods.index')
-            ->with('success', 'Método de pago actualizado.');
+            ->with('success', 'Método de pago actualizado correctamente.');
     }
 
-    /* -----------------------------------------------------
-       ELIMINAR
-    ----------------------------------------------------- */
     public function destroy($id)
     {
         $method = PaymentMethod::findOrFail($id);
+
+        if ($method->qr && file_exists(public_path($method->qr))) {
+            unlink(public_path($method->qr));
+        }
+
+        // borrar registro
         $method->delete();
 
         return redirect()->route('admin.config.payment_methods.index')
-            ->with('success', 'Método de pago eliminado.');
-    }
-
-    /* -----------------------------------------------------
-       API: lista de métodos activos para recargas
-    ----------------------------------------------------- */
-    public function apiActive()
-    {
-        return PaymentMethod::where('activo', true)
-            ->orderBy('nombre')
-            ->get();
+            ->with('success', 'Método de pago eliminado correctamente.');
     }
 }

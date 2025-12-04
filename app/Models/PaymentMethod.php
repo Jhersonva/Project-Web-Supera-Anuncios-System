@@ -7,13 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class PaymentMethod extends Model
 {
     protected $fillable = [
-        'nombre',
-        'tipo',
-        'numero',
-        'cuenta',
+        'name_method',
+        'type',
+        'logo',
+        'holder_name',
+        'cell_phone_number',
+        'account_number',
         'cci',
         'qr',
-        'activo',
+        'active',
     ];
 
     public function recharges()

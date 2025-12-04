@@ -81,11 +81,14 @@
         <h5 class="fw-semibold">Método de pago</h5>
 
         <div class="row g-3 mt-2">
-            @foreach(['yape','plin','bcp','interbank'] as $metodo)
+            @foreach ($paymentMethods as $method)
             <div class="col-6 col-md-3">
-                <div class="pago-opcion" data-metodo="{{ $metodo }}">
-                    <img src="{{ asset("/assets/img/pagos/$metodo" . ($metodo == 'plin' ? '.webp' : ($metodo == 'yape' ? '.png' : ($metodo == 'bcp' ? '.jpg' : '.png'))) ) }}">
-                    <p class="mt-2 text-capitalize">{{ $metodo }}</p>
+                <div class="pago-opcion" data-metodo-id="{{ $method->id }}">
+                    <img 
+                        src="{{ asset($method->logo ?? 'assets/default-payment.png') }}" 
+                        alt="{{ $method->logo }}"
+                    >
+                    <p class="mt-2">{{ $method->name_method }}</p>
                 </div>
             </div>
             @endforeach
@@ -96,7 +99,7 @@
             @csrf
 
             <input type="hidden" name="monto" id="inputMonto">
-            <input type="hidden" name="metodo_pago" id="inputMetodo">
+            <input type="hidden" name="payment_method_id" id="inputMetodo">
 
             <div class="mt-4">
                 <label class="fw-bold">Sube tu comprobante (opcional)</label>
@@ -185,30 +188,7 @@ btnHistorial.addEventListener("click", () => {
 /* ============================
    SISTEMA DE PAGO
 ============================ */
-const datosPago = {
-    yape: {
-        nombre: "Jherson Valdez",
-        numero: "987 654 321",
-        qr: "{{ asset('assets/pagos/qr-yape.png') }}"
-    },
-    plin: {
-        nombre: "Jherson Valdez",
-        numero: "987 654 321",
-        qr: "{{ asset('assets/pagos/qr-plin.png') }}"
-    },
-    bcp: {
-        nombre: "Jherson Valdez",
-        numero: "987 654 321",
-        cuenta: "123-45678901-0-12",
-        cci: "00212345678901234567"
-    },
-    interbank: {
-        nombre: "Jherson Valdez",
-        numero: "987 654 321",
-        cuenta: "123-4567890123",
-        cci: "00312345678901234567"
-    }
-};
+const paymentMethodsData = @json($paymentMethods);
 
 const inputMonto = document.getElementById("inputMonto");
 const inputMetodo = document.getElementById("inputMetodo");
@@ -221,42 +201,44 @@ document.getElementById("montoLibre").addEventListener("input", function () {
 // Selección método pago
 document.querySelectorAll(".pago-opcion").forEach(btn => {
     btn.addEventListener("click", () => {
+
         document.querySelectorAll(".pago-opcion").forEach(b => b.classList.remove("selected"));
         btn.classList.add("selected");
 
-        const metodo = btn.dataset.metodo;
-        inputMetodo.value = metodo;
+        const metodoId = btn.dataset.metodoId;
+        const metodo = paymentMethodsData.find(m => m.id == metodoId);
+
+        inputMetodo.value = metodo.id;
         mostrarDatosPago(metodo);
     });
 });
 
 // Mostrar info del método seleccionado
-function mostrarDatosPago(metodo) {
-    const info = datosPago[metodo];
-    const cont = document.getElementById("infoPago");
+function mostrarDatosPago(m) {
 
     let html = `
         <div class="card p-3 shadow-sm">
-            <h5 class="fw-bold text-danger text-center text-capitalize">${metodo}</h5>
-            <p><strong>Nombre:</strong> ${info.nombre}</p>
-            <p><strong>Número:</strong> ${info.numero}</p>
+
+            <h5 class="fw-bold text-danger text-center">${m.name_method}</h5>
+
+            ${m.holder_name ? `<p><strong>Titular:</strong> ${m.holder_name }</p>` : ''}
+            ${m.cell_phone_number ? `<p><strong>Número:</strong> ${m.cell_phone_number }</p>` : ''}
+            ${m.account_number ? `<p><strong>Cuenta:</strong> ${m.account_number }</p>` : ''}
+            ${m.cci ? `<p><strong>CCI:</strong> ${m.cci}</p>` : ''}
+
+            ${m.qr ? `
+                <div class="text-center mt-2">
+                    <img src="${m.qr.startsWith('http') ? m.qr : '/'+m.qr}" width="160" class="img-fluid rounded shadow">
+                    <p class="mt-2 text-muted small">Escanea el QR</p>
+                </div>
+            ` : ''}
+        </div>
     `;
 
-    if (info.cuenta) html += `<p><strong>Cuenta:</strong> ${info.cuenta}</p>`;
-    if (info.cci) html += `<p><strong>CCI:</strong> ${info.cci}</p>`;
-    if (info.qr) {
-        html += `
-            <div class="text-center mt-2">
-                <img src="${info.qr}" width="160" class="img-fluid rounded shadow">
-                <p class="mt-2 text-muted small">Escanea el QR</p>
-            </div>
-        `;
-    }
-
-    html += `</div>`;
-    cont.innerHTML = html;
-    cont.style.display = "block";
+    document.getElementById("infoPago").innerHTML = html;
+    document.getElementById("infoPago").style.display = "block";
 }
+
 </script>
 
 @endsection

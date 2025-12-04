@@ -6,7 +6,6 @@
 
 <div class="container mt-5 mb-5">
 
-    {{-- BOTÓN VOLVER --}}
     <a href="{{ route('admin.config') }}" class="text-dark">
         <i class="fa-solid fa-arrow-left fs-5"></i>
     </a>
@@ -16,13 +15,12 @@
         Administración completa de los métodos de pago disponibles.
     </p>
 
-    <!-- CARD CONTENEDOR PRINCIPAL -->
     <div class="card shadow-sm border-0 p-4" style="border-radius: 16px;">
 
         <div class="d-flex align-items-center mb-4">
             <div class="bg-primary text-white p-3 rounded-circle me-3"
                 style="width: 60px; height: 60px; display:flex; align-items:center; justify-content:center;">
-                <i class="fa-solid fa-money-bill-transfer fa-lg"></i>
+                <i class="fa-solid fa-credit-card fa-lg"></i>
             </div>
 
             <div>
@@ -31,7 +29,6 @@
             </div>
         </div>
 
-        {{-- BOTÓN CREAR --}}
         <div class="mb-4 text-end">
             <a href="{{ route('admin.config.payment_methods.create') }}" class="btn btn-success">
                 <i class="fa-solid fa-plus me-2"></i>Nuevo Método de Pago
@@ -42,16 +39,15 @@
             <p class="text-center text-muted">No existen métodos de pago registrados.</p>
         @else
 
-            {{-- ========================= --}}
-            {{-- TABLA ESCRITORIO --}}
-            {{-- ========================= --}}
             <div class="table-responsive desktop-table">
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
                         <tr>
                             <th>Nombre</th>
                             <th>Tipo</th>
-                            <th>Número</th>
+                            <th>Logo</th>
+                            <th>Titular</th>
+                            <th>Celular</th>
                             <th>Cuenta</th>
                             <th>CCI</th>
                             <th>QR</th>
@@ -63,10 +59,21 @@
                     <tbody>
                         @foreach ($methods as $method)
                             <tr>
-                                <td class="fw-semibold">{{ $method->nombre }}</td>
-                                <td>{{ $method->tipo ?? '-' }}</td>
-                                <td>{{ $method->numero ?? '-' }}</td>
-                                <td>{{ $method->cuenta ?? '-' }}</td>
+                                <td class="fw-semibold">{{ $method->name_method }}</td>
+                                <td>{{ $method->type ?? '-' }}</td>
+
+                                <td>
+                                    @if ($method->logo)
+                                        <img src="{{ asset($method->logo) }}" width="45" height="45"
+                                            class="rounded shadow-sm" style="object-fit:cover;">
+                                    @else
+                                        <span class="text-muted">Sin logo</span>
+                                    @endif
+                                </td>
+
+                                <td>{{ $method->holder_name ?? '-' }}</td>
+                                <td>{{ $method->cell_phone_number ?? '-' }}</td>
+                                <td>{{ $method->account_number ?? '-' }}</td>
                                 <td>{{ $method->cci ?? '-' }}</td>
 
                                 <td>
@@ -79,7 +86,7 @@
                                 </td>
 
                                 <td>
-                                    @if ($method->activo)
+                                    @if ($method->active)
                                         <span class="badge bg-success">Activo</span>
                                     @else
                                         <span class="badge bg-danger">Desactivado</span>
@@ -87,14 +94,11 @@
                                 </td>
 
                                 <td>
-
-                                    {{-- EDITAR --}}
                                     <a href="{{ route('admin.config.payment_methods.edit', $method->id) }}"
                                         class="btn btn-sm btn-primary mb-1">
                                         Editar
                                     </a>
 
-                                    {{-- ELIMINAR --}}
                                     <form action="{{ route('admin.config.payment_methods.delete', $method->id) }}"
                                         method="POST" class="d-inline"
                                         onsubmit="return confirm('¿Seguro de eliminar este método de pago?');">
@@ -102,8 +106,8 @@
                                         @method('DELETE')
                                         <button class="btn btn-sm btn-danger">Eliminar</button>
                                     </form>
-
                                 </td>
+
                             </tr>
                         @endforeach
                     </tbody>
@@ -111,21 +115,30 @@
                 </table>
             </div>
 
-            {{-- ========================= --}}
-            {{-- VISTA MÓVIL (CARDS) --}}
-            {{-- ========================= --}}
+            {{-- MOBILE --}}
             <div class="mobile-card">
 
                 @foreach ($methods as $method)
                     <div class="card mb-3 shadow-sm border-0" style="border-radius: 14px;">
                         <div class="card-body">
 
-                            <h6 class="fw-bold mb-1">{{ $method->nombre }}</h6>
-                            <p class="text-muted mb-2">{{ $method->tipo ?? 'Sin tipo' }}</p>
+                            <h6 class="fw-bold mb-1">{{ $method->name_method }}</h6>
+                            <p class="text-muted mb-2">{{ $method->type ?? 'Sin tipo' }}</p>
+
+                            <div class="mt-2">
+                                <strong>Logo:</strong><br>
+                                @if ($method->logo)
+                                    <img src="{{ asset($method->logo) }}" width="100"
+                                        class="rounded shadow-sm mt-1">
+                                @else
+                                    <span class="text-muted">No disponible</span>
+                                @endif
+                            </div>
 
                             <div class="small mb-3">
-                                <div><strong>Número:</strong> {{ $method->numero ?? '-' }}</div>
-                                <div><strong>Cuenta:</strong> {{ $method->cuenta ?? '-' }}</div>
+                                <div><strong>Titular:</strong> {{ $method->holder_name ?? '-' }}</div>
+                                <div><strong>Celular:</strong> {{ $method->cell_phone_number ?? '-' }}</div>
+                                <div><strong>Cuenta:</strong> {{ $method->account_number ?? '-' }}</div>
                                 <div><strong>CCI:</strong> {{ $method->cci ?? '-' }}</div>
 
                                 <div class="mt-2">
@@ -140,7 +153,7 @@
 
                                 <div class="mt-2">
                                     <strong>Estado:</strong>
-                                    @if ($method->activo)
+                                    @if ($method->active)
                                         <span class="badge bg-success">Activo</span>
                                     @else
                                         <span class="badge bg-danger">Desactivado</span>
@@ -148,7 +161,6 @@
                                 </div>
                             </div>
 
-                            {{-- ACCIONES --}}
                             <div class="d-flex gap-2">
                                 <a href="{{ route('admin.config.payment_methods.edit', $method->id) }}"
                                     class="btn btn-primary btn-sm w-100">
@@ -177,17 +189,11 @@
 
 <style>
 @media (max-width: 768px) {
-    .desktop-table {
-        display: none !important;
-    }
-    .mobile-card {
-        display: block !important;
-    }
+    .desktop-table { display: none !important; }
+    .mobile-card { display: block !important; }
 }
 @media (min-width: 769px) {
-    .mobile-card {
-        display: none !important;
-    }
+    .mobile-card { display: none !important; }
 }
 </style>
 

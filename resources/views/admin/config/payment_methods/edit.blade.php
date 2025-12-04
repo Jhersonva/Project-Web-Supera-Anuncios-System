@@ -14,38 +14,63 @@
 
     <div class="card shadow-sm border-0 p-4" style="border-radius: 16px;">
 
-        <form action="{{ route('admin.payment_methods.update', $method->id) }}"
+        <form action="{{ route('admin.config.payment_methods.update', $method->id) }}"
               method="POST" enctype="multipart/form-data">
             @csrf
+            @method('PUT')
 
-            {{-- NOMBRE --}}
+            {{-- NOMBRE DEL MÉTODO --}}
             <div class="mb-3">
                 <label class="form-label">Nombre *</label>
-                <input type="text" name="nombre" class="form-control" value="{{ $method->nombre }}" required>
+                <input type="text" name="name_method" class="form-control"
+                    value="{{ $method->name_method }}" required>
             </div>
 
             {{-- TIPO --}}
             <div class="mb-3">
                 <label class="form-label">Tipo</label>
-                <input type="text" name="tipo" class="form-control" value="{{ $method->tipo }}">
+                <input type="text" name="type" class="form-control"
+                    value="{{ $method->type }}">
             </div>
 
-            {{-- NÚMERO --}}
+            {{-- LOGO --}}
+            <div class="mb-4">
+                <label class="form-label">Logo</label><br>
+
+                @if ($method->logo)
+                    <img src="{{ asset($method->logo) }}" width="120"
+                        class="rounded shadow-sm mb-2">
+                @endif
+
+                <input type="file" name="logo" class="form-control mt-2">
+            </div>
+
+            {{-- TITULAR --}}
             <div class="mb-3">
-                <label class="form-label">Número</label>
-                <input type="text" name="numero" class="form-control" value="{{ $method->numero }}">
+                <label class="form-label">Nombre del Titular</label>
+                <input type="text" name="holder_name" class="form-control"
+                    value="{{ $method->holder_name }}">
+            </div>
+
+            {{-- CELULAR --}}
+            <div class="mb-3">
+                <label class="form-label">Número de Celular</label>
+                <input type="text" name="cell_phone_number" class="form-control"
+                    value="{{ $method->cell_phone_number }}">
             </div>
 
             {{-- CUENTA --}}
             <div class="mb-3">
-                <label class="form-label">Cuenta</label>
-                <input type="text" name="cuenta" class="form-control" value="{{ $method->cuenta }}">
+                <label class="form-label">Número de Cuenta</label>
+                <input type="text" name="account_number" class="form-control"
+                    value="{{ $method->account_number }}">
             </div>
 
             {{-- CCI --}}
             <div class="mb-3">
                 <label class="form-label">CCI</label>
-                <input type="text" name="cci" class="form-control" value="{{ $method->cci }}">
+                <input type="text" name="cci" class="form-control"
+                    value="{{ $method->cci }}">
             </div>
 
             {{-- QR --}}
@@ -53,7 +78,8 @@
                 <label class="form-label">Código QR</label><br>
 
                 @if ($method->qr)
-                    <img src="{{ asset($method->qr) }}" width="120" class="rounded shadow-sm mb-2">
+                    <img src="{{ asset($method->qr) }}" width="120"
+                        class="rounded shadow-sm mb-2">
                 @endif
 
                 <input type="file" name="qr" class="form-control mt-2">
@@ -61,8 +87,8 @@
 
             {{-- ACTIVO --}}
             <div class="form-check mb-4">
-                <input class="form-check-input" type="checkbox" name="activo"
-                        @if($method->activo) checked @endif>
+                <input class="form-check-input" type="checkbox" name="active"
+                    @if($method->active) checked @endif>
                 <label class="form-check-label">Activo</label>
             </div>
 

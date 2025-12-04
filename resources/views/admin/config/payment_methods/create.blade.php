@@ -18,28 +18,40 @@
               enctype="multipart/form-data">
             @csrf
 
-            {{-- NOMBRE --}}
+            {{-- NOMBRE DEL MÉTODO --}}
             <div class="mb-3">
-                <label class="form-label">Nombre *</label>
-                <input type="text" name="nombre" class="form-control" required>
+                <label class="form-label">Nombre del Método *</label>
+                <input type="text" name="name_method" class="form-control" required>
             </div>
 
             {{-- TIPO --}}
             <div class="mb-3">
                 <label class="form-label">Tipo</label>
-                <input type="text" name="tipo" class="form-control" placeholder="Yape / Plin / Banco / etc">
+                <input type="text" name="type" class="form-control" placeholder="Yape / Plin / Banco / etc">
             </div>
 
-            {{-- NÚMERO --}}
+            {{-- LOGO --}}
+            <div class="mb-4">
+                <label class="form-label">Logo</label>
+                <input type="file" name="logo" class="form-control">
+            </div>
+
+            {{-- TITULAR --}}
             <div class="mb-3">
-                <label class="form-label">Número</label>
-                <input type="text" name="numero" class="form-control">
+                <label class="form-label">Nombre del Titular</label>
+                <input type="text" name="holder_name" class="form-control">
+            </div>
+
+            {{-- CELULAR --}}
+            <div class="mb-3">
+                <label class="form-label">Número de Celular</label>
+                <input type="text" name="cell_phone_number" class="form-control">
             </div>
 
             {{-- CUENTA --}}
             <div class="mb-3">
-                <label class="form-label">Cuenta</label>
-                <input type="text" name="cuenta" class="form-control">
+                <label class="form-label">Número de Cuenta</label>
+                <input type="text" name="account_number" class="form-control">
             </div>
 
             {{-- CCI --}}
@@ -56,7 +68,7 @@
 
             {{-- ACTIVO --}}
             <div class="form-check mb-4">
-                <input class="form-check-input" type="checkbox" name="activo" checked>
+                <input class="form-check-input" type="checkbox" name="active" checked>
                 <label class="form-check-label">Activo</label>
             </div>
 
