@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Mis Anuncios')
+@section('title', 'Historial de Anuncios')
 
 @section('content')
 
@@ -8,9 +8,9 @@
 
 <div class="container mt-5 mb-5">
 
-    <h4 class="fw-bold text-center mb-2">Mis Anuncios</h4>
+    <h4 class="fw-bold text-center mb-2">Historial de Anuncios</h4>
     <p class="text-muted text-center mb-4">
-        Gestión completa de tus anuncios publicados, pendientes y expirados.
+        Listado completo de anuncios publicados y expirados.
     </p>
 
     {{-- FILTROS --}}
@@ -18,15 +18,14 @@
 
         <div class="col-md-4">
             <input type="text" name="search" value="{{ request('search') }}"
-                class="form-control" placeholder="Buscar por título, ubicación...">
+                class="form-control" placeholder="Buscar por título o usuario...">
         </div>
 
         <div class="col-md-3">
             <select name="status" class="form-select">
                 <option value="">-- Estado --</option>
                 <option value="publicado" {{ request('status') == 'publicado' ? 'selected' : '' }}>Publicado</option>
-                <option value="pendiente" {{ request('status') == 'pendiente' ? 'selected' : '' }}>Pendiente</option>
-                <option value="expirado"  {{ request('status') == 'expirado'  ? 'selected' : '' }}>Expirado</option>
+                <option value="expirado" {{ request('status') == 'expirado' ? 'selected' : '' }}>Expirado</option>
             </select>
         </div>
 
@@ -42,14 +41,14 @@
 
         {{-- ICONO Y TÍTULO --}}
         <div class="d-flex align-items-center mb-4">
-            <div class="bg-danger text-white p-3 rounded-circle me-3"
+            <div class="bg-primary text-white p-3 rounded-circle me-3"
                 style="width: 60px; height: 60px; display:flex; align-items:center; justify-content:center;">
                 <i class="fa-solid fa-rectangle-ad fa-lg"></i>
             </div>
 
             <div>
-                <h5 class="fw-bold m-0">Listado de Mis Anuncios</h5>
-                <small class="text-muted">Administración completa</small>
+                <h5 class="fw-bold m-0">Listado de Anuncios</h5>
+                <small class="text-muted">Historial completo del sistema</small>
             </div>
         </div>
 
@@ -69,6 +68,7 @@
                         <th>Imagen</th>
                         <th>Título</th>
                         <th>Categoría</th>
+                        <th>Usuario</th>
                         <th>Estado</th>
                         <th>Creado</th>
                         <th>Acciones</th>
@@ -86,20 +86,15 @@
                                 @endif
                             </td>
 
-                            <td class="fw-semibold text-truncate" style="max-width:220px;">
-                                {{ $ad->title }}
-                            </td>
+                            <td class="fw-semibold">{{ $ad->title }}</td>
 
-                            <td>
-                                {{ $ad->category->name }} > {{ $ad->subcategory->name }}
-                            </td>
+                            <td>{{ $ad->category->name }} > {{ $ad->subcategory->name }}</td>
 
-                            {{-- Estado --}}
+                            <td>{{ $ad->user->full_name }}</td>
+
                             <td>
                                 @if($ad->expires_at < now())
                                     <span class="badge bg-danger">Expirado</span>
-                                @elseif($ad->status == 'pendiente')
-                                    <span class="badge bg-warning text-dark">Pendiente</span>
                                 @else
                                     <span class="badge bg-success">Publicado</span>
                                 @endif
@@ -125,7 +120,6 @@
                                         onsubmit="return confirm('¿Eliminar anuncio?');">
                                         @csrf
                                         @method('DELETE')
-                                        <input type="hidden" name="return_to" value="{{ url()->full() }}">
                                         <button class="btn btn-sm btn-outline-danger">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
@@ -140,7 +134,7 @@
         </div>
 
         {{-- ======================= --}}
-        {{--     MÓVIL (CARDS) --}}
+        {{--     MÓVIL (CARDS)      --}}
         {{-- ======================= --}}
         <div class="mobile-card">
             @foreach ($ads as $ad)
@@ -156,64 +150,33 @@
                             @endif
                         </div>
 
-                        <h6 class="fw-bold text-truncate">{{ $ad->title }}</h6>
+                        <h6 class="fw-bold">{{ $ad->title }}</h6>
 
                         <div class="small mb-3">
                             <div><strong>Categoría:</strong> {{ $ad->category->name }} > {{ $ad->subcategory->name }}</div>
+                            <div><strong>Usuario:</strong> {{ $ad->user->full_name }}</div>
                             <div><strong>Fecha:</strong> {{ $ad->created_at->format('d/m/Y') }}</div>
 
                             <div class="mt-2">
                                 <strong>Estado:</strong>
                                 @if($ad->expires_at < now())
                                     <span class="badge bg-danger">Expirado</span>
-                                @elseif($ad->status == 'pendiente')
-                                    <span class="badge bg-warning text-dark">Pendiente</span>
                                 @else
                                     <span class="badge bg-success">Publicado</span>
                                 @endif
                             </div>
                         </div>
 
-                        {{-- Acciones --}}
-                        <div class="d-flex justify-content-between">
-                            
-                            <a href="{{ route('my-ads.show', $ad->id) }}" class="btn btn-sm btn-outline-secondary">
-                                <i class="fa-solid fa-eye"></i>
-                            </a>
-
-                            <a href="{{ route('my-ads.editAd', $ad->id) }}" class="btn btn-sm btn-warning">
-                                <i class="fa-solid fa-pen"></i>
-                            </a>
-
-                            <form action="{{ route('my-ads.deleteAd', $ad->id) }}" method="POST"
-                                onsubmit="return confirm('¿Eliminar anuncio?');">
-                                @csrf
-                                @method('DELETE')
-                                <input type="hidden" name="return_to" value="{{ url()->full() }}">
-                                <button class="btn btn-sm btn-outline-danger">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </form>
-
-                        </div>
-
+                        
                     </div>
                 </div>
             @endforeach
         </div>
 
-        {{-- PAGINACIÓN 
+        {{-- PAGINACIÓN --}}
         <div class="mt-3">
             {{ $ads->links() }}
-        </div>--}}
-
-        <!-- BOTÓN FLOTANTE CREAR ANUNCIO -->
-        <button onclick="location.href='{{ route('my-ads.createAd') }}'"
-            class="btn btn-danger shadow btn-float d-flex align-items-center gap-2 px-3 py-2 rounded-pill">
-            <i class="fa-solid fa-plus"></i>
-            <span>Crear Anuncio</span>
-        </button>
-
+        </div>
 
     </div>
 </div>

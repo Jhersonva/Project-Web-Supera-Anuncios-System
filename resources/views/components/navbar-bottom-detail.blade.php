@@ -7,32 +7,38 @@
         </a>
     </div>
 
-    <!-- ICONOS DE CONTACTO -->
+    <!-- ICONOS DE CONTACTO DEL USUARIO -->
     <div class="d-flex justify-content-around text-center">
 
+        {{-- WhatsApp --}}
         <div>
-            <a href="https://wa.me/{{ $ad->phone ?? '' }}" target="_blank" class="text-success fs-4 d-block">
+            <a href="https://wa.me/{{ $ad->user->whatsapp }}" target="_blank" class="text-success fs-4 d-block">
                 <i class="fab fa-whatsapp"></i>
             </a>
             <small class="text-secondary">WhatsApp</small>
         </div>
 
+        {{-- Llamada --}}
         <div>
-            <a href="tel:{{ $ad->phone ?? '' }}" class="text-primary fs-4 d-block">
+            <a href="tel:{{ $ad->user->call_phone ?? $ad->user->phone }}" class="text-primary fs-4 d-block">
                 <i class="fa-solid fa-phone"></i>
             </a>
             <small class="text-secondary">Llamar</small>
         </div>
 
+        {{-- Email --}}
         <div>
-            <a href="mailto:{{ $ad->email ?? '' }}" class="text-danger fs-4 d-block">
+            <a href="mailto:{{ $ad->user->contact_email ?? $ad->user->email }}" class="text-danger fs-4 d-block">
                 <i class="fa-solid fa-envelope"></i>
             </a>
             <small class="text-secondary">Email</small>
         </div>
 
+        {{-- Dirección --}}
         <div>
-            <a href="#" class="text-dark fs-4 d-block">
+            <a href="https://www.google.com/maps/search/{{ urlencode($ad->user->address) }}"
+               target="_blank"
+               class="text-dark fs-4 d-block">
                 <i class="fa-solid fa-location-dot"></i>
             </a>
             <small class="text-secondary">Dirección</small>

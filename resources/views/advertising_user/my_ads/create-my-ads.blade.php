@@ -16,9 +16,15 @@
 
 <div class="container mt-4 mb-5">
 
+    {{-- VOLVER --}}
+    <a href="{{ route('my-ads.index') }}" class="text-dark">
+        <i class="fa-solid fa-arrow-left fs-5"></i>
+    </a>
+
+
     <h3 class="fw-bold mb-3 text-center">Crear Nuevo Anuncio</h3>
     <p class="text-secondary text-center mb-4">
-        Completa la información para enviar tu solicitud de publicación.
+        Completa la información para la publicación de tu anuncio.
     </p>
 
     <!-- FORMULARIO -->
@@ -131,7 +137,7 @@
 
         <!-- BOTÓN ENVIAR -->
         <button class="btn btn-danger w-100 py-2 fw-semibold mt-3 d-none" id="submitBtn">
-            Enviar Solicitud
+            Publicar Anuncio
         </button>
 
     </form>

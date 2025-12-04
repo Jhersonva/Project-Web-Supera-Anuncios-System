@@ -9,16 +9,10 @@
     </a>
 
     <!-- SOLICITUDES DE ANUNCIOS -->
-    <a href="{{ route('admin.ads-requests.index') }}" 
-       class="text-center {{ request()->routeIs('admin.ads-requests.index') ? 'nav-item-active' : '' }}">
-        <i class="fa-solid fa-table-cells-large"></i><br>Soli. Anuncios
+    <a href="{{ route('admin.ads-history.index') }}" 
+       class="text-center {{ request()->routeIs('admin.ads-history.index') ? 'nav-item-active' : '' }}">
+        <i class="fa-solid fa-table-cells-large"></i><br>Hist. Anuncios
     </a>
-
-    <!-- PUBLICACIONES
-    <a href="" 
-       class="text-center {{ request()->routeIs('admin.publicaciones') ? 'nav-item-active' : '' }}">
-        <i class="fa-solid fa-bullhorn"></i><br>Publicaciones
-    </a>-->
 
     <!-- SOLICITUD DE RECARGAS -->
     <a href="{{ route('admin.reload-request.index') }}"

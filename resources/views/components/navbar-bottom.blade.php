@@ -35,6 +35,11 @@
                     <i class="fa-solid fa-comments fs-4"></i><br>Chat
                 </a>
 
+                <a href="{{ route('profile.index') }}" 
+                    class="text-center {{ request()->routeIs('profile.*') ? 'nav-item-active' : '' }}">
+                    <i class="fa-solid fa-user"></i><br>Perfil
+                </a>
+
             </div>
         @endif
     @endauth

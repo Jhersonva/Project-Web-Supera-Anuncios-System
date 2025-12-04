@@ -7,9 +7,11 @@ use App\Http\Controllers\ChatController;
 
 use App\Http\Controllers\AdvertisingUser\AdvertisementController;
 use App\Http\Controllers\AdvertisingUser\RechargeController;
+use App\Http\Controllers\AdvertisingUser\MyAdRequestController;
+use App\Http\Controllers\AdvertisingUser\UserProfileController;
+
 
 use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\Api\ChatApiController;
 
 
 use App\Http\Controllers\Admin\ReloadRequestController;
@@ -17,7 +19,7 @@ use App\Http\Controllers\Admin\ConfigController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\SubcategoryController;
 use App\Http\Controllers\Admin\FieldController;
-use App\Http\Controllers\Admin\AdsRequestController;
+use App\Http\Controllers\Admin\AdsHistoryController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\CashBoxController;
@@ -37,27 +39,30 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/api/ads', function () {
+
     $adsUrgent = \App\Models\Advertisement::where('published', 1)
-        ->where('status', 'aceptado')
+        ->where('status', 'publicado')   
         ->where('urgent_publication', 1)
+        ->where('expires_at', '>=', now())  
         ->with(['category', 'subcategory', 'images'])
-        ->get()
-        ->shuffle()
+        ->orderBy('created_at', 'desc')
         ->take(10)
+        ->get()
         ->map(function($ad){
-            $ad->full_url = $ad->detail_url; // agrega URL amigable
+            $ad->full_url = $ad->detail_url;
             return $ad;
         });
 
     $adsNormal = \App\Models\Advertisement::where('published', 1)
-        ->where('status', 'aceptado')
+        ->where('status', 'publicado')   
         ->where('urgent_publication', 0)
+        ->where('expires_at', '>=', now())
         ->with(['category', 'subcategory', 'images'])
-        ->get()
-        ->shuffle()
+        ->orderBy('created_at', 'desc')
         ->take(20)
+        ->get()
         ->map(function($ad){
-            $ad->full_url = $ad->detail_url; 
+            $ad->full_url = $ad->detail_url;
             return $ad;
         });
 
@@ -142,33 +147,32 @@ Route::middleware(['auth'])->prefix('advertising')->group(function () {
     | Mis anuncios
     |--------------------------------------------------------------------------
     */
-    Route::get('/my-ads', [AdvertisementController::class, 'index'])
-        ->name('my-ads.index');
-
-     // Crear anuncio
-    Route::get('/my-ads/create', [\App\Http\Controllers\AdvertisingUser\MyAdRequestController::class, 'create'])
-        ->name('my-ads.createAd');
-
-    // Guardar solicitud
-    Route::post('/my-ads/create', [\App\Http\Controllers\AdvertisingUser\MyAdRequestController::class, 'store'])
-        ->name('my-ads.storeAdRequest');
-
-    // Cargar dependencias dinámicas
-    Route::get('/my-ads/subcategories/{id}', [\App\Http\Controllers\AdvertisingUser\MyAdRequestController::class, 'loadSubcategories']);
-    Route::get('/fields/{id}', [\App\Http\Controllers\AdvertisingUser\MyAdRequestController::class, 'loadFields']);
-
+    Route::get('/my-ads', [AdvertisementController::class, 'index'])->name('my-ads.index');
+    Route::get('/my-ads/create', [MyAdRequestController::class, 'create'])->name('my-ads.createAd');
+    Route::post('/my-ads/create', [MyAdRequestController::class, 'store'])->name('my-ads.storeAdRequest');
+    Route::get('/my-ads/subcategories/{id}', [MyAdRequestController::class, 'loadSubcategories']);
+    Route::get('/fields/{id}', [MyAdRequestController::class, 'loadFields']);
+    Route::get('/my-ads/{id}', [MyAdRequestController::class, 'show'])->name('my-ads.show');
+    Route::get('/my-ads/{id}/edit', [MyAdRequestController::class, 'edit'])->name('my-ads.editAd');
+    Route::post('/my-ads/{id}/update', [MyAdRequestController::class, 'update'])->name('my-ads.updateAd');
+    Route::delete('/my-ads/{id}/delete', [MyAdRequestController::class, 'destroy'])->name('my-ads.deleteAd');
+    Route::get('/my-ads/{id}/stats', [MyAdRequestController::class, 'stats'])->name('my-ads.stats');
 
     /*
     |--------------------------------------------------------------------------
     | Recargas de saldo
     |--------------------------------------------------------------------------
     */
-    Route::get('/recharges', [RechargeController::class, 'index'])
-        ->name('recharges.index');
+    Route::get('/recharges', [RechargeController::class, 'index'])->name('recharges.index');
+    Route::post('/recharges', [RechargeController::class, 'store'])->name('recharges.store');
 
-    Route::post('/recharges', [RechargeController::class, 'store'])
-        ->name('recharges.store');
-
+    /*
+    |--------------------------------------------------------------------------
+    | PERFIL DE USUARIO — advertising_user
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/profile', [UserProfileController::class, 'index'])->name('profile.index');
+    Route::post('/profile/update', [UserProfileController::class, 'update'])->name('profile.update');
 
 });
 
@@ -231,24 +235,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         Route::post('/config/cash/{id}/close', [CashBoxController::class, 'close'])->name('admin.config.cash.close');
         Route::get('/config/cash/{id}', [CashBoxController::class, 'show'])->name('admin.config.cash.show');
 
-
-
-    // Solicitudes de anuncios
-    Route::get('/ads-requests', [AdsRequestController::class, 'index'])
-        ->name('admin.ads-requests.index');
-
-    Route::post('/ads-requests/{id}/approve', [AdsRequestController::class, 'approve'])
-        ->name('admin.ads-requests.approve');
-
-    Route::post('/ads-requests/{id}/reject', [AdsRequestController::class, 'reject'])
-        ->name('admin.ads-requests.reject');
-
-    // Metodos de Pago
-    Route::get('/config/payment-methods', [PaymentMethodController::class, 'index'])->name('admin.config.payment_methods.index');
-    Route::get('/config/payment-methods/create', [PaymentMethodController::class, 'create'])->name('admin.config.payment_methods.create');
-    Route::post('/config/payment-methods/store', [PaymentMethodController::class, 'store'])->name('admin.config.payment_methods.store');
-    Route::get('/config/payment-methods/edit/{id}', [PaymentMethodController::class, 'edit'])->name('admin.config.payment_methods.edit');
-    Route::post('/config/payment-methods/update/{id}', [PaymentMethodController::class, 'update'])->name('admin.config.payment_methods.update');
-    Route::delete('/config/payment-methods/delete/{id}', [PaymentMethodController::class, 'destroy'])->name('admin.config.payment_methods.delete');
-
+        // Metodos de Pago
+        Route::get('/config/payment-methods', [PaymentMethodController::class, 'index'])->name('admin.config.payment_methods.index');
+        Route::get('/config/payment-methods/create', [PaymentMethodController::class, 'create'])->name('admin.config.payment_methods.create');
+        Route::post('/config/payment-methods/store', [PaymentMethodController::class, 'store'])->name('admin.config.payment_methods.store');
+        Route::get('/config/payment-methods/edit/{id}', [PaymentMethodController::class, 'edit'])->name('admin.config.payment_methods.edit');
+        Route::post('/config/payment-methods/update/{id}', [PaymentMethodController::class, 'update'])->name('admin.config.payment_methods.update');
+        Route::delete('/config/payment-methods/delete/{id}', [PaymentMethodController::class, 'destroy'])->name('admin.config.payment_methods.delete');
+    
+    //Historial de Anuncios
+    Route::get('/anuncios/historial', [AdsHistoryController::class, 'index'])
+    ->name('admin.ads-history.index');
 });

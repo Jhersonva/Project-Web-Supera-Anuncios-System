@@ -94,33 +94,6 @@
 
     <hr>
 
-    {{-- SIMILARES (por ahora ejemplo) 
-    <h5 class="fw-bold mt-4 mb-3">Anuncios similares</h5>
-
-    <div class="row g-3">
-        <div class="col-6">
-            <div class="card rounded-4 shadow-sm">
-                <img src="{{ asset('img/no-image.png') }}" class="rounded-top-4" style="height:120px; object-fit:cover;">
-                <div class="p-2">
-                    <h6 class="small fw-bold">Ejemplo 1</h6>
-                    <p class="small">S/. 200</p>
-                    <a class="text-primary small">Ver Detalles →</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-6">
-            <div class="card rounded-4 shadow-sm">
-                <img src="{{ asset('img/no-image.png') }}" class="rounded-top-4" style="height:120px; object-fit:cover;">
-                <div class="p-2">
-                    <h6 class="small fw-bold">Ejemplo 2</h6>
-                    <p class="small">S/. 120</p>
-                    <a class="text-primary small">Ver Detalles →</a>
-                </div>
-            </div>
-        </div>
-    </div>--}}
-
 </div>
 
 @endsection

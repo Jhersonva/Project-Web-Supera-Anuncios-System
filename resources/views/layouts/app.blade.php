@@ -29,10 +29,14 @@
     </main>
 
     {{-- SI LA VISTA TIENE UN NAV INFERIOR PERSONALIZADO, MOSTRARLO --}}
-    @if(auth()->check() && in_array(auth()->user()->role->name, ['admin', 'employee']))
+    @if(View::hasSection('custom-bottom-nav'))
+        @yield('custom-bottom-nav')
+
+    {{-- NAV INFERIOR POR ROLES --}}
+    @elseif(auth()->check() && in_array(auth()->user()->role->name, ['admin', 'employee']))
         @include('components.navbar-bottom-admin')
 
-    {{-- NAV NORMAL PARA PUBLICADORES --}}
+    {{-- NAV NORMAL --}}
     @else
         @include('components.navbar-bottom')
     @endif
