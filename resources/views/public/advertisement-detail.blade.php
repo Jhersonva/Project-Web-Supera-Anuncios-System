@@ -24,8 +24,9 @@
 
                 @if($ad->images && count($ad->images) > 0)
                     @foreach($ad->images as $index => $img)
-                        <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
-                            <img src="{{ asset($img->image) }}" class="d-block mx-auto detalle-img">
+                        <div class="carousel-item {{ $index === 0 ? 'active' : '' }}"
+                            style="--bg-image: url('{{ asset($img->image) }}');">
+                            <img src="{{ asset($img->image) }}" alt="Imagen del anuncio">
                         </div>
                     @endforeach
                 @else

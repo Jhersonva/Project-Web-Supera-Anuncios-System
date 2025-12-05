@@ -2,22 +2,51 @@
 
 @section('title', 'Contactar Anunciante')
 
+<link rel="stylesheet" href="{{ asset('css/advertisement-detail.css') }}">
+
 @section('content')
 
-<div class="container mt-5 mb-5">
+<div class="container mt-4 pt-3">
+
+    <a href="{{ url()->previous() }}" class="text-dark">
+        <i class="fa-solid fa-arrow-left fs-5"></i>
+    </a>
 
     <h4 class="fw-bold text-center mb-3">Contactar al Anunciante</h4>
 
-    <div class="ad-card shadow-sm p-4">
+        <div class="detalle-carousel-container">
+            <div id="carouselAdImages" class="carousel slide" data-bs-ride="carousel">
 
-        @if($ad->images->isNotEmpty())
-            <div class="text-center mb-3">
-                <img src="{{ asset($ad->images->first()->image) }}" 
-                     alt="Imagen del anuncio" 
-                     style="width:450px; height:350px; object-fit:contain; border-radius:8px;">
+                <div class="carousel-inner">
+                    @if($ad->images && count($ad->images) > 0)
+                        @foreach($ad->images as $index => $img)
+                            <div class="carousel-item {{ $index === 0 ? 'active' : '' }}"
+                                style="--bg-image: url('{{ asset($img->image) }}');">
+                                <img src="{{ asset($img->image) }}" alt="Imagen del anuncio">
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="carousel-item active">
+                            <img src="{{ asset('img/no-image.png') }}" class="d-block w-90 detalle-img">
+                        </div>
+                    @endif
+                </div>
+
+                @if($ad->images && count($ad->images) > 1)
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselAdImages" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon"></span>
+                    </button>
+
+                    <button class="carousel-control-next" type="button" data-bs-target="#carouselAdImages" data-bs-slide="next">
+                        <span class="carousel-control-next-icon"></span>
+                    </button>
+                @endif
+
             </div>
-        @endif
+        </div>
 
+
+    <div class="ad-card shadow-sm p-4">
         <h5 class="fw-bold">{{ $ad->title }}</h5>
         <p class="text-muted mb-1">
             <strong>Categoría:</strong> {{ $ad->category->name }} <br>

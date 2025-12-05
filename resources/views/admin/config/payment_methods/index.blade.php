@@ -94,20 +94,25 @@
                                 </td>
 
                                 <td>
-                                    <a href="{{ route('admin.config.payment_methods.edit', $method->id) }}"
-                                        class="btn btn-sm btn-primary mb-1">
-                                        Editar
-                                    </a>
+                                    <div class="d-flex gap-2">
 
-                                    <form action="{{ route('admin.config.payment_methods.delete', $method->id) }}"
-                                        method="POST" class="d-inline"
-                                        onsubmit="return confirm('¿Seguro de eliminar este método de pago?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button class="btn btn-sm btn-danger">Eliminar</button>
-                                    </form>
+                                        <a href="{{ route('admin.config.payment_methods.edit', $method->id) }}"
+                                        class="btn btn-sm btn-outline-primary">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </a>
+
+                                        <form action="{{ route('admin.config.payment_methods.delete', $method->id) }}"
+                                            method="POST"
+                                            onsubmit="return confirm('¿Seguro de eliminar este método de pago?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="btn btn-sm btn-outline-danger">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
+
+                                    </div>
                                 </td>
-
                             </tr>
                         @endforeach
                     </tbody>

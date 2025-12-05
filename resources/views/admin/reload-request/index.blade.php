@@ -77,7 +77,10 @@
                 <p><strong>Monto:</strong> S/. {{ number_format($r->monto, 2) }}</p>
                 <p>
                     <strong>Método:</strong>
-                    <span class="badge bg-light text-dark">{{ ucfirst($r->metodo_pago) }}</span>
+                    <span class="badge bg-light text-dark">
+                        {{ $r->paymentMethod->name_method ?? 'Método no encontrado' }}
+                    </span>
+
                 </p>
                 <p>
                     <strong>Comprobante:</strong>
@@ -195,20 +198,18 @@
                 <p><strong>Monto:</strong> S/. {{ number_format($r->monto, 2) }}</p>
                 <p>
                     <strong>Método:</strong>
-                    <span class="badge bg-light text-dark">{{ ucfirst($r->metodo_pago) }}</span>
+                    <span class="badge bg-light text-dark">
+                        {{ $r->paymentMethod->name_method ?? 'Método no encontrado' }}
+                    </span>
                 </p>
                 <p>
                     <strong>Fecha:</strong>
                     {{ $r->created_at->format('d/m/Y H:i') }}
                 </p>
-
             </div>
             @endforeach
-
         @endif
-
     </div>
-
 </div>
 
 <script>

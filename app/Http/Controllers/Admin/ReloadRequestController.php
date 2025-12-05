@@ -16,15 +16,15 @@ class ReloadRequestController extends Controller
     {
         // Recargas pendientes
         $rechargesPendientes = Recharge::where('status', 'pendiente')
-            ->with('user')
-            ->latest()
-            ->get();
+        ->with(['user', 'paymentMethod'])
+        ->latest()
+        ->get();
 
         // Historial (aceptadas o rechazadas)
         $rechargesHistorial = Recharge::whereIn('status', ['aceptado', 'rechazado'])
-            ->with('user')
-            ->latest()
-            ->get();
+        ->with(['user', 'paymentMethod'])
+        ->latest()
+        ->get();
 
         return view('admin.reload-request.index', compact('rechargesPendientes', 'rechargesHistorial'));
     }
@@ -37,15 +37,26 @@ class ReloadRequestController extends Controller
             return back()->with('warning', 'La recarga ya fue procesada.');
         }
 
-        // Validar que ingrese el número de operación
+        // Validar número de operación
         $request->validate([
             'operation_number' => 'required|string|max:50',
         ]);
 
-        // Guardar el número de operación
+        $empleado = Auth::user();
+
+        // VALIDAR QUE HAYA UNA CAJA ABIERTA
+        $caja = CashBox::where('user_id', $empleado->id)
+                        ->where('status', 'open')
+                        ->first();
+
+        if (!$caja) {
+            return back()->with('error', 'No puedes aprobar la recarga porque no tienes una caja abierta.');
+        }
+
+        // Guardar número de operación
         $recarga->operation_number = $request->operation_number;
 
-        // Sumar monto al usuario
+        // Sumar monto al monedero virtual del usuario
         $usuario = $recarga->user;
         $usuario->virtual_wallet += $recarga->monto;
         $usuario->save();
@@ -54,30 +65,18 @@ class ReloadRequestController extends Controller
         $recarga->status = 'aceptado';
         $recarga->save();
 
-        // REGISTRAR MOVIMIENTO EN LA CAJA
-        $empleado = Auth::user();
+        // Actualizar saldo de caja
+        $caja->current_balance += $recarga->monto;
+        $caja->save();
 
-        // Encontrar caja abierta del admin/empleado que aprueba
-        $caja = CashBox::where('user_id', $empleado->id)
-                        ->where('status', 'open')
-                        ->first();
-
-        if ($caja) {
-
-            // Actualizar saldo
-            $caja->current_balance += $recarga->monto;
-            $caja->save();
-
-            // Registrar movimiento de recarga
-            CashMovement::create([
-                'cash_box_id' => $caja->id,
-                'employee_id' => $empleado->id, 
-                'type' => 'income',
-                'amount' => $recarga->monto,
-                'description' => 'Recarga aprobada para el usuario: ' . $usuario->full_name
-            ]);
-        }
-
+        // Registrar movimiento de caja
+        CashMovement::create([
+            'cash_box_id' => $caja->id,
+            'employee_id' => $empleado->id,
+            'type' => 'income',
+            'amount' => $recarga->monto,
+            'description' => 'Recarga aprobada para el usuario: ' . $usuario->full_name
+        ]);
 
         return back()->with('success', 'Recarga aprobada correctamente.');
     }

@@ -21,45 +21,35 @@
 </div>
 
 <div class="container crear-container mt-5 pt-4 mb-5">
+    <form method="POST" action="{{ route('advertisements.store') }}" enctype="multipart/form-data">
+        @csrf
 
-<form method="POST" action="{{ route('advertisements.store') }}" enctype="multipart/form-data">
-@csrf
+        {{--LISTA DE CATEGORÍAS --}}
+        <div class="card p-3 mb-3">
+            <h5 class="fw-bold mb-2">Categoría del Anuncio</h5>
 
-{{-- =========================
-   LISTA DE CATEGORÍAS
-   ========================= --}}
-<div class="card p-3 mb-3">
-    <h5 class="fw-bold mb-2">Categoría del Anuncio</h5>
+            <select name="ad_categories_id" id="categoria" class="form-select" required>
+                <option value="">Seleccione una categoría</option>
+                @foreach($categories as $cat)
+                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                @endforeach
+            </select>
+        </div>
 
-    <select name="ad_categories_id" id="categoria" class="form-select" required>
-        <option value="">Seleccione una categoría</option>
-        @foreach($categories as $cat)
-            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-        @endforeach
-    </select>
+        {{--SUBCATEGORÍAS --}}
+        <div class="card p-3 mb-3 d-none" id="cardSubcategoria">
+            <label class="fw-semibold mb-2">Subcategoría</label>
+            <select name="ad_subcategories_id" id="subcategoria" class="form-select" required></select>
+
+            <div id="camposDinamicos"></div>
+        </div>
+
+        <button class="btn btn-primary w-100 py-2 fw-bold mb-5">
+            Publicar Anuncio
+        </button>
+    </form>
 </div>
 
-{{-- =========================
-   SUBCATEGORÍAS
-   ========================= --}}
-<div class="card p-3 mb-3 d-none" id="cardSubcategoria">
-    <label class="fw-semibold mb-2">Subcategoría</label>
-    <select name="ad_subcategories_id" id="subcategoria" class="form-select" required></select>
-
-    <div id="camposDinamicos"></div>
-</div>
-
-<button class="btn btn-primary w-100 py-2 fw-bold mb-5">
-    Publicar Anuncio
-</button>
-
-</form>
-</div>
-
-
-{{-- =========================
-   JS
-   ========================= --}}
 <script>
 document.getElementById("categoria").addEventListener("change", async function() {
     const categoryId = this.value;

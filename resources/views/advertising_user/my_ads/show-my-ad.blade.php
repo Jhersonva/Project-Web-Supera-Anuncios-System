@@ -14,9 +14,11 @@
     .main-img{
         width: 100%;
         height: 320px;
-        object-fit: cover;
+        object-fit: contain;       /* ⬅ Cambiado */
+        background: #f5f5f5;       /* Fondo neutro para imágenes pequeñas */
         border-radius: 12px;
     }
+
     .thumb-img{
         width: 85px;
         height: 85px;
