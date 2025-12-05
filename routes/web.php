@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\ChatController;
 
@@ -38,7 +39,10 @@ Route::get('/', function () {
     return view('public.home');
 })->name('home');
 
-Route::get('/api/ads', function () {
+Route::get('/api/ads', function (Request $request) {
+
+    $pageUrgent = $request->get('page_urgent', 1);
+    $pageNormal = $request->get('page_normal', 1);
 
     $adsUrgent = \App\Models\Advertisement::where('published', 1)
         ->where('status', 'publicado')   
@@ -46,12 +50,7 @@ Route::get('/api/ads', function () {
         ->where('expires_at', '>=', now())  
         ->with(['category', 'subcategory', 'images'])
         ->orderBy('created_at', 'desc')
-        ->take(10)
-        ->get()
-        ->map(function($ad){
-            $ad->full_url = $ad->detail_url;
-            return $ad;
-        });
+        ->paginate(20, ['*'], 'page_urgent', $pageUrgent); 
 
     $adsNormal = \App\Models\Advertisement::where('published', 1)
         ->where('status', 'publicado')   
@@ -59,18 +58,18 @@ Route::get('/api/ads', function () {
         ->where('expires_at', '>=', now())
         ->with(['category', 'subcategory', 'images'])
         ->orderBy('created_at', 'desc')
-        ->take(20)
-        ->get()
-        ->map(function($ad){
-            $ad->full_url = $ad->detail_url;
-            return $ad;
-        });
+        ->paginate(50, ['*'], 'page_normal', $pageNormal);
+
+    // Agregar URL completo
+    $adsUrgent->getCollection()->transform(function($ad){ $ad->full_url = $ad->detail_url; return $ad; });
+    $adsNormal->getCollection()->transform(function($ad){ $ad->full_url = $ad->detail_url; return $ad; });
 
     return response()->json([
-        'urgent' => $adsUrgent->values(),
-        'normal' => $adsNormal->values()
+        'urgent' => $adsUrgent,
+        'normal' => $adsNormal
     ]);
 });
+
 
 Route::get('/api/subcategories', function () {
     return \App\Models\AdSubcategory::select('id', 'name')->orderBy('name')->get();

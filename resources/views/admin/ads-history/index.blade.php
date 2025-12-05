@@ -174,10 +174,47 @@
         </div>
 
         {{-- PAGINACIÓN --}}
-        <div class="mt-3">
-            {{ $ads->links() }}
-        </div>
+        {{ $ads->links('vendor.pagination.custom') }}
+        <style>
+            .my-pagination {
+                display: flex;
+                justify-content: center;
+            }
 
+            .my-pagination-list {
+                list-style: none;
+                padding: 0;
+                display: flex;
+                gap: 6px;
+            }
+
+            .my-pagination-list li a,
+            .my-pagination-list li span {
+                padding: 8px 12px;
+                border-radius: 6px;
+                background: #f1f1f1;
+                color: #444;
+                text-decoration: none;
+                font-size: 14px;
+                transition: 0.2s;
+            }
+
+            .my-pagination-list li a:hover {
+                background: #007bff;
+                color: white;
+            }
+
+            .my-pagination-list li.active span {
+                background: #007bff;
+                color: #fff;
+                font-weight: bold;
+            }
+
+            .my-pagination-list li.disabled span {
+                opacity: 0.4;
+                cursor: not-allowed;
+            }
+        </style>
     </div>
 </div>
 

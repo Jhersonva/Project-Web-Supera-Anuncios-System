@@ -27,15 +27,15 @@ class AdsHistoryController extends Controller
         // BUSCADOR
         if ($request->search) {
             $query->where('title', 'LIKE', "%{$request->search}%")
-                  ->orWhereHas('user', function ($q) use ($request) {
-                      $q->where('name', 'LIKE', "%{$request->search}%");
-                  })
-                  ->orWhereHas('category', function ($q) use ($request) {
-                      $q->where('name', 'LIKE', "%{$request->search}%");
-                  });
+                ->orWhereHas('user', function ($q) use ($request) {
+                    $q->where('full_name', 'LIKE', "%{$request->search}%"); 
+                })
+                ->orWhereHas('category', function ($q) use ($request) {
+                    $q->where('name', 'LIKE', "%{$request->search}%");
+                });
         }
 
-        $ads = $query->latest()->paginate(15);
+        $ads = $query->latest()->paginate(2);
 
         return view('admin.ads-history.index', compact('ads'));
     }

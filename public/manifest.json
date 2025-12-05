@@ -1,0 +1,20 @@
+{
+"name": "Supera Anuncios",
+"short_name": "SuperaAds",
+"start_url": "/",
+"display": "standalone",
+"background_color": "#ffffff",
+"theme_color": "#3a68d6",
+"icons": [
+{
+"src": "/assets/img/logo/logo-supera-anuncios.jpeg",
+"sizes": "192x192",
+"type": "image/jpeg"
+},
+{
+"src": "/assets/img/logo/logo-supera-anuncios.jpeg",
+"sizes": "512x512",
+"type": "image/jpeg"
+}
+]
+}

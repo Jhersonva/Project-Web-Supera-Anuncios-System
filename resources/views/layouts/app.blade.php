@@ -12,6 +12,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
+
+    <!-- Manifest para PWA -->
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#3a68d6">
 </head>
 
 <body class="bg-light">
@@ -101,6 +105,15 @@
             `
         });
     @endif
+
+    // Registrar el Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(reg => console.log('Service Worker registrado', reg))
+                .catch(err => console.log('Error en registro SW', err));
+        });
+    }
 </script>
 
 

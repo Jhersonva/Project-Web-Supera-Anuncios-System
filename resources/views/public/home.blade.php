@@ -91,6 +91,41 @@
 
 <script>
 
+let deferredPrompt;
+
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+if (isMobile) {
+window.addEventListener('beforeinstallprompt', (e) => {
+e.preventDefault();
+deferredPrompt = e;
+
+
+    Swal.fire({
+        title: 'Instalar aplicación',
+        text: '¿Deseas instalar esta web en tu dispositivo?',
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, instalar',
+        cancelButtonText: 'No, gracias'
+    }).then((result) => {
+        if (result.isConfirmed && deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('App instalada');
+                } else {
+                    console.log('App no instalada');
+                }
+                deferredPrompt = null;
+            });
+        }
+    });
+});
+
+}
+
+
 let allAds = { urgent: [], normal: [] };
 
  function loadSubcategories() {
@@ -179,17 +214,71 @@ function renderAds(data) {
     container.innerHTML = '';
 
     // URGENTES
-    if (data.urgent.length > 0) {
+    if (data.urgent.data.length > 0) {
         container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">🚨 Anuncios Urgentes</h5>`;
-        data.urgent.forEach(ad => container.innerHTML += createAdCard(ad));
+        data.urgent.data.forEach(ad => container.innerHTML += createAdCard(ad));
+
+        container.innerHTML += `<nav class="mt-2 d-flex justify-content-center">
+            ${renderPagination(data.urgent, 'urgent')}
+        </nav>`;
     }
 
     // NORMALES
-    if (data.normal.length > 0) {
+    if (data.normal.data.length > 0) {
         container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">📌 Otros Anuncios</h5>`;
-        data.normal.forEach(ad => container.innerHTML += createAdCard(ad));
+        data.normal.data.forEach(ad => container.innerHTML += createAdCard(ad));
+
+        container.innerHTML += `<nav class="mt-2 d-flex justify-content-center">
+            ${renderPagination(data.normal, 'normal')}
+        </nav>`;
     }
 }
+
+function renderPagination(paginatedData, type) {
+    let html = `<ul class="pagination pagination-sm">`;
+
+    // Página anterior
+    if (paginatedData.prev_page_url) {
+        html += `<li class="page-item">
+            <a class="page-link" href="#" onclick="goToPage('${type}', ${paginatedData.current_page - 1}); return false;">&laquo;</a>
+        </li>`;
+    } else {
+        html += `<li class="page-item disabled"><span class="page-link">&laquo;</span></li>`;
+    }
+
+    // Páginas numeradas
+    for (let i = 1; i <= paginatedData.last_page; i++) {
+        html += `<li class="page-item ${i === paginatedData.current_page ? 'active' : ''}">
+            <a class="page-link" href="#" onclick="goToPage('${type}', ${i}); return false;">${i}</a>
+        </li>`;
+    }
+
+    // Página siguiente
+    if (paginatedData.next_page_url) {
+        html += `<li class="page-item">
+            <a class="page-link" href="#" onclick="goToPage('${type}', ${paginatedData.current_page + 1}); return false;">&raquo;</a>
+        </li>`;
+    } else {
+        html += `<li class="page-item disabled"><span class="page-link">&raquo;</span></li>`;
+    }
+
+    html += `</ul>`;
+    return html;
+}
+
+function goToPage(type, page) {
+    const params = new URLSearchParams();
+    if (type === 'urgent') params.set('page_urgent', page);
+    if (type === 'normal') params.set('page_normal', page);
+
+    fetch('/api/ads?' + params.toString())
+        .then(res => res.json())
+        .then(data => {
+            allAds = data;
+            renderAds(data);
+        });
+}
+
 
 function createAdCard(ad){
     const img = ad.images.length
