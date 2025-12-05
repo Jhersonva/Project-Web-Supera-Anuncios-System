@@ -72,6 +72,10 @@ Route::get('/api/ads', function () {
     ]);
 });
 
+Route::get('/api/subcategories', function () {
+    return \App\Models\AdSubcategory::select('id', 'name')->orderBy('name')->get();
+});
+
 // Contactar al anunciante
 Route::get('/contact/{id}', [PublicController::class, 'contact'])->name('public.contact');
 
@@ -240,7 +244,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         Route::get('/config/payment-methods/create', [PaymentMethodController::class, 'create'])->name('admin.config.payment_methods.create');
         Route::post('/config/payment-methods/store', [PaymentMethodController::class, 'store'])->name('admin.config.payment_methods.store');
         Route::get('/config/payment-methods/edit/{id}', [PaymentMethodController::class, 'edit'])->name('admin.config.payment_methods.edit');
-        Route::post('/config/payment-methods/update/{id}', [PaymentMethodController::class, 'update'])->name('admin.config.payment_methods.update');
+        Route::put('/config/payment-methods/update/{id}', [PaymentMethodController::class, 'update'])->name('admin.config.payment_methods.update');
         Route::delete('/config/payment-methods/delete/{id}', [PaymentMethodController::class, 'destroy'])->name('admin.config.payment_methods.delete');
     
     //Historial de Anuncios

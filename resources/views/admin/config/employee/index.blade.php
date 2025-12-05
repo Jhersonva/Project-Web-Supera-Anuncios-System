@@ -25,10 +25,6 @@
         </a>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success text-center">{{ session('success') }}</div>
-    @endif
-
     @if($employees->count() == 0)
         <div class="alert alert-warning text-center">
             No hay empleados registrados.
@@ -62,8 +58,8 @@
                         <th>DNI</th>
                         <th>Teléfono</th>
                         <th>Localidad</th>
-                        <th>WhatsApp</th>
-                        <th>Llamadas</th>
+                        <!--<th>WhatsApp</th>
+                        <th>Llamadas</th>-->
                         <th>Email Contacto</th>
                         <th>Dirección</th>
                         <th>Estado</th>
@@ -79,8 +75,8 @@
                             <td>{{ $emp->dni }}</td>
                             <td>{{ $emp->phone }}</td>
                             <td>{{ $emp->locality }}</td>
-                            <td>{{ $emp->whatsapp }}</td>
-                            <td>{{ $emp->call_phone }}</td>
+                            <!--<td>{{ $emp->whatsapp }}</td>
+                            <td>{{ $emp->call_phone }}</td>-->
                             <td>{{ $emp->contact_email }}</td>
                             <td>{{ $emp->address }}</td>
 
@@ -141,8 +137,8 @@
                             <div><strong>DNI:</strong> {{ $emp->dni }}</div>
                             <div><strong>Teléfono:</strong> {{ $emp->phone }}</div>
                             <div><strong>Localidad:</strong> {{ $emp->locality }}</div>
-                            <div><strong>WhatsApp:</strong> {{ $emp->whatsapp }}</div>
-                            <div><strong>Llamadas:</strong> {{ $emp->call_phone }}</div>
+                            <!--<div><strong>WhatsApp:</strong> {{ $emp->whatsapp }}</div>
+                            <div><strong>Llamadas:</strong> {{ $emp->call_phone }}</div>-->
                             <div><strong>Email contacto:</strong> {{ $emp->contact_email }}</div>
                             <div><strong>Dirección:</strong> {{ $emp->address }}</div>
                             <div class="mt-2">

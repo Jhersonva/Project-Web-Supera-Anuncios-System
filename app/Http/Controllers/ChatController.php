@@ -69,7 +69,9 @@ class ChatController extends Controller
             'message' => $request->message
         ]);
 
-        return redirect()->route('chat.show', $conversation->id);
+        return redirect()->route('chat.show', $conversation->id)
+            ->with('success', 'Conversación iniciada correctamente.');
+
     }
 
     public function sendMessage(Request $request, $id)
@@ -82,7 +84,8 @@ class ChatController extends Controller
             'message' => $request->message,
         ]);
 
-        return back();
+        return back()->with('success', 'Mensaje enviado.');
+
     }
 
     public function getMessages($id, Request $request)

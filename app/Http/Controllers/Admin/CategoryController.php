@@ -12,16 +12,16 @@ class CategoryController extends Controller
     public function index()
     {
         // Cargar categorías con subcategorías y sus campos
-        $categories = AdCategory::with([
-            'subcategories.fields'
-        ])->get();
+            $categories = AdCategory::with([
+                'subcategories.fields'
+            ])->get();
 
-        $urgentPrice = \App\Models\Setting::get('urgent_publication_price', 5.00);
+            $urgentPrice = \App\Models\Setting::get('urgent_publication_price', 5.00);
 
-        return view('admin.config.categories.index', [
-        'categories' => AdCategory::with('subcategories.fields')->get(),
-        'urgentPrice' => Setting::get('urgent_publication_price', 5.00)
-    ]);
+            return view('admin.config.categories.index', [
+            'categories' => AdCategory::with('subcategories.fields')->get(),
+            'urgentPrice' => Setting::get('urgent_publication_price', 5.00)
+        ]);
     }
 
     public function store(Request $request)

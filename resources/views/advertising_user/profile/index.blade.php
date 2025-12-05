@@ -23,10 +23,6 @@
 
     <h4 class="fw-bold text-center mb-3">Mi Perfil</h4>
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
     <div class="card shadow-sm profile-card">
 
         <!-- Ícono centrado -->

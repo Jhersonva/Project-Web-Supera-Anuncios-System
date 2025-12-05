@@ -239,6 +239,46 @@ function mostrarDatosPago(m) {
     document.getElementById("infoPago").style.display = "block";
 }
 
+document.addEventListener("DOMContentLoaded", function () {
+
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: '¡Recarga enviada!',
+            text: "{{ session('success') }}",
+            showConfirmButton: false,
+            timer: 2500,
+            timerProgressBar: true
+        });
+    @endif
+
+    @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: "{{ session('error') }}",
+            showConfirmButton: true
+        });
+    @endif
+
+
+    @if ($errors->any())
+        Swal.fire({
+            icon: 'error',
+            title: 'Verifica los datos',
+            html: `
+                <ul style="text-align:left;">
+                    @foreach ($errors->all() as $e)
+                        <li>{{ $e }}</li>
+                    @endforeach
+                </ul>
+            `,
+            confirmButtonText: 'Entendido'
+        });
+    @endif
+
+});
+
 </script>
 
 @endsection

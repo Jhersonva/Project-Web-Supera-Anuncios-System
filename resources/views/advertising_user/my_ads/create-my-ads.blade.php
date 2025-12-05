@@ -146,7 +146,7 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-    // -------------------- CARGAR SUBCATEGORÍAS --------------------
+    // CARGAR SUBCATEGORÍAS
     document.getElementById('categorySelect').addEventListener('change', function () {
 
         const categoryId = this.value;
@@ -175,7 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let subcatPrice = 0;
 
-    // -------------------- CARGAR CAMPOS + PRECIO --------------------
+    // CARGAR CAMPOS + PRECIO 
     document.getElementById('subcategorySelect').addEventListener('change', function () {
 
         const subcatId = this.value;
@@ -215,7 +215,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 
-    // -------------------- CALCULAR TOTAL + FECHA --------------------
+    // CALCULAR TOTAL + FECHA 
     document.getElementById("days_active")
         .addEventListener("input", function () {
 
@@ -240,7 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("expiresAt").value = `${yyyy}-${mm}-${dd}`;
         });
 
-        // ---- PRECIO URGENTE ----
+        // PRECIO URGENTE 
         let urgentPrice = {{ $urgentPrice }};
 
         // escucha el cambio del switch de urgente
@@ -265,10 +265,10 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             document.getElementById("totalCost").value = `S/. ${total.toFixed(2)}`;
-            document.getElementById("summaryTotalCost").textContent = `S/. ${total.toFixed(2)}`; // ← nuevo
+            document.getElementById("summaryTotalCost").textContent = `S/. ${total.toFixed(2)}`; 
         }
 
-    // -------------------- MOSTRAR CAMPOS OBLIGATORIOS --------------------
+    // MOSTRAR CAMPOS OBLIGATORIOS 
     function showMainFields() {
         document.getElementById('titleContainer').classList.remove('d-none');
         document.getElementById('descriptionContainer').classList.remove('d-none');
@@ -283,6 +283,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 });
+
 </script>
 
 @endsection

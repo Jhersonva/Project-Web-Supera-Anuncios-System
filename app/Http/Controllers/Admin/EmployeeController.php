@@ -32,6 +32,23 @@ class EmployeeController extends Controller
             'email'     => 'required|email|unique:users,email',
             'dni'       => 'required|digits:8|unique:users,dni',
             'password'  => 'required|min:6',
+        ], [
+            // full_name
+            'full_name.required' => 'El nombre completo es obligatorio.',
+
+            // email
+            'email.required' => 'El correo electrónico es obligatorio.',
+            'email.email'    => 'Debes ingresar un correo electrónico válido.',
+            'email.unique'   => 'Este correo ya se encuentra registrado.',
+
+            // dni
+            'dni.required' => 'El DNI es obligatorio.',
+            'dni.digits'   => 'El DNI debe tener exactamente 8 dígitos.',
+            'dni.unique'   => 'Este DNI ya está registrado en el sistema.',
+
+            // password
+            'password.required' => 'La contraseña es obligatoria.',
+            'password.min'      => 'La contraseña debe contener al menos 6 caracteres.',
         ]);
 
         User::create([
@@ -64,6 +81,16 @@ class EmployeeController extends Controller
             'full_name' => 'required',
             'email'     => 'required|email|unique:users,email,' . $employee->id,
             'dni'       => 'required|digits:8|unique:users,dni,' . $employee->id,
+        ], [
+            'full_name.required' => 'El nombre completo es obligatorio.',
+
+            'email.required' => 'El correo electrónico es obligatorio.',
+            'email.email'    => 'Debes ingresar un correo electrónico válido.',
+            'email.unique'   => 'Otro usuario ya está usando este correo.',
+
+            'dni.required' => 'El DNI es obligatorio.',
+            'dni.digits'   => 'El DNI debe tener exactamente 8 dígitos.',
+            'dni.unique'   => 'Otro usuario ya está usando este DNI.',
         ]);
 
         $employee->update($request->all());

@@ -235,6 +235,68 @@ btnHistorial.addEventListener("click", () => {
     seccionPendientes.style.display = "none";
     seccionHistorial.style.display  = "block";
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    // ÉXITO
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: '¡Operación exitosa!',
+            text: "{{ session('success') }}",
+            showConfirmButton: false,
+            timer: 2200,
+            timerProgressBar: true
+        });
+    @endif
+
+    // ERROR
+    @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: "{{ session('error') }}",
+            confirmButtonText: "Entendido"
+        });
+    @endif
+
+    // WARNING
+    @if(session('warning'))
+        Swal.fire({
+            icon: 'warning',
+            title: 'Atención',
+            text: "{{ session('warning') }}",
+            confirmButtonText: "Ok"
+        });
+    @endif
+
+    // INFO
+    @if(session('info'))
+        Swal.fire({
+            icon: 'info',
+            title: 'Información',
+            text: "{{ session('info') }}",
+            confirmButtonText: "Ok"
+        });
+    @endif
+
+    // VALIDACIONES
+    @if ($errors->any())
+        Swal.fire({
+            icon: 'error',
+            title: 'Corrige los errores',
+            html: `
+                <ul style="text-align:left;">
+                    @foreach ($errors->all() as $e)
+                        <li>{{ $e }}</li>
+                    @endforeach
+                </ul>
+            `,
+            confirmButtonText: "Cerrar"
+        });
+    @endif
+
+});
 </script>
 
 @endsection

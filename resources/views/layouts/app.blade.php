@@ -46,7 +46,42 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+
+    <script>
+    @if (session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: "{{ session('success') }}",
+            confirmButtonColor: '#3085d6'
+        });
+    @endif
+
+    @if (session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: "{{ session('error') }}",
+            confirmButtonColor: '#d33'
+        });
+    @endif
+
+    @if ($errors->any())
+        Swal.fire({
+            icon: 'error',
+            title: 'Corrige los errores',
+            html: `
+                <ul style="text-align:left;">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            `
+        });
+    @endif
+</script>
 
 
     @stack('scripts')

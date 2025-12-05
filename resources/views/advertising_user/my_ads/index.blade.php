@@ -121,15 +121,19 @@
                                         <i class="fa-solid fa-pen"></i>
                                     </a>
 
-                                    <form action="{{ route('my-ads.deleteAd', $ad->id) }}" method="POST"
-                                        onsubmit="return confirm('¿Eliminar anuncio?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <input type="hidden" name="return_to" value="{{ url()->full() }}">
-                                        <button class="btn btn-sm btn-outline-danger">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger"
+                                            onclick="confirmDelete({{ $ad->id }})">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+
+                                    <form id="deleteForm-{{ $ad->id }}" 
+                                    action="{{ route('my-ads.deleteAd', $ad->id) }}" 
+                                    method="POST" style="display:none;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <input type="hidden" name="return_to" value="{{ url()->full() }}">
+                                </form>
 
                                 </div>
                             </td>
@@ -217,6 +221,62 @@
 
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+function confirmDelete(id) {
+    Swal.fire({
+        title: "¿Eliminar anuncio?",
+        text: "Esta acción no se puede deshacer.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "Cancelar"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById(`deleteForm-${id}`).submit();
+        }
+    });
+}
+
+// ALERTA DE ÉXITO
+@if (session('success'))
+Swal.fire({
+    icon: 'success',
+    title: 'Éxito',
+    text: "{{ session('success') }}",
+    confirmButtonColor: '#3085d6'
+});
+@endif
+
+// ALERTA DE ERROR
+@if (session('error'))
+Swal.fire({
+    icon: 'error',
+    title: 'Error',
+    text: "{{ session('error') }}",
+    confirmButtonColor: '#d33'
+});
+@endif
+
+// ERRORES DE VALIDACIÓN
+@if ($errors->any())
+Swal.fire({
+    icon: 'error',
+    title: 'Corrige los errores',
+    html: `
+        <ul style="text-align:left;">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    `,
+});
+@endif
+</script>
 
 <style>
 @media (max-width: 768px) {

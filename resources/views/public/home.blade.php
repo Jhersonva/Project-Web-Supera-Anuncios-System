@@ -18,10 +18,25 @@
         Lo que buscas, Aquí lo encuentras
     </h5>
 
-    {{-- BUSCADOR --}}
-    <div class="input-group mb-4">
-        <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass"></i></span>
-        <input id="inputSearch" type="text" class="form-control" placeholder="Buscar anuncios...">
+    {{-- BUSCADOR + SELECTOR DE SUBCATEGORÍAS EN UNA MISMA FILA --}}
+    <div class="row g-2 mb-4 align-items-center">
+
+        <div class="col-12 col-md-8">
+            <div class="input-group">
+                <span class="input-group-text bg-white">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </span>
+                <input id="inputSearch" type="text" class="form-control"
+                    placeholder="Buscar anuncios...">
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <select id="filterSubcategory" class="form-select">
+                <option value="all">Todas las subcategorías</option>
+            </select>
+        </div>
+
     </div>
 
     {{-- CARDS DE ANUNCIOS --}}
@@ -76,55 +91,103 @@
 
 <script>
 
-let allAds = [];
+let allAds = { urgent: [], normal: [] };
+
+ function loadSubcategories() {
+    fetch('/api/subcategories')
+        .then(res => res.json())
+        .then(data => {
+            const select = document.getElementById("filterSubcategory");
+
+            data.forEach(sub => {
+                let opt = document.createElement("option");
+                opt.value = sub.id;
+                opt.textContent = sub.name;
+                select.appendChild(opt);
+            });
+        });
+    }
+
 
 document.addEventListener("DOMContentLoaded", function () {
     loadAds();
+    loadSubcategories();
 
-    document.getElementById("inputSearch").addEventListener("keyup", function () {
-        const text = this.value.toLowerCase();
-        const filtered = allAds.filter(ad => 
+    const input = document.getElementById("inputSearch");
+
+    input.addEventListener("keyup", function () {
+        const text = this.value.toLowerCase().trim();
+
+        // Si el buscador queda vacío → mostrar todo
+        if (text === "") {
+            renderAds(allAds);
+            return;
+        }
+
+        const filteredUrgent = allAds.urgent.filter(ad =>
             ad.title.toLowerCase().includes(text) ||
-            (ad.subcategory?.name ?? "").toLowerCase().includes(text)
+            (ad.subcategory?.name ?? "").toLowerCase().includes(text) ||
+            (ad.category?.name ?? "").toLowerCase().includes(text)
         );
-        renderAds(filtered);
-    });
-});
 
-document.addEventListener("DOMContentLoaded", function () {
-    loadAds();
+        const filteredNormal = allAds.normal.filter(ad =>
+            ad.title.toLowerCase().includes(text) ||
+            (ad.subcategory?.name ?? "").toLowerCase().includes(text) ||
+            (ad.category?.name ?? "").toLowerCase().includes(text)
+        );
+
+        renderAds({
+            urgent: filteredUrgent,
+            normal: filteredNormal
+        });
+    });
+
+    document.getElementById("filterSubcategory").addEventListener("change", function () {
+        const selected = this.value;
+
+        // Si elige "Todas"
+        if (selected === "all") {
+            renderAds(allAds);
+            return;
+        }
+
+        const filteredUrgent = allAds.urgent.filter(ad =>
+            ad.subcategory?.id == selected
+        );
+        const filteredNormal = allAds.normal.filter(ad =>
+            ad.subcategory?.id == selected
+        );
+
+        renderAds({
+            urgent: filteredUrgent,
+            normal: filteredNormal
+        });
+    });
 });
 
 function loadAds() {
     fetch('/api/ads')
         .then(res => res.json())
-        .then(data => renderAds(data));
+        .then(data => {
+            allAds = data;  
+            renderAds(data);
+        });
 }
 
 function renderAds(data) {
     const container = document.getElementById('listaAnuncios');
     container.innerHTML = '';
 
-    // --- URGENTES ---
-    if(data.urgent.length > 0){
+    // URGENTES
+    if (data.urgent.length > 0) {
         container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">🚨 Anuncios Urgentes</h5>`;
-        data.urgent.forEach(ad => {
-            container.innerHTML += createAdCard(ad);
-        });
-
-        if(data.urgent.length === 10){
-            container.innerHTML += `<button class="btn btn-sm btn-outline-danger mb-3" onclick="showMoreUrgent()">
-                Mostrar más urgentes
-            </button>`;
-        }
+        data.urgent.forEach(ad => container.innerHTML += createAdCard(ad));
     }
 
-    // --- NO URGENTES ---
-    if(data.normal.length > 0){
+    // NORMALES
+    if (data.normal.length > 0) {
         container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">📌 Otros Anuncios</h5>`;
-        data.normal.forEach(ad => {
-            container.innerHTML += createAdCard(ad);
-        });
+        data.normal.forEach(ad => container.innerHTML += createAdCard(ad));
     }
 }
 
@@ -133,7 +196,6 @@ function createAdCard(ad){
         ? '/' + ad.images[0].image
         : '/images/no-image.png';
 
-    const location = ad.location ?? "Ubicación no especificada";
     const subcategory = ad.subcategory?.name ?? "Sin subcategoría";
 
     return `
@@ -181,44 +243,40 @@ function createAdCard(ad){
     </div>`;
 }
 
+// Función principal para abrir el modal y mostrar datos del anuncio
 function shareAd(ad) {
-    const url = ad.full_url;
-    
-    // Mostrar modal
     const modal = new bootstrap.Modal(document.getElementById('modalCompartir'));
+
+    const link = ad.full_url;
+    document.getElementById("linkCompartir").value = link;
+
+    // Generar enlaces dinámicos de compartir
+    document.getElementById("shareWhatsapp").href   = `https://wa.me/?text=${encodeURIComponent(link)}`;
+    document.getElementById("shareMessenger").href  = `https://www.facebook.com/dialog/send?link=${encodeURIComponent(link)}&app_id=YOUR_APP_ID`;
+    document.getElementById("shareFacebook").href   = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`;
+    document.getElementById("shareTelegram").href   = `https://t.me/share/url?url=${encodeURIComponent(link)}`;
+    document.getElementById("shareTwitter").href    = `https://twitter.com/intent/tweet?url=${encodeURIComponent(link)}`;
+
     modal.show();
-
-    // Poner link en el input
-    document.getElementById('linkCompartir').value = url;
-
-    // Actualizar links de redes
-    const title = ad.title;
-    document.getElementById('shareWhatsapp').href = `https://api.whatsapp.com/send?text=${encodeURIComponent(title + " " + url)}`;
-    document.getElementById('shareMessenger').href = `fb-messenger://share/?link=${encodeURIComponent(url)}`;
-    document.getElementById('shareFacebook').href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-    document.getElementById('shareTelegram').href = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
-    document.getElementById('shareTwitter').href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`;
 }
 
 
-// Función copiar al portapapeles
-function showMoreUrgent() {
-    fetch('/api/ads?urgent_more=1') 
-        .then(res => res.json())
-        .then(data => {
-            const container = document.getElementById('listaAnuncios');
-            data.urgent.forEach(ad => {
-                container.innerHTML += createAdCard(ad);
+// Copiar el link al portapapeles
+function copiarLink() {
+    const input = document.getElementById("linkCompartir");
+    input.select();
+    input.setSelectionRange(0, 99999);
+
+    navigator.clipboard.writeText(input.value)
+        .then(() => {
+            Swal.fire({
+                icon: "success",
+                title: "Enlace copiado",
+                text: "Ahora puedes compartirlo donde quieras",
+                timer: 1500,
+                showConfirmButton: false
             });
         });
-}
-
-function copiarLink() {
-    const input = document.getElementById('linkCompartir');
-    input.select();
-    input.setSelectionRange(0, 99999); 
-    document.execCommand('copy');
-    alert('Enlace copiado al portapapeles');
 }
 
 </script>

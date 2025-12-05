@@ -103,7 +103,7 @@
 
                                         <form action="{{ route('admin.config.payment_methods.delete', $method->id) }}"
                                             method="POST"
-                                            onsubmit="return confirm('¿Seguro de eliminar este método de pago?');">
+                                            data-swal-delete>
                                             @csrf
                                             @method('DELETE')
                                             <button class="btn btn-sm btn-outline-danger">
@@ -173,24 +173,51 @@
                                 </a>
 
                                 <form action="{{ route('admin.config.payment_methods.delete', $method->id) }}"
-                                    method="POST" class="w-100"
-                                    onsubmit="return confirm('¿Eliminar este método?');">
+                                    method="POST"
+                                    data-swal-delete>
                                     @csrf
                                     @method('DELETE')
-                                    <button class="btn btn-danger btn-sm w-100">Eliminar</button>
+                                    <button class="btn btn-sm btn-outline-danger">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
                                 </form>
                             </div>
 
                         </div>
                     </div>
                 @endforeach
-
             </div>
-
         @endif
-
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Selecciona todos los formularios con data-swal-delete
+    const deleteForms = document.querySelectorAll('form[data-swal-delete]');
+
+    deleteForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault(); 
+
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "¡No podrás revertir esto!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit(); 
+                }
+            });
+        });
+    });
+});
+</script>
 
 <style>
 @media (max-width: 768px) {

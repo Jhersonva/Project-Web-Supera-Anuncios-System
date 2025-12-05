@@ -28,6 +28,16 @@ class RechargeController extends Controller
             'monto'             => 'required|numeric|min:1',
             'payment_method_id' => 'required|exists:payment_methods,id',
             'img_cap_pago'      => 'nullable|image|max:4096',
+        ], [
+            'monto.required' => 'El monto es obligatorio.',
+            'monto.numeric'  => 'El monto debe ser un número válido.',
+            'monto.min'      => 'El monto mínimo es S/. 1.',
+
+            'payment_method_id.required' => 'Debes seleccionar un método de pago.',
+            'payment_method_id.exists'   => 'El método de pago seleccionado no es válido.',
+
+            'img_cap_pago.image' => 'El archivo debe ser una imagen.',
+            'img_cap_pago.max'   => 'La imagen no puede superar los 4MB.',
         ]);
 
         $rutaImagen = null;
@@ -50,7 +60,7 @@ class RechargeController extends Controller
             'payment_method_id' => $request->payment_method_id,
             'img_cap_pago'      => $rutaImagen,
             'status'            => 'pendiente',
-        ]);
+        ]); 
 
         return redirect()->back()
             ->with('success', 'Tu solicitud de recarga fue enviada correctamente.');
