@@ -50,6 +50,26 @@
 
 
     <script>
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const badge = document.getElementById('badge-recargas');
+        async function actualizarRecargas() {
+            try {
+                const response = await axios.get('{{ route('admin.reload-request.pending-count') }}');
+                const count = response.data.count;
+
+                badge.textContent = count;
+                badge.style.display = count > 0 ? 'inline-block' : 'none';
+            } catch (error) {
+                console.error('Error al obtener recargas pendientes:', error);
+            }
+        }
+        // Inicial
+        actualizarRecargas();
+        // Actualizar cada 15 segundos
+        setInterval(actualizarRecargas, 15000);
+    });
+
     @if (session('success'))
         Swal.fire({
             icon: 'success',

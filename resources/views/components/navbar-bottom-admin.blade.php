@@ -16,15 +16,14 @@
 
     <!-- SOLICITUD DE RECARGAS -->
     <a href="{{ route('admin.reload-request.index') }}"
-        class="text-center {{ request()->routeIs('admin.reload-request.index') ? 'nav-item-active' : '' }}">
+    class="text-center position-relative {{ request()->routeIs('admin.reload-request.index') ? 'nav-item-active' : '' }}">
         <i class="fa-solid fa-dollar-sign"></i><br>Soli. Recarga
+        <span id="badge-recargas" 
+            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            0
+        </span>
     </a>
 
-    <!-- USUARIOS 
-    <a href=""
-       class="text-center {{ request()->routeIs('admin.usuarios') ? 'nav-item-active' : '' }}">
-        <i class="fa-solid fa-users"></i><br>Usuarios
-    </a>-->
 
     <!-- CONFIG -->
     <a href="{{ route('admin.config') }}"

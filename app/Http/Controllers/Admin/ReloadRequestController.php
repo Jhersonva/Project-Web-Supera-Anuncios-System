@@ -29,6 +29,12 @@ class ReloadRequestController extends Controller
         return view('admin.reload-request.index', compact('rechargesPendientes', 'rechargesHistorial'));
     }
 
+    public function pendingCount()
+    {
+        $count = Recharge::where('status', 'pendiente')->count();
+        return response()->json(['count' => $count]);
+    }
+
     public function approve(Request $request, $id)
     {
         $recarga = Recharge::findOrFail($id);

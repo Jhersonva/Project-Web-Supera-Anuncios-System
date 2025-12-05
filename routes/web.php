@@ -189,14 +189,10 @@ Route::middleware(['auth'])->prefix('advertising')->group(function () {
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
     // Solicitud de Recargas de saldo
-    Route::get('/reload-request', [ReloadRequestController::class, 'index'])
-        ->name('admin.reload-request.index');
-
-    Route::post('/reload-request/{id}/approve', [ReloadRequestController::class, 'approve'])
-        ->name('admin.reload-request.approve');
-
-    Route::post('/reload-request/{id}/reject', [ReloadRequestController::class, 'reject'])
-        ->name('admin.reload-request.reject');
+    Route::get('/reload-request', [ReloadRequestController::class, 'index'])->name('admin.reload-request.index');
+    Route::post('/reload-request/{id}/approve', [ReloadRequestController::class, 'approve'])->name('admin.reload-request.approve');
+    Route::post('/reload-request/{id}/reject', [ReloadRequestController::class, 'reject'])->name('admin.reload-request.reject');
+    Route::get('/reload-request/pending-count', [ReloadRequestController::class, 'pendingCount'])->name('admin.reload-request.pending-count');
 
     // Configuración
     Route::get('/config', [ConfigController::class, 'index'])->name('admin.config');
