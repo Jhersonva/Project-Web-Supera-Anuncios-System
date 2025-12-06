@@ -12,7 +12,7 @@
 </head>
 <body>
 
-<a href="{{ url('/login') }}" class="back-floating">
+<a href="{{ route('login') }}" class="back-floating">
   <i class="fa-solid fa-arrow-left"></i>
 </a>
 
@@ -82,7 +82,7 @@
 
       <p class="mt-3 text-center">
         ¿Ya tienes una cuenta?
-        <a href="{{ url('/login') }}" class="fw-semibold">Inicia sesión</a>
+        <a href="{{ route('login') }}" class="fw-semibold">Inicia sesión</a>
       </p>
 
     </form>
