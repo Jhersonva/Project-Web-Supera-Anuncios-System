@@ -154,33 +154,43 @@
             <div class="mt-4">
                 <h6 class="fw-bold mb-2">Enviar mensaje al anunciante</h6>
 
+                <div id="waBox" class="mt-3" style="display:none;">
+                    <label class="fw-bold">Mensaje a enviar:</label>
+                    <textarea id="waMsg" class="form-control" rows="4"></textarea>
+
+                    <button onclick="sendWA()" class="btn btn-success mt-2 w-100">
+                        <i class="fa-brands fa-whatsapp"></i> Enviar por WhatsApp
+                    </button>
+                </div>
+
                 @if($esPendiente)
-                    <a href="{{ route('admin.ads.notify', [$ad->id, 'pendiente']) }}"
-                    target="_blank" class="btn btn-warning text-dark wa-btn w-100">
-                        <i class="fa-brands fa-whatsapp"></i> Notificar estado: Pendiente
-                    </a>
+                <button class="btn btn-warning wa-btn w-100"
+                        onclick="loadMessage('{{ route('admin.ads.notify', [$ad->id, 'pendiente']) }}')">
+                    <i class="fa-brands fa-whatsapp"></i> Notificar: Pendiente
+                </button>
                 @endif
 
                 @if($esAprobado)
-                    <a href="{{ route('admin.ads.notify', [$ad->id, 'publicado']) }}"
-                    target="_blank" class="btn btn-success text-white wa-btn w-100 mt-2">
-                        <i class="fa-brands fa-whatsapp"></i> Notificar: Publicado
-                    </a>
+                <button class="btn btn-success text-white wa-btn w-100 mt-2"
+                        onclick="loadMessage('{{ route('admin.ads.notify', [$ad->id, 'publicado']) }}')">
+                    <i class="fa-brands fa-whatsapp"></i> Notificar: Publicado
+                </button>
                 @endif
 
                 @if($esRechazado)
-                    <a href="{{ route('admin.ads.notify', [$ad->id, 'rechazado']) }}"
-                    target="_blank" class="btn btn-danger text-white wa-btn w-100 mt-2">
-                        <i class="fa-brands fa-whatsapp"></i> Notificar: Rechazado
-                    </a>
+                <button class="btn btn-danger text-white wa-btn w-100 mt-2"
+                        onclick="loadMessage('{{ route('admin.ads.notify', [$ad->id, 'rechazado']) }}')">
+                    <i class="fa-brands fa-whatsapp"></i> Notificar: Rechazado
+                </button>
                 @endif
 
                 @if($esExpirado)
-                    <a href="{{ route('admin.ads.notify', [$ad->id, 'expirado']) }}"
-                    target="_blank" class="btn btn-secondary text-white wa-btn w-100 mt-2">
-                        <i class="fa-brands fa-whatsapp"></i> Notificar: Expirado
-                    </a>
+                <button class="btn btn-secondary text-white wa-btn w-100 mt-2"
+                        onclick="loadMessage('{{ route('admin.ads.notify', [$ad->id, 'expirado']) }}')">
+                    <i class="fa-brands fa-whatsapp"></i> Notificar: Expirado
+                </button>
                 @endif
+
             </div>
 
             {{-- BOTONES DE CAMBIO DE ESTADO --}}
@@ -237,9 +247,12 @@
 
             {{-- PRECIO --}}
             <div class="price-box mb-4">
+                @if($ad->amount_visible == 1)
                 S/. {{ number_format($ad->amount, 2) }}
+                @else
+                  S/. No especificado
+                @endif
             </div>
-
             {{-- DESCRIPCIÓN --}}
             <h5 class="fw-bold">Descripción</h5>
             <p class="text-secondary">{{ $ad->description }}</p>
@@ -294,5 +307,26 @@
         </div>
     </div>
 </div>
+
+<script>
+let waPhone = "";
+
+function loadMessage(url) {
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            waPhone = data.phone;
+            document.getElementById("waMsg").value = data.text;
+            document.getElementById("waBox").style.display = "block";
+        });
+}
+
+function sendWA() {
+    let msg = document.getElementById("waMsg").value;
+    let link = "https://wa.me/51" + waPhone + "?text=" + encodeURIComponent(msg);
+    window.open(link, "_blank");
+}
+</script>
+
 
 @endsection

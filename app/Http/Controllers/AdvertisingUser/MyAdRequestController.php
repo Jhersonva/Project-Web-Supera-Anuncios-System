@@ -80,7 +80,8 @@ class MyAdRequestController extends Controller
             'subcategory_id' => 'required|exists:ad_subcategories,id',
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'amount' => 'required|numeric',
+            'amount_visible' => 'required|in:0,1',
+            'amount' => 'required_if:amount_visible,1|nullable|numeric|min:0',
             'days_active' => 'required|integer|min:1',
         ]);
 
@@ -110,6 +111,9 @@ class MyAdRequestController extends Controller
         $user->virtual_wallet -= $finalPrice;
         $user->save();
 
+        $amount = $request->amount_visible == 1 ? $request->amount : 0;
+
+
         // Crear ANUNCIO *PUBLICADO AUTOMÁTICAMENTE*
         $ad = Advertisement::create([
             'ad_categories_id' => $request->category_id,
@@ -118,15 +122,12 @@ class MyAdRequestController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'contact_location' => $request->contact_location,
-            'amount' => $request->amount,
+            'amount' => $amount,
+            'amount_visible' => $request->amount_visible,
             'days_active' => $days,
             'expires_at' => $expiresAt,
-
-            // se publica automáticamente
-            // Ahora queda como pendiente
             'published' => 0,
             'status' => 'pendiente',
-
             'urgent_publication' => $request->has('urgent_publication'),
             'urgent_price' => $urgentPrice,
         ]);
@@ -192,9 +193,12 @@ class MyAdRequestController extends Controller
             'subcategory_id' => 'required|exists:ad_subcategories,id',
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'amount' => 'required|numeric',
+            'amount_visible' => 'required|in:0,1',
+            'amount' => 'required_if:amount_visible,1|nullable|numeric|min:0',
             'contact_location' => 'nullable|string',
         ]);
+
+        $amount = $request->amount_visible == 1 ? $request->amount : 0;
 
         $ad->update([
             'ad_categories_id' => $request->category_id,
@@ -202,7 +206,8 @@ class MyAdRequestController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'contact_location' => $request->contact_location,
-            'amount' => $request->amount,
+            'amount_visible' => $request->amount_visible,
+            'amount' => $amount,
             'urgent_publication' => $request->has('urgent_publication'),
         ]);
 

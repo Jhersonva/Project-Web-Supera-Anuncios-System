@@ -68,9 +68,25 @@
             <input type="text" name="contact_location" class="form-control" placeholder="Ej: Lima, Perú">
         </div>
 
+        <!-- REEMPLAZAR: div id="amountContainer" -->
         <div class="field-card d-none" id="amountContainer">
-            <label class="fw-semibold">Monto / Precio / Sueldo *</label>
-            <input type="number" step="0.01" min="0" name="amount" class="form-control" required>
+            <div class="d-flex justify-content-between align-items-start gap-3">
+                <div style="flex:1">
+                    <label class="fw-semibold">Monto / Precio / Sueldo *</label>
+                    <input type="number" step="0.01" min="0" name="amount" id="amountInput" class="form-control" required>
+                    <small id="amountHelp" class="text-muted">Si marcas "Ocultar monto", el público verá "No especificado".</small>
+                </div>
+
+                <div style="min-width:170px; display:flex; align-items:center; justify-content:center;">
+                    <div class="form-check form-switch" style="transform:scale(0.98);">
+                        <input class="form-check-input" type="checkbox" id="amountVisibleCheckbox" checked>
+                        <label class="form-check-label" for="amountVisibleCheckbox">Mostrar monto</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- hidden field para enviar al backend si quiere controlarlo -->
+            <input type="hidden" name="amount_visible" id="amountVisibleInput" value="1">
         </div>
 
         <div class="field-card d-none" id="costContainer">
@@ -215,6 +231,63 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     });
 
+    //Mostrar Monto o No
+    // Elementos
+    const amountContainer = document.getElementById('amountContainer');
+    const amountInput = document.getElementById('amountInput');
+    const amountVisibleCheckbox = document.getElementById('amountVisibleCheckbox');
+    const amountVisibleInput = document.getElementById('amountVisibleInput');
+
+    // Asegurarnos que existen (evita errores si no se cargó el campo aún)
+    if (amountContainer && amountInput && amountVisibleCheckbox && amountVisibleInput) {
+
+        // Función para aplicar estado (llamada al cambiar o al mostrar campos)
+        function applyAmountVisibility(visible) {
+            if (visible) {
+                amountInput.removeAttribute('disabled');
+                amountInput.required = true;
+                amountInput.placeholder = '';
+                amountVisibleInput.value = "1";
+                // si antes habías guardado un valor temporal en data, restáuralo
+                if (amountInput.dataset.tmpVal) {
+                    amountInput.value = amountInput.dataset.tmpVal;
+                    delete amountInput.dataset.tmpVal;
+                }
+            } else {
+                // guardamos temporalmente el valor para no perderlo
+                amountInput.dataset.tmpVal = amountInput.value;
+                amountInput.value = '';
+                amountInput.setAttribute('disabled', 'disabled');
+                amountInput.required = false;
+                amountInput.placeholder = 'No especificado';
+                amountVisibleInput.value = "0";
+            }
+        }
+
+        // Inicializar según estado actual del checkbox
+        applyAmountVisibility(amountVisibleCheckbox.checked);
+
+        // Escuchar cambios del checkbox
+        amountVisibleCheckbox.addEventListener('change', function () {
+            applyAmountVisibility(this.checked);
+        });
+
+        // Si tu función showMainFields() muestra el amountContainer, asegúrate de
+        // reaplicar el estado (por si el usuario lo configuró antes):
+        // Llamar applyAmountVisibility cuando se quite la clase d-none:
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(mutation => {
+                if (mutation.attributeName === 'class') {
+                    const hasDnone = amountContainer.classList.contains('d-none');
+                    if (!hasDnone) {
+                        // reaplicar por seguridad
+                        applyAmountVisibility(amountVisibleCheckbox.checked);
+                    }
+                }
+            });
+        });
+        observer.observe(amountContainer, { attributes: true });
+    }
 
     // CALCULAR TOTAL + FECHA 
     document.getElementById("days_active")

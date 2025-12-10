@@ -308,28 +308,84 @@ function createAdCard(ad){
 
                 <div class="ad-price-box">
                     <p class="fw-bold text-success">
-                        S/ ${ ad.amount }
+                        ${ ad.amount_visible == 1 ? `S/ ${ad.amount}` : "S/. No especificado" }
                     </p>
                 </div>
 
-                <div class="ad-buttons">
+                <div class="ad-buttons"> 
+
+                    <!-- Ver -->
                     <button class="btn btn-sm btn-primary" onclick="window.location.href='${ad.full_url}'">
                         <i class="fa-solid fa-eye"></i> Ver
                     </button>
 
-                    <button class="btn btn-sm btn-success" onclick="window.location.href='/contact/${ad.id}'">
-                        <i class="fa-solid fa-phone"></i> Contactar
+                    <!-- WhatsApp -->
+                    <button class="btn btn-sm btn-success"
+                        onclick="abrirWhatsapp('${ad.whatsapp}', '${ad.title}')">
+                        <i class="fa-brands fa-whatsapp"></i> WhatsApp
                     </button>
 
-                    <button class="btn btn-sm btn-secondary" onclick='shareAd(${JSON.stringify(ad).replace(/"/g,"&quot;")})'>
+                    <!-- Llamar -->
+                    <button class="btn btn-sm btn-info"
+                        onclick="realizarLlamada('${ad.call_phone}')">
+                        <i class="fa-solid fa-phone"></i> Llamar
+                    </button>
+
+                    <!-- Compartir -->
+                    <button class="btn btn-sm btn-secondary"
+                        onclick='shareAd(${JSON.stringify(ad).replace(/"/g,"&quot;")})'>
                         <i class="fa-solid fa-share"></i> Compartir
                     </button>
+
                 </div>
+                
+                <p class="ad-time">
+                    <i class="fa-regular fa-clock"></i> ${ad.time_ago}
+                </p>
 
             </div>
 
         </div>
     </div>`;
+}
+
+// Detecta si es dispositivo móvil
+function isMobileDevice() {
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+// WhatsApp (Web en PC / App en móvil)
+function abrirWhatsapp(numero, titulo) {
+    if (!numero) {
+        alert("El anunciante no tiene número registrado.");
+        return;
+    }
+
+    const mensaje = encodeURIComponent(`Hola, vi tu anuncio: ${titulo}`);
+
+    if (isMobileDevice()) {
+        // Móvil → abre en la app
+        window.location.href = `https://wa.me/51${numero}?text=${mensaje}`;
+    } else {
+        // PC → abre WhatsApp Web
+        window.open(`https://web.whatsapp.com/send?phone=51${numero}&text=${mensaje}`, "_blank");
+    }
+}
+
+// Llamar (solo móvil, en PC abre WhatsApp Web)
+function realizarLlamada(numero) {
+    if (!numero) {
+        alert("El anunciante no tiene número registrado.");
+        return;
+    }
+
+    if (isMobileDevice()) {
+        // Llamada directa en celular
+        window.location.href = `tel:+51${numero}`;
+    } else {
+        // En PC → abrir WhatsApp Web
+        window.open(`https://web.whatsapp.com/send?phone=51${numero}`, "_blank");
+    }
 }
 
 // Función principal para abrir el modal y mostrar datos del anuncio
@@ -393,7 +449,7 @@ function copiarLink() {
     /* Banner panorámico */
     .ad-banner {
         width: 100%;
-        height: 140px;
+        height: 220px;  /* AUMENTADO para mostrar mejor la imagen */
         overflow: hidden;
         background: #f3f3f3;
     }
@@ -401,7 +457,8 @@ function copiarLink() {
     .ad-banner img {
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: contain; /* <-- NO recorta la imagen */
+        background-color: #f3f3f3; /* si la imagen no llena todo, se ve elegante */
     }
 
     /* Contenido del anuncio */
@@ -458,10 +515,21 @@ function copiarLink() {
         color: #d60000;
     }
 
+    .ad-time {
+        font-size: 12px;
+        color: #777;
+        margin-top: -4px;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+
     /* === RESPONSIVE === */
     @media (max-width: 768px) {
         .ad-banner {
-            height: 160px;
+            height: 260px; /* más grande en móvil */
         }
 
         .ad-title {

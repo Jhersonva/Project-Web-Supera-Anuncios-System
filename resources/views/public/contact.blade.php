@@ -53,7 +53,13 @@
             <strong>Subcategoría:</strong> {{ $ad->subcategory->name }}
         </p>
         <p>{{ $ad->description }}</p>
-        <p class="text-success fw-bold">S/ {{ $ad->amount }}</p>
+        <p class="text-success fw-bold fs-5">
+            @if($ad->amount_visible == 1)
+                S/. {{ number_format($ad->amount, 2) }}
+            @else
+                S/. No especificado
+            @endif
+        </p>
 
         <p class="small text-muted">
             <i class="fa-solid fa-user"></i> Publicado por: {{ $ad->user->full_name }}

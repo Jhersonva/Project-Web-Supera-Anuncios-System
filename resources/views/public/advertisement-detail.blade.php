@@ -56,7 +56,11 @@
 
     {{-- PRECIO --}}
     <p class="text-success fw-bold fs-5">
-        S/. {{ number_format($ad->amount, 2) }}
+        @if($ad->amount_visible == 1)
+            S/. {{ number_format($ad->amount, 2) }}
+        @else
+            S/. No especificado
+        @endif
     </p>
 
     {{-- UBICACIÓN --}}

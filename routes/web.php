@@ -61,14 +61,43 @@ Route::get('/api/ads', function (Request $request) {
         ->paginate(50, ['*'], 'page_normal', $pageNormal);
 
     // Agregar URL completo
-    $adsUrgent->getCollection()->transform(function($ad){ $ad->full_url = $ad->detail_url; return $ad; });
-    $adsNormal->getCollection()->transform(function($ad){ $ad->full_url = $ad->detail_url; return $ad; });
+    $adsUrgent->getCollection()->transform(function($ad){
+        $ad->full_url = $ad->detail_url;
 
-    return response()->json([
-        'urgent' => $adsUrgent,
-        'normal' => $adsNormal
-    ]);
-});
+        $date = $ad->approved_at ?: $ad->created_at;
+        $ad->time_ago = $date->locale('es')->diffForHumans();
+
+        // 👇 AGREGAR CAMPOS DEL USUARIO
+        $ad->whatsapp = $ad->user->whatsapp ?? $ad->user->phone ?? null;
+        $ad->call_phone = $ad->user->call_phone ?? $ad->user->phone ?? null;
+
+        $ad->amount_visible = $ad->amount_visible; // 👈 enviar al frontend
+        $ad->amount = $ad->amount;                 // 👈 asegurar que llega el monto
+
+        return $ad;
+    });
+
+    $adsNormal->getCollection()->transform(function($ad){
+        $ad->full_url = $ad->detail_url;
+
+        $date = $ad->approved_at ?: $ad->created_at;
+        $ad->time_ago = $date->locale('es')->diffForHumans();
+
+        // Datos del usuario
+        $ad->whatsapp = $ad->user->whatsapp ?? $ad->user->phone ?? null;
+        $ad->call_phone = $ad->user->call_phone ?? $ad->user->phone ?? null;
+
+        // 👇 CAMPOS QUE FALTABAN
+        $ad->amount_visible = $ad->amount_visible;
+        $ad->amount = $ad->amount;
+
+        return $ad;
+    });
+        return response()->json([
+            'urgent' => $adsUrgent,
+            'normal' => $adsNormal
+        ]);
+    });
 
 
 Route::get('/api/subcategories', function () {

@@ -45,28 +45,22 @@ class AdsHistoryController extends Controller
         $ad = Advertisement::with('user')->findOrFail($id);
 
         if (!$ad->user->phone) {
-            return back()->with('error', 'El usuario no tiene número de WhatsApp registrado.');
+            return response()->json(['error' => 'El usuario no tiene número de WhatsApp registrado.'], 400);
         }
 
-        $phone = $ad->user->phone; // asegúrate que tu tabla tenga este campo
+        $phone = $ad->user->phone;
 
-        // Mensajes personalizados
         $messages = [
             'pendiente' => "Hola {$ad->user->full_name}, tu anuncio '{$ad->title}' está en revisión y se encuentra pendiente de aprobación.",
-            'publicado' => "¡Hola {$ad->user->full_name}! Tu anuncio '{$ad->title}' ha sido aprobado y ya está publicado 🎉.",
+            'publicado' => "¡Hola {$ad->user->full_name}! Tu anuncio '{$ad->title}' ha sido aprobado y ya está publicado.",
             'rechazado' => "Hola {$ad->user->full_name}, lamentamos informarte que tu anuncio '{$ad->title}' ha sido rechazado.",
-            'expirado' => "Hola {$ad->user->full_name}, tu anuncio '{$ad->title}' ha expirado. Puedes renovarlo cuando desees."
+            'expirado'  => "Hola {$ad->user->full_name}, tu anuncio '{$ad->title}' ha expirado. Puedes renovarlo cuando desees."
         ];
 
-        if (!isset($messages[$status])) {
-            return back()->with('error', 'Estado no válido.');
-        }
-
-        $text = urlencode($messages[$status]);
-
-        $whatsappUrl = "https://wa.me/51{$phone}?text={$text}";
-
-        return redirect($whatsappUrl);
+        return response()->json([
+            'phone' => $phone,
+            'text'  => $messages[$status] ?? ""
+        ]);
     }
 
     public function approve($id)

@@ -19,6 +19,7 @@ class Advertisement extends Model
         'description',
         'contact_location',
         'amount',
+        'amount_visible',
         'days_active',
         'expires_at',
         'published',
