@@ -165,7 +165,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 let html = `<option value="">-- Selecciona --</option>`;
 
                 data.forEach(sub => {
-                    html += `<option value="${sub.id}">${sub.name} (S/. ${sub.price})</option>`;
+                    //html += `<option value="${sub.id}">${sub.name} (S/. ${sub.price})</option>`;
+                    html += `<option value="${sub.id}">${sub.name}</option>`;
                 });
 
                 subcatSelect.innerHTML = html;

@@ -243,6 +243,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         Route::delete('/config/payment-methods/delete/{id}', [PaymentMethodController::class, 'destroy'])->name('admin.config.payment_methods.delete');
     
     //Historial de Anuncios
-    Route::get('/anuncios/historial', [AdsHistoryController::class, 'index'])
-    ->name('admin.ads-history.index');
+    Route::get('/anuncios/historial', [AdsHistoryController::class, 'index'])->name('admin.ads-history.index');
+    Route::get('/ad/{id}/notify/{status}', [AdsHistoryController::class, 'notifyUser'])->name('admin.ads.notify');
+    Route::post('/ad/{id}/approve', [AdsHistoryController::class, 'approve'])->name('admin.ads.approve');
+    Route::post('/ad/{id}/reject', [AdsHistoryController::class, 'reject'])->name('admin.ads.reject');
 });

@@ -94,11 +94,17 @@
 
                             <td>
                                 @if($ad->expires_at < now())
-                                    <span class="badge bg-danger">Expirado</span>
-                                @else
+                                    <span class="badge bg-secondary">Expirado</span>
+                                @elseif($ad->status == 'pendiente')
+                                    <span class="badge bg-warning text-dark">Pendiente</span>
+                                @elseif($ad->status == 'rechazado')
+                                    <span class="badge bg-danger">Rechazado</span>
+                                @elseif($ad->status == 'publicado')
                                     <span class="badge bg-success">Publicado</span>
+                                @else
+                                    <span class="badge bg-secondary">Desconocido</span>
                                 @endif
-                            </td>
+                            </td>                    
 
                             <td>{{ $ad->created_at->format('d/m/Y') }}</td>
 
@@ -161,12 +167,45 @@
                                 <strong>Estado:</strong>
                                 @if($ad->expires_at < now())
                                     <span class="badge bg-danger">Expirado</span>
-                                @else
+
+                                @elseif($ad->status == 'pendiente')
+                                    <span class="badge bg-warning text-dark">Pendiente</span>
+
+                                @elseif($ad->status == 'rechazado')
+                                    <span class="badge bg-danger">Rechazado</span>
+
+                                @elseif($ad->status == 'publicado')
                                     <span class="badge bg-success">Publicado</span>
+
                                 @endif
+
                             </div>
                         </div>
 
+                        {{-- Acciones --}}
+                        <div class="d-flex gap-2 justify-content-center flex-wrap">
+
+                            <a href="{{ route('my-ads.show', $ad->id) }}" 
+                            class="btn btn-sm btn-outline-secondary">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+
+                            <a href="{{ route('my-ads.editAd', $ad->id) }}" 
+                            class="btn btn-sm btn-warning text-white">
+                                <i class="fa-solid fa-pen"></i>
+                            </a>
+
+                            <form action="{{ route('my-ads.deleteAd', $ad->id) }}" 
+                                method="POST"
+                                onsubmit="return confirm('¿Eliminar anuncio?');">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn btn-sm btn-outline-danger">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+
+                        </div>
                         
                     </div>
                 </div>

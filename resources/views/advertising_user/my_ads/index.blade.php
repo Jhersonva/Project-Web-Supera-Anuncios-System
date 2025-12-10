@@ -97,11 +97,15 @@
                             {{-- Estado --}}
                             <td>
                                 @if($ad->expires_at < now())
-                                    <span class="badge bg-danger">Expirado</span>
+                                    <span class="badge bg-secondary">Expirado</span>
                                 @elseif($ad->status == 'pendiente')
                                     <span class="badge bg-warning text-dark">Pendiente</span>
-                                @else
+                                @elseif($ad->status == 'rechazado')
+                                    <span class="badge bg-danger">Rechazado</span>
+                                @elseif($ad->status == 'publicado')
                                     <span class="badge bg-success">Publicado</span>
+                                @else
+                                    <span class="badge bg-secondary">Desconocido</span>
                                 @endif
                             </td>
 
@@ -170,16 +174,22 @@
                                 <strong>Estado:</strong>
                                 @if($ad->expires_at < now())
                                     <span class="badge bg-danger">Expirado</span>
+
                                 @elseif($ad->status == 'pendiente')
                                     <span class="badge bg-warning text-dark">Pendiente</span>
-                                @else
+
+                                @elseif($ad->status == 'rechazado')
+                                    <span class="badge bg-danger">Rechazado</span>
+
+                                @elseif($ad->status == 'publicado')
                                     <span class="badge bg-success">Publicado</span>
+
                                 @endif
                             </div>
                         </div>
 
                         {{-- Acciones --}}
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex gap-2 justify-content-center flex-wrap">
                             
                             <a href="{{ route('my-ads.show', $ad->id) }}" class="btn btn-sm btn-outline-secondary">
                                 <i class="fa-solid fa-eye"></i>

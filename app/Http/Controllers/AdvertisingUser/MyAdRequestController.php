@@ -123,8 +123,9 @@ class MyAdRequestController extends Controller
             'expires_at' => $expiresAt,
 
             // se publica automáticamente
-            'published' => 1,
-            'status' => 'publicado',
+            // Ahora queda como pendiente
+            'published' => 0,
+            'status' => 'pendiente',
 
             'urgent_publication' => $request->has('urgent_publication'),
             'urgent_price' => $urgentPrice,
@@ -162,7 +163,7 @@ class MyAdRequestController extends Controller
 
         return redirect()
             ->route('my-ads.index')
-            ->with('success', '¡Tu anuncio fue publicado exitosamente!');
+            ->with('success', 'Tu anuncio ha sido enviado para revisión. Será publicado una vez aprobado.');
     }
 
     public function edit($id)

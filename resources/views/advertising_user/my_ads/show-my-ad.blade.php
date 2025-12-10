@@ -80,6 +80,157 @@
         </div>
     </div>
 
+    @auth
+        @if(in_array(auth()->user()->role_id, [1, 3]))
+
+        <hr>
+
+        {{-- PANEL ADMIN --}}
+
+        <h4 class="fw-bold text-center mb-4">Panel de Control</h4>
+
+        <style>
+            .admin-box{
+                background: #f9fafb;
+                padding: 20px;
+                border-radius: 14px;
+                border: 1px solid #ececec;
+            }
+            .status-badge{
+                font-size: .95rem;
+                padding: 8px 14px;
+                border-radius: 8px;
+                font-weight: 600;
+            }
+            .wa-btn{
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-weight: 600;
+                padding: 10px;
+                border-radius: 10px;
+            }
+            .action-btn{
+                padding: 11px;
+                border-radius: 10px;
+                font-weight: 600;
+            }
+        </style>
+
+        <div class="admin-box mb-4">
+
+            {{-- ESTADO DEL ANUNCIO --}}
+            @php
+                $esExpirado = $ad->expires_at < now();
+                $esPendiente = $ad->status === 'pendiente' && !$esExpirado;
+                $esAprobado  = $ad->status === 'publicado' && !$esExpirado;
+                $esRechazado = $ad->status === 'rechazado' && !$esExpirado;
+            @endphp
+
+            <h6 class="fw-bold mb-2">Estado actual</h6>
+
+            @if($esExpirado)
+                <span class="status-badge bg-secondary text-white">
+                    <i class="fa-solid fa-clock me-1"></i> Expirado
+                </span>
+
+            @elseif($esPendiente)
+                <span class="status-badge bg-warning text-dark">
+                    <i class="fa-solid fa-circle-exclamation me-1"></i> Pendiente de aprobación
+                </span>
+
+            @elseif($esAprobado)
+                <span class="status-badge bg-success text-white">
+                    <i class="fa-solid fa-check me-1"></i> Publicado
+                </span>
+
+            @elseif($esRechazado)
+                <span class="status-badge bg-danger text-white">
+                    <i class="fa-solid fa-xmark me-1"></i> Rechazado
+                </span>
+            @endif
+
+            {{-- BOTONES DE WHATSAPP --}}
+            <div class="mt-4">
+                <h6 class="fw-bold mb-2">Enviar mensaje al anunciante</h6>
+
+                @if($esPendiente)
+                    <a href="{{ route('admin.ads.notify', [$ad->id, 'pendiente']) }}"
+                    target="_blank" class="btn btn-warning text-dark wa-btn w-100">
+                        <i class="fa-brands fa-whatsapp"></i> Notificar estado: Pendiente
+                    </a>
+                @endif
+
+                @if($esAprobado)
+                    <a href="{{ route('admin.ads.notify', [$ad->id, 'publicado']) }}"
+                    target="_blank" class="btn btn-success text-white wa-btn w-100 mt-2">
+                        <i class="fa-brands fa-whatsapp"></i> Notificar: Publicado
+                    </a>
+                @endif
+
+                @if($esRechazado)
+                    <a href="{{ route('admin.ads.notify', [$ad->id, 'rechazado']) }}"
+                    target="_blank" class="btn btn-danger text-white wa-btn w-100 mt-2">
+                        <i class="fa-brands fa-whatsapp"></i> Notificar: Rechazado
+                    </a>
+                @endif
+
+                @if($esExpirado)
+                    <a href="{{ route('admin.ads.notify', [$ad->id, 'expirado']) }}"
+                    target="_blank" class="btn btn-secondary text-white wa-btn w-100 mt-2">
+                        <i class="fa-brands fa-whatsapp"></i> Notificar: Expirado
+                    </a>
+                @endif
+            </div>
+
+            {{-- BOTONES DE CAMBIO DE ESTADO --}}
+            <div class="mt-4">
+                <h6 class="fw-bold mb-2">Acciones administrativas</h6>
+
+                @if($esPendiente)
+                    <form action="{{ route('admin.ads.approve', $ad->id) }}" method="POST">
+                        @csrf
+                        <button class="btn btn-success action-btn w-100">
+                            <i class="fa-solid fa-check"></i> Aprobar anuncio
+                        </button>
+                    </form>
+
+                    <form action="{{ route('admin.ads.reject', $ad->id) }}" method="POST" class="mt-2">
+                        @csrf
+                        <button class="btn btn-danger action-btn w-100">
+                            <i class="fa-solid fa-xmark"></i> Rechazar anuncio
+                        </button>
+                    </form>
+                @endif
+
+                @if($esAprobado)
+                    <form action="{{ route('admin.ads.reject', $ad->id) }}" method="POST" class="mt-2">
+                        @csrf
+                        <button class="btn btn-danger action-btn w-100">
+                            <i class="fa-solid fa-xmark"></i> Rechazar anuncio
+                        </button>
+                    </form>
+                @endif
+
+                @if($esRechazado)
+                    <form action="{{ route('admin.ads.approve', $ad->id) }}" method="POST" class="mt-2">
+                        @csrf
+                        <button class="btn btn-success action-btn w-100">
+                            <i class="fa-solid fa-check"></i> Aprobar anuncio
+                        </button>
+                    </form>
+                @endif
+
+                @if($esExpirado)
+                    <p class="text-muted mt-3 text-center">
+                        <i class="fa-solid fa-clock"></i> Este anuncio expiró automáticamente.
+                    </p>
+                @endif
+            </div>
+        </div>
+        @endif
+        @endauth
+
     <div class="row">
         {{-- INFORMACIÓN PRINCIPAL --}}
         <div class="col-md-8">
@@ -139,27 +290,6 @@
 
                 <hr>
             </div>
-
-            {{-- SI EL ANUNCIO PERTENECE AL USUARIO 
-            @if (auth()->id() == $ad->user_id)
-                <div class="mt-4 p-3 border rounded-3 bg-light">
-                    <h6 class="fw-bold mb-3">Acciones</h6>
-
-                    <a class="btn btn-warning w-100 mb-2"
-                       href="{{ route('my-ads.editAd', $ad->id) }}">
-                        <i class="fa-solid fa-pen"></i> Editar anuncio
-                    </a>
-
-                    <form method="POST" action="{{ route('my-ads.deleteAd', $ad->id) }}"
-                          onsubmit="return confirm('¿Eliminar anuncio?')">
-                        @csrf
-                        @method('DELETE')
-                        <button class="btn btn-danger w-100">
-                            <i class="fa-solid fa-trash"></i> Eliminar
-                        </button>
-                    </form>
-                </div>
-            @endif--}}
 
         </div>
     </div>
