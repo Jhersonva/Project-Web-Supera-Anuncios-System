@@ -56,22 +56,35 @@
     <script>
 
     document.addEventListener('DOMContentLoaded', function () {
-        const badge = document.getElementById('badge-recargas');
-        async function actualizarRecargas() {
-            try {
-                const response = await axios.get('{{ route('admin.reload-request.pending-count') }}');
-                const count = response.data.count;
 
-                badge.textContent = count;
-                badge.style.display = count > 0 ? 'inline-block' : 'none';
-            } catch (error) {
-                console.error('Error al obtener recargas pendientes:', error);
+        // Verificar que el usuario es admin o empleado
+        @if(auth()->check() && in_array(auth()->user()->role->name, ['admin', 'employee']))
+
+            const badge = document.getElementById('badge-recargas');
+
+            // Si NO existe el badge, no ejecutar nada
+            if (!badge) return;
+
+            async function actualizarRecargas() {
+                try {
+                    const response = await axios.get('{{ route('admin.reload-request.pending-count') }}');
+                    const count = response.data.count;
+
+                    badge.textContent = count;
+                    badge.style.display = count > 0 ? 'inline-block' : 'none';
+
+                } catch (error) {
+                    console.warn('No se pudo obtener recargas, usuario sin permisos.');
+                }
             }
-        }
-        // Inicial
-        actualizarRecargas();
-        // Actualizar cada 15 segundos
-        setInterval(actualizarRecargas, 15000);
+
+            actualizarRecargas();
+
+            // Actualizar cada 15 segundos
+            setInterval(actualizarRecargas, 10000);
+
+        @endif
+
     });
 
     @if (session('success'))

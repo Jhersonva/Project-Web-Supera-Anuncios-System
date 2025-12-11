@@ -71,8 +71,8 @@ Route::get('/api/ads', function (Request $request) {
         $ad->whatsapp = $ad->user->whatsapp ?? $ad->user->phone ?? null;
         $ad->call_phone = $ad->user->call_phone ?? $ad->user->phone ?? null;
 
-        $ad->amount_visible = $ad->amount_visible; // 👈 enviar al frontend
-        $ad->amount = $ad->amount;                 // 👈 asegurar que llega el monto
+        $ad->amount_visible = $ad->amount_visible; 
+        $ad->amount = $ad->amount;                
 
         return $ad;
     });
@@ -87,7 +87,7 @@ Route::get('/api/ads', function (Request $request) {
         $ad->whatsapp = $ad->user->whatsapp ?? $ad->user->phone ?? null;
         $ad->call_phone = $ad->user->call_phone ?? $ad->user->phone ?? null;
 
-        // 👇 CAMPOS QUE FALTABAN
+        // CAMPOS QUE FALTABAN
         $ad->amount_visible = $ad->amount_visible;
         $ad->amount = $ad->amount;
 

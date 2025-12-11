@@ -91,6 +91,32 @@
 
 <script>
 
+const isAuthenticated = {{ auth()->check() ? 'true' : 'false' }};
+
+function requireLogin(action, payload = null) {
+
+    // Guardamos lo que intentó hacer
+    localStorage.setItem("pending_action", action);
+    if (payload !== null) {
+        localStorage.setItem("pending_payload", JSON.stringify(payload));
+    }
+
+    Swal.fire({
+        icon: "warning",
+        title: "Inicia sesión",
+        text: "Para realizar esta acción necesitas iniciar sesión o crear una cuenta.",
+        showCancelButton: true,
+        confirmButtonText: "Iniciar sesión",
+        cancelButtonText: "Crear cuenta"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = "/auth/login";
+        } else {
+            window.location.href = "/auth/register";
+        }
+    });
+}
+
 let deferredPrompt;
 
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -315,21 +341,23 @@ function createAdCard(ad){
                 <div class="ad-buttons"> 
 
                     <!-- Ver -->
-                    <button class="btn btn-sm btn-primary" onclick="window.location.href='${ad.full_url}'">
+                    <button class="btn btn-sm btn-primary"
+                        onclick="handleVer('${ad.full_url}')">
                         <i class="fa-solid fa-eye"></i> Ver
                     </button>
 
                     <!-- WhatsApp -->
                     <button class="btn btn-sm btn-success"
-                        onclick="abrirWhatsapp('${ad.whatsapp}', '${ad.title}')">
+                        onclick="handleWhatsapp('${ad.whatsapp}', '${ad.title}')">
                         <i class="fa-brands fa-whatsapp"></i> WhatsApp
                     </button>
 
                     <!-- Llamar -->
                     <button class="btn btn-sm btn-info"
-                        onclick="realizarLlamada('${ad.call_phone}')">
+                        onclick="handleLlamada('${ad.call_phone}')">
                         <i class="fa-solid fa-phone"></i> Llamar
                     </button>
+
 
                     <!-- Compartir -->
                     <button class="btn btn-sm btn-secondary"
@@ -348,6 +376,34 @@ function createAdCard(ad){
         </div>
     </div>`;
 }
+
+// --- Acción VER ---
+function handleVer(url) {
+    if (!isAuthenticated) {
+        requireLogin("ver", { url });
+        return;
+    }
+    window.location.href = url;
+}
+
+// --- Acción WHATSAPP ---
+function handleWhatsapp(numero, titulo) {
+    if (!isAuthenticated) {
+        requireLogin("whatsapp", { numero, titulo });
+        return;
+    }
+    abrirWhatsapp(numero, titulo);
+}
+
+// --- Acción LLAMAR ---
+function handleLlamada(numero) {
+    if (!isAuthenticated) {
+        requireLogin("llamar", { numero });
+        return;
+    }
+    realizarLlamada(numero);
+}
+
 
 // Detecta si es dispositivo móvil
 function isMobileDevice() {
@@ -423,6 +479,40 @@ function copiarLink() {
             });
         });
 }
+
+// ==========================================================
+//  AUTO-EJECUTAR ACCIÓN PENDIENTE AL VOLVER DEL LOGIN
+// ==========================================================
+document.addEventListener("DOMContentLoaded", () => {
+    const pendingAction = localStorage.getItem("pending_action");
+    const pendingPayload = localStorage.getItem("pending_payload");
+
+    // Si NO hay acción → no hacemos nada
+    if (!pendingAction) return;
+
+    const data = pendingPayload ? JSON.parse(pendingPayload) : null;
+
+    // Se ejecuta solo si ahora SÍ está autenticado
+    if (isAuthenticated) {
+
+        if (pendingAction === "ver") {
+            handleVer(data.url);
+        }
+
+        if (pendingAction === "whatsapp") {
+            handleWhatsapp(data.numero, data.titulo);
+        }
+
+        if (pendingAction === "llamar") {
+            handleLlamada(data.numero);
+        }
+
+        // Limpiar para que no se repita
+        localStorage.removeItem("pending_action");
+        localStorage.removeItem("pending_payload");
+    }
+});
+
 
 </script>
 
