@@ -239,6 +239,16 @@ function renderAds(data) {
     const container = document.getElementById('listaAnuncios');
     container.innerHTML = '';
 
+    // DESTACADOS
+    if (data.featured.data.length > 0) {
+        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">⭐ Anuncios Destacados</h5>`;
+        data.featured.data.forEach(ad => container.innerHTML += createAdCard(ad));
+
+        container.innerHTML += `<nav class="mt-2 d-flex justify-content-center">
+            ${renderPagination(data.featured, 'featured')}
+        </nav>`;
+    }
+
     // URGENTES
     if (data.urgent.data.length > 0) {
         container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">🚨 Anuncios Urgentes</h5>`;
@@ -318,6 +328,19 @@ function createAdCard(ad){
         <div class="ad-card-horizontal">
 
             <div class="ad-banner">
+
+                <!-- DESTACADO -->
+                ${ad.featured_publication == 1 ? `
+                    <div class="badge-destacado">
+                        DESTACADO
+                    </div>
+                ` : ''}
+
+                <!-- URGENTE (EL TUYO, SIN CAMBIOS) -->
+                ${ad.urgent_publication == 1 ? `
+                    <div class="badge-urgente">URGENTE</div>
+                ` : ''}
+
                 <img src="${img}" alt="Imagen del anuncio">
             </div>
 
@@ -333,8 +356,8 @@ function createAdCard(ad){
                 </div>
 
                 <div class="ad-price-box">
-                    <p class="fw-bold text-success">
-                        ${ ad.amount_visible == 1 ? `S/ ${ad.amount}` : "S/. No especificado" }
+                    <p class="fw-bold ${ad.amount_visible == 0 ? 'text-secondary' : 'text-success'}">
+                        ${ ad.amount_visible == 1 ? `S/ ${ad.amount}` : "S/ No especificado" }
                     </p>
                 </div>
 
@@ -480,9 +503,7 @@ function copiarLink() {
         });
 }
 
-// ==========================================================
 //  AUTO-EJECUTAR ACCIÓN PENDIENTE AL VOLVER DEL LOGIN
-// ==========================================================
 document.addEventListener("DOMContentLoaded", () => {
     const pendingAction = localStorage.getItem("pending_action");
     const pendingPayload = localStorage.getItem("pending_payload");
@@ -517,6 +538,64 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 <style>
+
+    .badge-urgente {
+        position: absolute;
+        top: 15px;
+        right: -63px;        
+        background: red;
+        color: white;
+        padding: 6px 60px;   
+        font-size: 14px;
+        font-weight: bold;
+        text-transform: uppercase;
+        transform: rotate(45deg);
+        z-index: 20;
+        box-shadow: 0 0 6px rgba(0,0,0,0.3);
+        pointer-events: none;  
+    }
+
+    .badge-urgente span {
+        position: absolute;
+        top: -50px;  
+        right: -3px; 
+        color: white;
+        font-size: 13px;
+        font-weight: bold;
+        transform: rotate(45deg); 
+        text-transform: uppercase;
+    }
+
+    .ad-banner {
+        position: relative;
+    }
+
+    .badge-destacado {
+        position: absolute;
+        bottom: 12px;
+        left: 12px;
+        background: linear-gradient(135deg, #f7d458, #e0b743);
+        color: #4a3a00;
+        padding: 6px 16px;
+        font-size: 13px;
+        font-weight: 700;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+        z-index: 20;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(2px);
+    }
+
+    /* Icono estrella más elegante */
+    .badge-destacado::before {
+        content: "⭐";
+        font-size: 14px;
+        filter: drop-shadow(0 0 2px rgba(255,255,255,0.7));
+    }
+
    /* === CARD HORIZONTAL PREMIUM === */
 
     .ad-card-horizontal {
@@ -615,11 +694,10 @@ document.addEventListener("DOMContentLoaded", () => {
         gap: 4px;
     }
 
-
     /* === RESPONSIVE === */
     @media (max-width: 768px) {
         .ad-banner {
-            height: 260px; /* más grande en móvil */
+            height: 260px; 
         }
 
         .ad-title {

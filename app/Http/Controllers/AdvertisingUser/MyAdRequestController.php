@@ -23,8 +23,9 @@ class MyAdRequestController extends Controller
         $categories = AdCategory::all();
 
         $urgentPrice = Setting::get('urgent_publication_price', 5.00);
+        $featuredPrice  = Setting::get('featured_publication_price', 5.00);
 
-        return view('advertising_user.my_ads.create-my-ads', compact('categories', 'urgentPrice'));
+        return view('advertising_user.my_ads.create-my-ads', compact('categories', 'urgentPrice', 'featuredPrice'));
     }
 
     public function show($id)
@@ -99,8 +100,14 @@ class MyAdRequestController extends Controller
             ? (float) Setting::get('urgent_publication_price', 5.00)
             : 0;
 
-        // Total
-        $finalPrice = ($basePrice * $days) + $urgentPrice;
+        // Precio destacado
+        $featuredPrice = $request->featured_publication == 1
+            ? (float) Setting::get('featured_publication_price', 10.00)
+            : 0;
+
+        // Total final
+        $finalPrice = ($basePrice * $days) + $urgentPrice + $featuredPrice;
+
 
         // Validación de saldo
         if ($user->virtual_wallet < $finalPrice) {
@@ -116,20 +123,31 @@ class MyAdRequestController extends Controller
 
         // Crear ANUNCIO *PUBLICADO AUTOMÁTICAMENTE*
         $ad = Advertisement::create([
-            'ad_categories_id' => $request->category_id,
-            'ad_subcategories_id' => $request->subcategory_id,
-            'user_id' => $user->id,
-            'title' => $request->title,
-            'description' => $request->description,
-            'contact_location' => $request->contact_location,
-            'amount' => $amount,
-            'amount_visible' => $request->amount_visible,
-            'days_active' => $days,
-            'expires_at' => $expiresAt,
-            'published' => 0,
-            'status' => 'pendiente',
-            'urgent_publication' => $request->has('urgent_publication'),
-            'urgent_price' => $urgentPrice,
+            'ad_categories_id'      => $request->category_id,
+            'ad_subcategories_id'   => $request->subcategory_id,
+            'user_id'               => $user->id,
+            'title'                 => $request->title,
+            'description'           => $request->description,
+            'contact_location'      => $request->contact_location,
+            'amount'                => $amount,
+            'amount_visible'        => $request->amount_visible,
+            'days_active'           => $days,
+            'expires_at'            => $expiresAt,
+            'published'             => false,
+            'status'                => 'pendiente',
+
+            'urgent_publication'    => $request->has('urgent_publication'),
+            'urgent_price'          => $urgentPrice,
+
+            'featured_publication'  => $request->has('featured_publication'),
+            'featured_price' => $featuredPrice,
+
+            'receipt_type'          => $request->receipt_type,
+            'dni'                   => $request->dni,
+            'full_name'             => $request->full_name,
+            'ruc'                   => $request->ruc,
+            'company_name'          => $request->company_name,
+            'address'               => $request->address,
         ]);
 
         // CAMPOS DINÁMICOS

@@ -16,11 +16,13 @@ class CategoryController extends Controller
                 'subcategories.fields'
             ])->get();
 
-            $urgentPrice = \App\Models\Setting::get('urgent_publication_price', 5.00);
+            $urgentPrice = Setting::get('urgent_publication_price', 5.00);
+            $featuredPrice = Setting::get('featured_publication_price', 3.00); 
 
             return view('admin.config.categories.index', [
             'categories' => AdCategory::with('subcategories.fields')->get(),
-            'urgentPrice' => Setting::get('urgent_publication_price', 5.00)
+            'urgentPrice' => Setting::get('urgent_publication_price', 5.00),
+            'featuredPrice' => Setting::get('featured_publication_price', 3.00)
         ]);
     }
 

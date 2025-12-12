@@ -26,6 +26,7 @@ use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\CashBoxController;
 use App\Http\Controllers\Admin\UrgentPriceController;
 use App\Http\Controllers\Admin\PaymentMethodController;
+use App\Http\Controllers\Admin\FeaturedPriceController;
 
 
 /*
@@ -41,24 +42,52 @@ Route::get('/', function () {
 
 Route::get('/api/ads', function (Request $request) {
 
+    $pageFeatured = $request->get('page_featured', 1);
     $pageUrgent = $request->get('page_urgent', 1);
     $pageNormal = $request->get('page_normal', 1);
 
+    $adsFeatured = \App\Models\Advertisement::where('published', 1)
+        ->where('status', 'publicado')
+        ->where('featured_publication', 1)
+        ->where('expires_at', '>=', now())
+        ->with(['category', 'subcategory', 'images'])
+        ->orderBy('created_at', 'desc')
+        ->paginate(20, ['*'], 'page_featured', $pageFeatured);
+
     $adsUrgent = \App\Models\Advertisement::where('published', 1)
-        ->where('status', 'publicado')   
+        ->where('status', 'publicado')
         ->where('urgent_publication', 1)
-        ->where('expires_at', '>=', now())  
+        ->where('featured_publication', 0)
+        ->where('expires_at', '>=', now())
         ->with(['category', 'subcategory', 'images'])
         ->orderBy('created_at', 'desc')
         ->paginate(20, ['*'], 'page_urgent', $pageUrgent); 
 
     $adsNormal = \App\Models\Advertisement::where('published', 1)
-        ->where('status', 'publicado')   
+        ->where('status', 'publicado')
         ->where('urgent_publication', 0)
+        ->where('featured_publication', 0)
         ->where('expires_at', '>=', now())
         ->with(['category', 'subcategory', 'images'])
         ->orderBy('created_at', 'desc')
         ->paginate(50, ['*'], 'page_normal', $pageNormal);
+
+    $adsFeatured->getCollection()->transform(function($ad){
+        $ad->full_url = $ad->detail_url;
+
+        $date = $ad->approved_at ?: $ad->created_at;
+        $ad->time_ago = $date->locale('es')->diffForHumans();
+
+        // Datos usuario
+        $ad->whatsapp = $ad->user->whatsapp ?? $ad->user->phone ?? null;
+        $ad->call_phone = $ad->user->call_phone ?? $ad->user->phone ?? null;
+
+        // Montos
+        $ad->amount_visible = $ad->amount_visible;
+        $ad->amount = $ad->amount;
+
+        return $ad;
+    });
 
     // Agregar URL completo
     $adsUrgent->getCollection()->transform(function($ad){
@@ -67,7 +96,7 @@ Route::get('/api/ads', function (Request $request) {
         $date = $ad->approved_at ?: $ad->created_at;
         $ad->time_ago = $date->locale('es')->diffForHumans();
 
-        // 👇 AGREGAR CAMPOS DEL USUARIO
+        // AGREGAR CAMPOS DEL USUARIO
         $ad->whatsapp = $ad->user->whatsapp ?? $ad->user->phone ?? null;
         $ad->call_phone = $ad->user->call_phone ?? $ad->user->phone ?? null;
 
@@ -94,6 +123,7 @@ Route::get('/api/ads', function (Request $request) {
         return $ad;
     });
         return response()->json([
+            'featured' => $adsFeatured,
             'urgent' => $adsUrgent,
             'normal' => $adsNormal
         ]);
@@ -227,6 +257,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
         // Administracion de categorias
         Route::post('/config/urgent-price/update', [UrgentPriceController::class, 'update'])->name('admin.config.urgent-price.update');
+        Route::post('/config/featured-price/update', [FeaturedPriceController::class, 'update'])->name('admin.config.featured-price.update');
+
         // Administracion de categorias
         Route::get('/config/categorias', [CategoryController::class, 'index'])->name('admin.config.categories');
         Route::post('/config/categorias/store', [CategoryController::class, 'store'])->name('admin.config.categories.store');

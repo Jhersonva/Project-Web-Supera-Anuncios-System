@@ -22,7 +22,15 @@ return new class extends Migration {
             $table->unsignedTinyInteger('stars')->default(0); 
             $table->boolean('urgent_publication')->default(false); 
             $table->decimal('urgent_price', 10, 2)->nullable();
+            $table->boolean('featured_publication')->default(false); 
+            $table->decimal('featured_price', 10, 2)->nullable(); 
             $table->enum('status', ['pendiente', 'publicado', 'rechazado', 'expirado'])->default('pendiente');
+            $table->enum('receipt_type', ['boleta', 'factura'])->nullable();
+            $table->string('dni')->nullable();
+            $table->string('full_name')->nullable();
+            $table->string('ruc')->nullable();
+            $table->string('company_name')->nullable();
+            $table->string('address')->nullable();
             $table->timestamps();
         });
     }

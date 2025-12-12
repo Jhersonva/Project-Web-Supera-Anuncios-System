@@ -37,6 +37,24 @@
         </div>
     </div>
 
+    <div class="d-flex justify-content-end mb-3">
+        <div class="card p-3" style="width: 260px;">
+            <h6 class="fw-bold">Precio de Publicación Destacada</h6>
+
+            <form action="{{ route('admin.config.featured-price.update') }}" method="POST">
+                @csrf
+
+                <input 
+                    type="number" 
+                    step="0.01"
+                    name="featured_price"
+                    class="form-control mb-2"
+                    value="{{ $featuredPrice }}">
+
+                <button class="btn btn-danger btn-sm w-100">Actualizar</button>
+            </form>
+        </div>
+    </div>
 
     @foreach ($categories as $category)
         <div class="card shadow-sm mb-4 border-0" style="border-radius: 16px;">

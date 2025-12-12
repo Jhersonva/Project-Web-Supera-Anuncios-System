@@ -7,10 +7,8 @@ use Illuminate\Support\Str;
 
 class Advertisement extends Model
 {
-    /* Nombre de tabla personalizado */
     protected $table = 'advertisementss';
 
-    /* Campos asignables */
     protected $fillable = [
         'ad_categories_id',
         'ad_subcategories_id',
@@ -26,44 +24,47 @@ class Advertisement extends Model
         'stars',
         'urgent_publication',
         'urgent_price',
+        'featured_publication',
+        'featured_price',
         'status',
+        'receipt_type',
+        'dni',
+        'full_name',
+        'ruc',
+        'company_name',
+        'address',
     ];
 
-    /* Casts automáticos */
     protected $casts = [
-        'price'               => 'decimal:2',
-        'published'           => 'boolean',
-        'urgent_publication'  => 'boolean',
-        'urgent_price'        => 'decimal:2',
-        'stars'               => 'integer',
-        'days_active'         => 'integer',
-        'expires_at'          => 'datetime',
+        'amount'                => 'decimal:2',
+        'published'             => 'boolean',
+        'urgent_publication'    => 'boolean',
+        'urgent_price'          => 'decimal:2',
+        'featured_publication'  => 'boolean',
+        'featured_price'        => 'decimal:2',
+        'stars'                 => 'integer',
+        'days_active'           => 'integer',
+        'expires_at'            => 'datetime',
     ];
 
-    /* Relaciones */
-
-    /* Categoría principal */
     public function category()
     {
-        return $this->belongsTo(AdCategory::class, 'ad_categories_id', 'id');
+        return $this->belongsTo(AdCategory::class, 'ad_categories_id');
     }
 
-    /* Subcategoría */
     public function subcategory()
     {
-        return $this->belongsTo(AdSubcategory::class, 'ad_subcategories_id', 'id');
+        return $this->belongsTo(AdSubcategory::class, 'ad_subcategories_id');
     }
 
-    /* Campos dinámicos -> valores */
     public function fields_values()
     {
-        return $this->hasMany(ValueFieldAd::class, 'advertisementss_id', 'id');
+        return $this->hasMany(ValueFieldAd::class, 'advertisementss_id');
     }
 
-    /* Usuario dueño del anuncio */
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id', 'id');
+        return $this->belongsTo(User::class);
     }
 
     public function images()
@@ -77,13 +78,11 @@ class Advertisement extends Model
                     ->where('is_main', true);
     }
 
-     // Accesor para obtener slug
     public function getSlugAttribute()
     {
         return Str::slug($this->title);
     }
 
-    // Accesor para obtener URL completa
     public function getDetailUrlAttribute()
     {
         return url("/detalle-anuncio/{$this->slug}/{$this->id}");
