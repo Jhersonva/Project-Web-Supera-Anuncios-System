@@ -63,31 +63,31 @@
         @endif
     </p>
 
-    {{-- UBICACIÓN --}}
-    <p><i class="fa-solid fa-location-dot text-danger"></i> {{ $ad->contact_location ?? 'Sin ubicación' }}</p>
+    <div class="detalle-info-grid">
 
-    {{-- CATEGORÍA --}}
-    <p><i class="fa-solid fa-tag"></i> 
-        {{ $ad->category->name ?? 'Categoría' }} — 
-        {{ $ad->subcategory->name ?? '' }}
-    </p>
+        <p><i class="fa-solid fa-location-dot text-danger"></i>
+            {{ $ad->contact_location ?? 'Sin ubicación' }}
+        </p>
 
-    {{-- FECHA --}}
-    <p><i class="fa-solid fa-calendar"></i> Publicado el: {{ $ad->created_at->format('d/m/Y') }}</p>
+        <p><i class="fa-solid fa-tag"></i>
+            {{ $ad->category->name ?? 'Categoría' }} — {{ $ad->subcategory->name ?? '' }}
+        </p>
+
+        <p><i class="fa-solid fa-calendar"></i>
+            {{ $ad->created_at->format('d/m/Y') }}
+        </p>
+
+    </div>
+
 
     {{-- DESCRIPCIÓN --}}
     <h5 class="fw-bold mt-4">Descripción</h5>
-    <p class="text-muted">{{ $ad->description }}</p>
+    <p class="text-muted descripcion-texto">{{ $ad->description }}</p>
 
-    {{-- CALIFICACIÓN VISUAL --}}
-    <div class="my-3">
-        <small class="fw-bold">CALIFICACIÓN DE LA PUBLICACIÓN</small><br>
-        <span class="text-warning fs-5">★★★★★</span>
-    </div>
 
     {{-- CARACTERÍSTICAS DINÁMICAS --}}
     <h5 class="fw-bold">Características</h5>
-    <div class="d-flex flex-wrap gap-2 my-2">
+    <div class="caracteristicas-grid my-2">
 
         @foreach($ad->fields_values as $valueField)
             <span class="badge bg-light text-dark border px-3 py-2">
@@ -96,6 +96,12 @@
         @endforeach
 
     </div>
+
+    {{-- CALIFICACIÓN VISUAL
+    <div class="my-3">
+        <small class="fw-bold">CALIFICACIÓN DE LA PUBLICACIÓN</small><br>
+        <span class="text-warning fs-5">★★★★★</span>
+    </div> --}}
 
     <hr>
 

@@ -10,6 +10,7 @@ return new class extends Migration {
             $table->id();
             $table->string('name');
             $table->string('icon')->nullable();
+            $table->boolean('is_property')->default(false);
             $table->timestamps();
         });
     }

@@ -9,14 +9,16 @@ class AdFieldSeeder extends Seeder
 {
     public function run(): void
     {
-        // ============================================
         // SUBCATEGORÍA: EMPLEO (CATEGORÍA: EMPLEOS)
-        // ============================================
         $jobFields = [
-            "Rubro", "Razon Social", "Cargo",
-            "Funciones", "Requisitos", "Beneficios",
-            "Direccion", "Distrito", "Provincia", "Departamento"
+            ['name' => "Rubro", 'type' => 'multiple'], 
+            ['name' => "Razon Social", 'type' => 'string'],
+            ['name' => "Cargo", 'type' => 'string'],
+            ['name' => "Funciones", 'type' => 'string'],
+            ['name' => "Requisitos", 'type' => 'string'],
+            ['name' => "Beneficios", 'type' => 'string'],
         ];
+
 
         // OBTENER SUBCATEGORIA EMPLEO
         $subEmpleo = DB::table('ad_subcategories')
@@ -32,20 +34,18 @@ class AdFieldSeeder extends Seeder
             foreach ($jobFields as $field) {
                 DB::table('fields_subcategory_ads')->insert([
                     'ad_subcategories_id' => $subEmpleo->id,
-                    'name' => $field,
-                    'type' => 'string',
+                    'name' => $field['name'],
+                    'type' => $field['type'],
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
             }
         }
 
-        // ============================================
         // CAMPOS GENÉRICOS — AGRUPADOS POR CATEGORÍA
-        // ============================================
         $categorySubFields = [
 
-            // ---------- Comprar / Traspaso ----------
+            // Comprar / Traspaso
             "Comprar / Traspaso" => [
                 "Inmobiliaria" => ["Metros Cuadrados", "Baños", "Cuartos", "Antigüedad"],
                 "Vehiculos" => ["Marca", "Modelo", "Año", "Kilometraje"],
@@ -58,7 +58,7 @@ class AdFieldSeeder extends Seeder
                 "Otros Inmuebles" => ["Descripción Detallada"],
             ],
 
-            // ---------- Alquileres / Anticresis ----------
+            // Alquileres / Anticresis
             "Alquileres / Anticresis" => [
                 "Inmobiliaria" => ["Metros Cuadrados", "Baños", "Cuartos", "Antigüedad"],
                 "Vehiculos" => ["Marca", "Modelo", "Año", "Kilometraje"],
@@ -70,7 +70,7 @@ class AdFieldSeeder extends Seeder
                 "Otros Inmuebles" => ["Descripción Detallada"],
             ],
 
-            // ---------- Servicios ----------
+            // Servicios
             "Servicios" => [
                 "Oficios" => ["Tipo de Servicio", "Experiencia", "Disponibilidad"],
                 "Profesionales" => ["Profesión", "Especialidad", "Experiencia"],
@@ -78,9 +78,7 @@ class AdFieldSeeder extends Seeder
             ],
         ];
 
-        // ============================================
         // ASIGNAR CAMPOS A CADA SUBCATEGORIA
-        // ============================================
         foreach ($categorySubFields as $categoryName => $subcategories) {
 
             $category = DB::table('ad_categories')

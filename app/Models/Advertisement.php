@@ -26,6 +26,8 @@ class Advertisement extends Model
         'urgent_price',
         'featured_publication',
         'featured_price',
+        'premiere_publication',
+        'premiere_price',
         'status',
         'receipt_type',
         'dni',

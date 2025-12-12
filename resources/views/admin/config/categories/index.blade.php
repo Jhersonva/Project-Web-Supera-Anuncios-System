@@ -13,47 +13,64 @@
 
     <h4 class="fw-bold mb-3 text-center">Administración de Categorías</h4>
 
-    <div class="text-center mb-4">
-        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalAddCategory">
+    <div class="d-flex justify-content-center gap-3 mb-4 flex-wrap">
+        <!-- Botón Nueva Categoría -->
+        <button class="btn btn-danger"
+            data-bs-toggle="modal"
+            data-bs-target="#modalAddCategory">
             <i class="fa-solid fa-plus"></i> Nueva Categoría
+        </button>
+        <!-- Botón Configuración de Precios -->
+        <button class="btn btn-dark"
+            data-bs-toggle="collapse"
+            data-bs-target="#priceCards">
+            <i class="fa-solid fa-gear me-1"></i>
+            Configuración de Precios
         </button>
     </div>
 
-    <div class="d-flex justify-content-end mb-3">
-        <div class="card p-3" style="width: 260px;">
-            <h6 class="fw-bold">Precio de Publicación Urgente</h6>
+    <div id="priceCards" class="collapse">
 
-            <form action="{{ route('admin.config.urgent-price.update') }}" method="POST">
-                @csrf
+        <div class="d-flex justify-content-center gap-4 mb-4 flex-wrap">
 
-                <input type="number"
-                    step="0.01"
-                    name="urgent_price"
-                    class="form-control mb-2"
-                    value="{{ $urgentPrice }}">
+            <!-- CARD 1 -->
+            <div class="card p-3 shadow-sm" style="width: 260px; border-radius: 12px;">
+                <h6 class="fw-bold mb-3">Publicación Urgente</h6>
 
-                <button class="btn btn-danger btn-sm w-100">Actualizar</button>
-            </form>
+                <form action="{{ route('admin.config.urgent-price.update') }}" method="POST">
+                    @csrf
+                    <input type="number" step="0.01" name="urgent_price"
+                        class="form-control mb-2" value="{{ $urgentPrice }}">
+                    <button class="btn btn-danger btn-sm w-100">Actualizar</button>
+                </form>
+            </div>
+
+            <!-- CARD 2 -->
+            <div class="card p-3 shadow-sm" style="width: 260px; border-radius: 12px;">
+                <h6 class="fw-bold mb-3">Publicación Destacada</h6>
+
+                <form action="{{ route('admin.config.featured-price.update') }}" method="POST">
+                    @csrf
+                    <input type="number" step="0.01" name="featured_price"
+                        class="form-control mb-2" value="{{ $featuredPrice }}">
+                    <button class="btn btn-danger btn-sm w-100">Actualizar</button>
+                </form>
+            </div>
+
+            <!-- CARD 3 -->
+            <div class="card p-3 shadow-sm" style="width: 260px; border-radius: 12px;">
+                <h6 class="fw-bold mb-3">Publicación Estreno</h6>
+
+                <form action="{{ route('admin.config.premiere-price.update') }}" method="POST">
+                    @csrf
+                    <input type="number" step="0.01" name="premiere_price"
+                        class="form-control mb-2" value="{{ $premierePrice }}">
+                    <button class="btn btn-danger btn-sm w-100">Actualizar</button>
+                </form>
+            </div>
+
         </div>
-    </div>
 
-    <div class="d-flex justify-content-end mb-3">
-        <div class="card p-3" style="width: 260px;">
-            <h6 class="fw-bold">Precio de Publicación Destacada</h6>
-
-            <form action="{{ route('admin.config.featured-price.update') }}" method="POST">
-                @csrf
-
-                <input 
-                    type="number" 
-                    step="0.01"
-                    name="featured_price"
-                    class="form-control mb-2"
-                    value="{{ $featuredPrice }}">
-
-                <button class="btn btn-danger btn-sm w-100">Actualizar</button>
-            </form>
-        </div>
     </div>
 
     @foreach ($categories as $category)

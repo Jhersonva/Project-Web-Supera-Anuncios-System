@@ -259,6 +259,16 @@ function renderAds(data) {
         </nav>`;
     }
 
+    // ESTRENO
+    if (data.premiere?.data?.length > 0) {
+        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">🔥 Anuncios en Estreno</h5>`;
+        data.premiere.data.forEach(ad => container.innerHTML += createAdCard(ad));
+
+        container.innerHTML += `<nav class="mt-2 d-flex justify-content-center">
+            ${renderPagination(data.premiere, 'premiere')}
+        </nav>`;
+    }
+
     // NORMALES
     if (data.normal.data.length > 0) {
         container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">📌 Otros Anuncios</h5>`;
@@ -327,22 +337,27 @@ function createAdCard(ad){
     <div class="col-12 col-md-6 col-lg-4">
         <div class="ad-card-horizontal">
 
-            <div class="ad-banner">
+            <div class="position-relative">
+
+                <img src="${img}" class="w-100 home-card-img">
 
                 <!-- DESTACADO -->
                 ${ad.featured_publication == 1 ? `
-                    <div class="badge-destacado">
-                        DESTACADO
-                    </div>
+                    <div class="badge-destacado">DESTACADO</div>
                 ` : ''}
 
-                <!-- URGENTE (EL TUYO, SIN CAMBIOS) -->
+                <!-- URGENTE -->
                 ${ad.urgent_publication == 1 ? `
                     <div class="badge-urgente">URGENTE</div>
                 ` : ''}
 
-                <img src="${img}" alt="Imagen del anuncio">
-            </div>
+                <!-- ESTRENO -->
+                ${ad.premiere_publication == 1 ? `
+                    <div class="badge-estreno">ESTRENO</div>
+                ` : ''}
+
+        </div>
+
 
             <div class="ad-content">
 
@@ -400,7 +415,7 @@ function createAdCard(ad){
     </div>`;
 }
 
-// --- Acción VER ---
+// -Acción VER
 function handleVer(url) {
     if (!isAuthenticated) {
         requireLogin("ver", { url });
@@ -409,7 +424,7 @@ function handleVer(url) {
     window.location.href = url;
 }
 
-// --- Acción WHATSAPP ---
+// Acción WHATSAPP 
 function handleWhatsapp(numero, titulo) {
     if (!isAuthenticated) {
         requireLogin("whatsapp", { numero, titulo });
@@ -418,7 +433,7 @@ function handleWhatsapp(numero, titulo) {
     abrirWhatsapp(numero, titulo);
 }
 
-// --- Acción LLAMAR ---
+// Acción LLAMAR
 function handleLlamada(numero) {
     if (!isAuthenticated) {
         requireLogin("llamar", { numero });
@@ -596,7 +611,24 @@ document.addEventListener("DOMContentLoaded", () => {
         filter: drop-shadow(0 0 2px rgba(255,255,255,0.7));
     }
 
-   /* === CARD HORIZONTAL PREMIUM === */
+    /* CINTA ESTRENO (izquierda, MISMA POSICIÓN Y TAMAÑO QUE URGENTE) */
+    .badge-estreno {
+        position: absolute;
+        top: 15px;
+        left: -63px;
+        background: #ffa726;
+        color: white;
+        padding: 6px 60px;      
+        font-size: 14px;      
+        font-weight: bold;
+        text-transform: uppercase;
+        transform: rotate(-45deg); 
+        z-index: 25;
+        box-shadow: 0 0 6px rgba(0,0,0,0.3);
+        pointer-events: none;
+    }
+
+   /* CARD HORIZONTAL PREMIUM */
 
     .ad-card-horizontal {
         display: flex;
@@ -618,7 +650,7 @@ document.addEventListener("DOMContentLoaded", () => {
     /* Banner panorámico */
     .ad-banner {
         width: 100%;
-        height: 220px;  /* AUMENTADO para mostrar mejor la imagen */
+        height: 220px; 
         overflow: hidden;
         background: #f3f3f3;
     }
@@ -626,8 +658,8 @@ document.addEventListener("DOMContentLoaded", () => {
     .ad-banner img {
         width: 100%;
         height: 100%;
-        object-fit: contain; /* <-- NO recorta la imagen */
-        background-color: #f3f3f3; /* si la imagen no llena todo, se ve elegante */
+        object-fit: contain; 
+        background-color: #f3f3f3; 
     }
 
     /* Contenido del anuncio */
@@ -694,7 +726,7 @@ document.addEventListener("DOMContentLoaded", () => {
         gap: 4px;
     }
 
-    /* === RESPONSIVE === */
+    /* RESPONSIVE */
     @media (max-width: 768px) {
         .ad-banner {
             height: 260px; 
@@ -708,4 +740,22 @@ document.addEventListener("DOMContentLoaded", () => {
             font-size: 20px;
         }
     }
+
+    /* ESTANDARIZAR LAS IMÁGENES DEL HOME */
+    .home-card-img {
+        width: 100%;
+        height: 400px;       
+        object-fit: cover;   
+        object-position: center;
+        border-bottom: 1px solid #eee;
+        background-color: #f3f3f3;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+        .home-card-img {
+            height: 260px;
+        }
+    }
+
 </style>

@@ -24,6 +24,8 @@ return new class extends Migration {
             $table->decimal('urgent_price', 10, 2)->nullable();
             $table->boolean('featured_publication')->default(false); 
             $table->decimal('featured_price', 10, 2)->nullable(); 
+            $table->boolean('premiere_publication')->default(false);
+            $table->decimal('premiere_price', 10, 2)->nullable();
             $table->enum('status', ['pendiente', 'publicado', 'rechazado', 'expirado'])->default('pendiente');
             $table->enum('receipt_type', ['boleta', 'factura'])->nullable();
             $table->string('dni')->nullable();

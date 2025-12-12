@@ -151,6 +151,37 @@
                     </small>
                 </div>
 
+                <div class="field-card d-none" id="premiereContainer">
+                    <label class="fw-semibold">¿Publicación estreno?</label>
+
+                    <div class="form-check form-switch">
+                        <input 
+                            class="form-check-input" 
+                            type="checkbox" 
+                            id="premiere_publication_switch"
+                        >
+
+                        <input 
+                            type="hidden" 
+                            name="premiere_publication" 
+                            id="premiere_publication" 
+                            value="0"
+                        >
+
+                        <label class="form-check-label" for="premiere_publication">
+                            Activar publicación estreno
+                        </label>
+                    </div>
+
+                    <small class="text-muted">
+                        Esta opción se muestra solo para categorías de tipo inmueble.
+                    </small>
+
+                    <small class="text-danger fw-bold mt-1 d-block">
+                        Precio de publicación estreno: S/. {{ number_format($premierePrice, 2) }}
+                    </small>
+                </div>
+
                 {{-- RESUMEN DE COSTO Y SALDO --}}
                 <div class="field-card d-none" id="summaryContainer">
                     <h5 class="fw-bold mb-3">Resumen de Pago</h5>
@@ -219,16 +250,11 @@
                     </div>
 
                     <button type="button" id="confirmReceiptBtn"
-                        class="btn btn-primary w-100 mt-3 d-none">
-                        Confirmar y Descargar Comprobante
+                        class="btn btn-danger w-100 mt-3 d-none">
+                        Enviar Solicitud de Anuncio y Descargar Comprobante
                     </button>
 
                 </div>
-
-                <!-- BOTÓN ENVIAR -->
-                <button class="btn btn-danger w-100 py-2 fw-semibold mt-3 d-none" id="submitBtn">
-                    Enviar Solicitud de Anuncio
-                </button>
             </form>
         </div>
 
@@ -243,6 +269,7 @@
 
     </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
 
@@ -254,7 +281,7 @@ let adPreview = {
     subcategory: { name: "Subcategoría" },
     contact_location: "",
     amount: "",
-    amount_visible: 1,   // MUY IMPORTANTE → visible por defecto
+    amount_visible: 1,   
     whatsapp: "",
     call_phone: "",
     urgent_publication: 0,
@@ -287,6 +314,12 @@ function createAdCard(ad) {
                 ${ad.urgent_publication == 1 ? `
                     <div class="badge-urgente">URGENTE</div>
                 ` : ''}
+
+                <!-- ESTRENO -->
+                ${ad.premiere_publication == 1 ? `
+                    <div class="badge-estreno">ESTRENO</div>
+                ` : ''}
+
             </div>
 
             <div class="card-body">     
@@ -313,19 +346,15 @@ function createAdCard(ad) {
                         <i class="fa-solid fa-eye"></i> Ver
                     </button>
 
-                    ${ad.whatsapp ? `
-                        <a href="https://wa.me/${ad.whatsapp}" target="_blank" 
-                            class="btn btn-sm btn-success">
-                            <i class="fa-brands fa-whatsapp"></i> WhatsApp
-                        </a>
-                    ` : ''}
-
-                    ${ad.call_phone ? `
-                        <a href="tel:${ad.call_phone}" 
-                            class="btn btn-sm btn-info">
-                            <i class="fa-solid fa-phone"></i> Llamar
-                        </a>
-                    ` : ''}
+                    <a href="#" 
+                        class="btn btn-sm btn-success">
+                        <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                    </a>
+                    
+                    <a href="#" 
+                        class="btn btn-sm btn-info">
+                        <i class="fa-solid fa-phone"></i> Llamar
+                    </a>
 
                     <!-- Compartir -->
                     <button class="btn btn-sm btn-secondary">
@@ -353,6 +382,7 @@ function updatePreview() {
 
         featured_publication: document.querySelector("#featured_publication")?.checked ? 1 : 0,
         urgent_publication: document.querySelector("#urgent_publication")?.checked ? 1 : 0,
+        premiere_publication: document.querySelector("#premiere_publication_switch")?.checked ? 1 : 0,
 
         subcategory: {
             name: document.querySelector("#subcategorySelect option:checked")?.textContent || "Subcategoría"
@@ -371,6 +401,11 @@ function updatePreview() {
 
     document.querySelector("#previewCard").innerHTML = createAdCard(ad);
 }
+
+document.getElementById("premiere_publication_switch")
+    .addEventListener("change", function () {
+        document.getElementById("premiere_publication").value = this.checked ? 1 : 0;
+    });
 
 document.querySelectorAll("#adForm input, #adForm textarea, #adForm select")
     .forEach(el => {
@@ -396,36 +431,63 @@ document.querySelector("input[name='images[]']").addEventListener("change", func
 
 updatePreview();
 
-
+// Seleccionar Categoria y Sub
 document.addEventListener("DOMContentLoaded", () => {
 
-    // CARGAR SUBCATEGORÍAS
-    document.getElementById('categorySelect').addEventListener('change', function () {
+    const categorySelect = document.getElementById('categorySelect');
+    const subcatSelect = document.getElementById('subcategorySelect');
+    const subcatContainer = document.getElementById('subcatContainer');
+    const premiereContainer = document.getElementById('premiereContainer');
+    const premiereSwitch = document.getElementById("premiere_publication_switch");
+    const premiereHidden = document.getElementById("premiere_publication");
+
+    if (premiereSwitch && premiereHidden) {
+        premiereSwitch.addEventListener("change", function () {
+            premiereHidden.value = this.checked ? "1" : "0";
+            console.log("PREMIERE VALUE ENVIADO:", premiereHidden.value);
+        });
+    }
+
+    // ---- CARGAR SUBCATEGORÍAS + DETECTAR CATEGORÍA ----
+    categorySelect.addEventListener('change', function () {
 
         const categoryId = this.value;
-        const subcatSelect = document.getElementById('subcategorySelect');
-        const subcatContainer = document.getElementById('subcatContainer');
 
         subcatSelect.innerHTML = "";
         subcatContainer.classList.add('d-none');
+        premiereContainer.classList.add("d-none");
 
         if (!categoryId) return;
 
-        fetch(`/advertising/my-ads/subcategories/${categoryId}`)
+        fetch(`/advertising/my-ads/subcategories-with-category/${categoryId}`)
             .then(res => res.json())
             .then(data => {
 
-                let html = `<option value="">-- Selecciona --</option>`;
+                const isProperty = data.category.is_property;
 
-                data.forEach(sub => {
-                    //html += `<option value="${sub.id}">${sub.name} (S/. ${sub.price})</option>`;
+                // Llenar subcategorías
+                let html = `<option value="">-- Selecciona --</option>`;
+                data.subcategories.forEach(sub => {
                     html += `<option value="${sub.id}">${sub.name}</option>`;
                 });
 
                 subcatSelect.innerHTML = html;
                 subcatContainer.classList.remove('d-none');
+
+                // Detectar selección de subcategoría
+                subcatSelect.onchange = function () {
+                    if (this.value && isProperty == 1) {
+                        premiereContainer.classList.remove("d-none");
+                    } else {
+                        premiereContainer.classList.add("d-none");
+                    }
+                };
             });
     });
+});
+
+
+document.addEventListener("DOMContentLoaded", () => {
 
     let subcatPrice = 0;
 
@@ -457,19 +519,42 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch(`/advertising/fields/${subcatId}`)
             .then(res => res.json())
             .then(fields => {
-                fields.forEach(f => {
-                    fieldsContainer.innerHTML += `
-                        <div class="field-card">
-                            <label class="fw-semibold">${f.name}</label>
-                            <input type="text" class="form-control" name="dynamic[${f.id}]">
-                        </div>
-                    `;
+
+                fields.forEach(field => {
+
+                    // CAMPO ESPECIAL SOLO PARA EMPLEO → "Rubro"
+                    if (field.type === 'multiple' && field.name === 'Rubro') {
+
+                        fieldsContainer.innerHTML += `
+                            <div class="field-card">
+                                <label class="fw-semibold">${field.name} (máx 4)</label>
+
+                                <div id="rubroList"></div>
+
+                                <button type="button" class="btn btn-sm btn-primary mt-2" id="addRubroBtn">
+                                    Agregar Rubro
+                                </button>
+
+                                <input type="hidden" name="dynamic[${field.id}]" id="rubroHidden">
+                            </div>
+                        `;
+
+                    } else {
+
+                        fieldsContainer.innerHTML += `
+                            <div class="field-card">
+                                <label class="fw-semibold">${field.name}</label>
+                                <input type="text" class="form-control" name="dynamic[${field.id}]">
+                            </div>
+                        `;
+                    }
                 });
-            });
-    });
+
+            })
+            .catch(err => console.error("Error cargando campos:", err));
+        });
 
     //Mostrar Monto o No
-    // Elementos
     const amountContainer = document.getElementById('amountContainer');
     const amountInput = document.getElementById('amountInput');
     const amountVisibleCheckbox = document.getElementById('amountVisibleCheckbox');
@@ -488,7 +573,6 @@ document.addEventListener("DOMContentLoaded", () => {
             amountInput.type = "number";
             amountInput.disabled = false;
 
-            // Si estaba antes como "No especificado", lo vaciamos
             if (amountInput.value === "S/ No especificado") {
                 amountInput.value = "";
             }
@@ -537,15 +621,11 @@ document.addEventListener("DOMContentLoaded", () => {
             updatePreview();
         });
 
-        // Si tu función showMainFields() muestra el amountContainer, asegúrate de
-        // reaplicar el estado (por si el usuario lo configuró antes):
-        // Llamar applyAmountVisibility cuando se quite la clase d-none:
         const observer = new MutationObserver(function(mutations) {
             mutations.forEach(mutation => {
                 if (mutation.attributeName === 'class') {
                     const hasDnone = amountContainer.classList.contains('d-none');
                     if (!hasDnone) {
-                        // reaplicar por seguridad
                         applyAmountVisibility(amountVisibleCheckbox.checked);
                     }
                 }
@@ -582,11 +662,14 @@ document.addEventListener("DOMContentLoaded", () => {
         // PRECIO URGENTE 
         let urgentPrice = {{ $urgentPrice }};
         let featuredPrice = {{ $featuredPrice }};
+        let premierePrice  = {{ $premierePrice  }};
 
         // escucha el cambio del switch de urgente
         document.getElementById("urgent_publication").addEventListener("change", updateTotalCost);
         // escucha el cambio del switch de destacado
         document.getElementById("featured_publication").addEventListener("change", updateTotalCost);
+        // escucha el cambio del switch de estreno
+        document.getElementById("premiere_publication_switch").addEventListener("change", updateTotalCost);
         // escucha cambios en días
         document.getElementById("days_active").addEventListener("input", updateTotalCost);
 
@@ -602,15 +685,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
             let total = subcatPrice * days;
 
-            // Si activó publicación urgente
+            // Urgente
             if (document.getElementById("urgent_publication").checked) {
                 total += urgentPrice;
             }
 
-            // Si activó publicación destacada
+            // Destacado
             if (document.getElementById("featured_publication").checked) {
                 total += featuredPrice;
             }
+
+            // Estreno
+            if (document.getElementById("premiere_publication_switch").checked) {
+                total += premierePrice;
+            }
+
 
             document.getElementById("totalCost").value = `S/. ${total.toFixed(2)}`;
             document.getElementById("summaryTotalCost").textContent = `S/. ${total.toFixed(2)}`;
@@ -623,7 +712,6 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('contactLocationContainer').classList.remove('d-none');
         document.getElementById('amountContainer').classList.remove('d-none');
         document.getElementById('imagesContainer').classList.remove('d-none');
-        document.getElementById('submitBtn').classList.remove('d-none');
         document.getElementById('costContainer').classList.remove('d-none');
         document.getElementById('urgentContainer').classList.remove('d-none');
         document.getElementById('featuredContainer').classList.remove('d-none');
@@ -634,9 +722,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 
-// =======================================================
+// ============================
+// SISTEMA DE RUBROS DINÁMICOS
+// ============================
+let rubroCount = 0;
+
+$(document).on("click", "#addRubroBtn", function () {
+    if (rubroCount >= 4) {
+        alert("Solo puedes agregar hasta 4 rubros.");
+        return;
+    }
+
+    rubroCount++;
+
+    $("#rubroList").append(`
+        <input type="text" class="form-control mt-2 rubroInput" placeholder="Ej: Cocinero">
+    `);
+
+    updateRubroHidden();
+});
+
+$(document).on("input", ".rubroInput", function () {
+    updateRubroHidden();
+});
+
+function updateRubroHidden() {
+    let values = [];
+
+    $(".rubroInput").each(function () {
+        if ($(this).val().trim() !== "") {
+            values.push($(this).val().trim());
+        }
+    });
+
+    $("#rubroHidden").val(values.join(", "));
+}
+
+
 // COMPROBANTE: BOLETA - FACTURA - PREVIEW - DESCARGA
-// =======================================================
 
 const receiptType = document.getElementById("receipt_type");
 const boletaFields = document.getElementById("boletaFields");
@@ -676,6 +799,7 @@ document.addEventListener("input", function (e) {
 });
 
 function updateReceiptPreview() {
+console.log("Elemento:", document.getElementById("ID_DEL_ELEMENTO"));
 
     const type = receiptType.value;
     if (!type) {
@@ -723,7 +847,7 @@ function updateReceiptPreview() {
     // Acción al confirmar comprobante
     confirmReceiptBtn.addEventListener("click", function () {
         alert("Comprobante generado y descargado correctamente.");
-        document.getElementById("submitBtn").click();
+        document.getElementById("adForm").submit();
     });
 
 </script>
@@ -784,6 +908,22 @@ function updateReceiptPreview() {
         content: "⭐";
         font-size: 14px;
         filter: drop-shadow(0 0 2px rgba(255,255,255,0.7));
+    }
+
+    /* CINTA ESTRENO (izquierda) */
+    .badge-estreno {
+        position: absolute;
+        top: 15px;
+        left: -63px;
+        background: #ffa726;
+        color: white;
+        padding: 6px 60px;
+        font-size: 14px;
+        font-weight: bold;
+        text-transform: uppercase;
+        transform: rotate(-45deg);
+        z-index: 20;
+        box-shadow: 0 0 6px rgba(0,0,0,0.3);
     }
 
     /* === CARD HORIZONTAL PREMIUM === */

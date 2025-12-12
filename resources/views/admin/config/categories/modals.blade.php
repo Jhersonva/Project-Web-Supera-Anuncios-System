@@ -15,6 +15,10 @@
                 <label class="form-label mt-3">Icono (FontAwesome)</label>
                 <input type="text" name="icon" class="form-control" required>
                 <small class="text-muted">Ejemplo: fa-car, fa-house</small>
+                <div class="form-check mt-3">
+                    <input type="checkbox" name="is_property" value="1" class="form-check-input">
+                    <label class="form-check-label">¿Es un inmueble?</label>
+                </div>
 
             </div>
             <div class="modal-footer">

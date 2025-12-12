@@ -23,9 +23,10 @@ class MyAdRequestController extends Controller
         $categories = AdCategory::all();
 
         $urgentPrice = Setting::get('urgent_publication_price', 5.00);
-        $featuredPrice  = Setting::get('featured_publication_price', 5.00);
+        $featuredPrice  = Setting::get('featured_publication_price', 3.00);
+        $premierePrice  = Setting::get('premiere_publication_price', 3.00);
 
-        return view('advertising_user.my_ads.create-my-ads', compact('categories', 'urgentPrice', 'featuredPrice'));
+        return view('advertising_user.my_ads.create-my-ads', compact('categories', 'urgentPrice', 'featuredPrice', 'premierePrice'));
     }
 
     public function show($id)
@@ -71,11 +72,18 @@ class MyAdRequestController extends Controller
         return response()->json($fields);
     }
 
+    public function categoryInfo($id)
+    {
+        return AdCategory::findOrFail($id);
+    }
+
     /**
      * Guardar y publicar el anuncio
      */
     public function store(Request $request)
     {
+        Log::info("REQUEST RAW", $request->all());
+
         $request->validate([
             'category_id' => 'required|exists:ad_categories,id',
             'subcategory_id' => 'required|exists:ad_subcategories,id',
@@ -104,9 +112,14 @@ class MyAdRequestController extends Controller
         $featuredPrice = $request->featured_publication == 1
             ? (float) Setting::get('featured_publication_price', 10.00)
             : 0;
+        
+        // Precio estreno
+        $premierePrice = $request->premiere_publication == 1
+            ? (float) Setting::get('premiere_publication_price', 0)
+            : 0;
 
         // Total final
-        $finalPrice = ($basePrice * $days) + $urgentPrice + $featuredPrice;
+       $finalPrice = ($basePrice * $days) + $urgentPrice + $featuredPrice + $premierePrice;
 
 
         // Validación de saldo
@@ -119,6 +132,12 @@ class MyAdRequestController extends Controller
         $user->save();
 
         $amount = $request->amount_visible == 1 ? $request->amount : 0;
+
+        Log::info("ANTES DE CREAR", [
+            'premiere_publication' => $request->premiere_publication,
+            'premiere_publication_bool' => $request->premiere_publication == 1 ? 1 : 0,
+            'premiere_price' => $premierePrice,
+        ]);
 
 
         // Crear ANUNCIO *PUBLICADO AUTOMÁTICAMENTE*
@@ -141,6 +160,9 @@ class MyAdRequestController extends Controller
 
             'featured_publication'  => $request->has('featured_publication'),
             'featured_price' => $featuredPrice,
+
+            'premiere_publication' => $request->premiere_publication == 1,
+            'premiere_price'       => $premierePrice,
 
             'receipt_type'          => $request->receipt_type,
             'dni'                   => $request->dni,

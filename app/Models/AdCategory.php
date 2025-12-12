@@ -9,6 +9,7 @@ class AdCategory extends Model
     protected $fillable = [
         'name',
         'icon',
+        'is_property',
     ];
 
     public function subcategories()

@@ -2,6 +2,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdCategory;
 use App\Models\AdSubcategory;
 use Illuminate\Http\Request;
 
@@ -43,4 +44,26 @@ class SubcategoryController extends Controller
 
         return back()->with('success', 'Subcategoría eliminada.');
     }
+
+    public function subcategories($categoryId)
+    {
+        return AdSubcategory::where('ad_categories_id', $categoryId)
+            ->select('id', 'name', 'price')
+            ->get();
+    }
+
+    public function subcategoriesWithCategory($id)
+    {
+        $category = AdCategory::findOrFail($id);
+
+        $subcategories = AdSubcategory::where('ad_categories_id', $id)
+            ->select('id','name','price')
+            ->get();
+
+        return response()->json([
+            'category' => $category,
+            'subcategories' => $subcategories
+        ]);
+    }
+
 }

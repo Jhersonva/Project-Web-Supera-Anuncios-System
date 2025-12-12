@@ -18,11 +18,13 @@ class CategoryController extends Controller
 
             $urgentPrice = Setting::get('urgent_publication_price', 5.00);
             $featuredPrice = Setting::get('featured_publication_price', 3.00); 
+            $premierePrice = Setting::get('premiere_publication_price', 2.00); 
 
             return view('admin.config.categories.index', [
             'categories' => AdCategory::with('subcategories.fields')->get(),
             'urgentPrice' => Setting::get('urgent_publication_price', 5.00),
-            'featuredPrice' => Setting::get('featured_publication_price', 3.00)
+            'featuredPrice' => Setting::get('featured_publication_price', 3.00),
+            'premierePrice' => Setting::get('premiere_publication_price', 2.00)
         ]);
     }
 
@@ -33,7 +35,11 @@ class CategoryController extends Controller
             'icon' => 'required'
         ]);
 
-        AdCategory::create($request->only('name', 'icon'));
+        AdCategory::create([
+            'name' => $request->name,
+            'icon' => $request->icon,
+            'is_property' => $request->has('is_property') ? 1 : 0,
+        ]);
 
         return back()->with('success', 'Categoría creada correctamente.');
     }
@@ -42,7 +48,11 @@ class CategoryController extends Controller
     {
         $category = AdCategory::findOrFail($id);
 
-        $category->update($request->only('name','icon'));
+        $category->update([
+            'name' => $request->name,
+            'icon' => $request->icon,
+            'is_property' => $request->has('is_property') ? 1 : 0,
+        ]);
 
         return back()->with('success', 'Categoría actualizada.');
     }
