@@ -12,6 +12,7 @@ use App\Models\AdvertisementImage;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class MyAdRequestController extends Controller
 {
@@ -171,6 +172,30 @@ class MyAdRequestController extends Controller
             'company_name'          => $request->company_name,
             'address'               => $request->address,
         ]);
+
+        //  GENERAR COMPROBANTE Y GUARDARLO EN public/proof_payment/
+
+        $folder = public_path('proof_payment');
+        if (!file_exists($folder)) mkdir($folder, 0777, true);
+
+        $receiptFile = "receipt_{$ad->id}.pdf";
+        $receiptPath = $folder . '/' . $receiptFile;
+
+        // Renderizar PDF usando la vista
+        $pdf = Pdf::loadView('public.pdf.receipt', [
+            'ad' => $ad,
+            'user' => $user,
+            'finalPrice' => $finalPrice
+        ]);
+
+        // Guardar PDF en el servidor
+        $pdf->save($receiptPath);
+
+        // Guardar ruta en la BD
+        $ad->update([
+            'receipt_file' => "proof_payment/{$receiptFile}"
+        ]);
+
 
         // CAMPOS DINÁMICOS
         if ($request->has('dynamic')) {

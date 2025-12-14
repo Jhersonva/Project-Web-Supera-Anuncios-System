@@ -115,6 +115,13 @@
                             <td>
                                 <div class="d-flex gap-2">
 
+                                    @if($ad->receipt_file)
+                                        <a href="{{ asset($ad->receipt_file) }}" target="_blank" class="btn btn-outline-primary">
+                                            Ver Comprobante
+                                        </a>
+                                    @endif
+
+
                                     <a href="{{ route('my-ads.show', $ad->id) }}"
                                         class="btn btn-sm btn-outline-secondary">
                                         <i class="fa-solid fa-eye"></i>

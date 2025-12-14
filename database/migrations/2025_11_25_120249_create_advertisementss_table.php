@@ -33,6 +33,7 @@ return new class extends Migration {
             $table->string('ruc')->nullable();
             $table->string('company_name')->nullable();
             $table->string('address')->nullable();
+            $table->string('receipt_file')->nullable();
             $table->timestamps();
         });
     }

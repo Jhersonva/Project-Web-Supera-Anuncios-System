@@ -27,7 +27,6 @@
         Completa la información para la publicación de tu anuncio.
     </p>
 
-    
 
     <div class="row mt-4">
 
@@ -722,9 +721,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 
-// ============================
 // SISTEMA DE RUBROS DINÁMICOS
-// ============================
 let rubroCount = 0;
 
 $(document).on("click", "#addRubroBtn", function () {
@@ -846,7 +843,9 @@ console.log("Elemento:", document.getElementById("ID_DEL_ELEMENTO"));
 
     // Acción al confirmar comprobante
     confirmReceiptBtn.addEventListener("click", function () {
-        alert("Comprobante generado y descargado correctamente.");
+        confirmReceiptBtn.disabled = true;
+        confirmReceiptBtn.textContent = "Enviando solicitud...";
+
         document.getElementById("adForm").submit();
     });
 
