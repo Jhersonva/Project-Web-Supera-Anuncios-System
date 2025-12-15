@@ -1,7 +1,8 @@
 {
   "name": "Supera Anuncios",
   "short_name": "Supera",
-  "start_url": "/",
+  "id": "/?pwa=true",
+  "start_url": "/?pwa=true",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
