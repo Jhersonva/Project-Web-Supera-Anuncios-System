@@ -186,17 +186,6 @@ class MyAdRequestController extends Controller
         // CREAR PDF REAL
         file_put_contents($receiptPath, $pdf->output());
 
-        // VERIFICACIÓN REAL
-        if (!file_exists($receiptPath)) {
-            Log::error('PDF NO CREADO', [
-                'path' => $receiptPath
-            ]);
-        } else {
-            Log::info('PDF CREADO', [
-                'path' => $receiptPath
-            ]);
-        }
-
         // Guardar ruta en BD
         $ad->update([
             'receipt_file' => "proof_payment/{$receiptFile}"

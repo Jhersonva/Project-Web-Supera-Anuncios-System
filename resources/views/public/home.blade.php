@@ -88,6 +88,25 @@
 </button>
 @endauth
 
+<div id="installBanner"
+     class="position-fixed bottom-0 start-0 end-0 bg-white border-top shadow p-3 d-none"
+     style="z-index: 1050;">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <strong>Instala Supera Anuncios</strong><br>
+            <small class="text-muted">Accede más rápido desde tu celular</small>
+        </div>
+        <div class="d-flex gap-2">
+            <button id="installBtn" class="btn btn-danger btn-sm">
+                Instalar
+            </button>
+            <button id="closeInstall" class="btn btn-outline-secondary btn-sm">
+                ✕
+            </button>
+        </div>
+    </div>
+</div>
+
 
 <script>
 
@@ -118,38 +137,38 @@ function requireLogin(action, payload = null) {
 }
 
 let deferredPrompt;
+const banner = document.getElementById('installBanner');
+const installBtn = document.getElementById('installBtn');
+const closeBtn = document.getElementById('closeInstall');
 
-const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+// Detecta si ya está instalada
+const isInstalled =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
 
-if (isMobile) {
-window.addEventListener('beforeinstallprompt', (e) => {
-e.preventDefault();
-deferredPrompt = e;
+if (!isInstalled) {
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
 
-
-    Swal.fire({
-        title: 'Instalar aplicación',
-        text: '¿Deseas instalar esta web en tu dispositivo?',
-        icon: 'info',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, instalar',
-        cancelButtonText: 'No, gracias'
-    }).then((result) => {
-        if (result.isConfirmed && deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((choiceResult) => {
-                if (choiceResult.outcome === 'accepted') {
-                    console.log('App instalada');
-                } else {
-                    console.log('App no instalada');
-                }
-                deferredPrompt = null;
-            });
-        }
+        // Mostrar banner SIEMPRE que se recargue
+        banner.classList.remove('d-none');
     });
+}
+
+installBtn?.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+
+    deferredPrompt = null;
+    banner.classList.add('d-none');
 });
 
-}
+closeBtn?.addEventListener('click', () => {
+    banner.classList.add('d-none');
+});
 
 
 let allAds = { urgent: [], normal: [] };

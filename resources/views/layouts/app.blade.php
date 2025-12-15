@@ -4,6 +4,7 @@
     <meta charset="utf-8"/>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="theme-color" content="#dc3545">
     <title>Supera Anuncios</title>
     <link rel="icon" href="{{ asset('assets/img/logo/logo-supera-anuncios.jpeg') }}" type="image/png">
 
@@ -14,7 +15,7 @@
     <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
 
     <!-- Manifest para PWA -->
-    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#3a68d6">
 </head>
 
@@ -44,8 +45,6 @@
     @else
         @include('components.navbar-bottom')
     @endif
-
-
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -121,13 +120,11 @@
 
     // Registrar el Service Worker
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-            navigator.serviceWorker.register('/service-worker.js')
-                .then(reg => console.log('Service Worker registrado', reg))
-                .catch(err => console.log('Error en registro SW', err));
-        });
+        navigator.serviceWorker.register('/service-worker.js')
+        .then(reg => console.log('Service Worker registrado', reg))
+        .catch(err => console.error('SW error', err));
     }
-</script>
+    </script>
 
 
     @stack('scripts')
