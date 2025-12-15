@@ -35,6 +35,7 @@ class Advertisement extends Model
         'ruc',
         'company_name',
         'address',
+        'receipt_file',
     ];
 
     protected $casts = [

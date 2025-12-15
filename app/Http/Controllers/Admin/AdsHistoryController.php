@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Advertisement;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 
 class AdsHistoryController extends Controller
@@ -45,21 +46,44 @@ class AdsHistoryController extends Controller
         $ad = Advertisement::with('user')->findOrFail($id);
 
         if (!$ad->user->phone) {
-            return response()->json(['error' => 'El usuario no tiene número de WhatsApp registrado.'], 400);
+            return response()->json([
+                'error' => 'El usuario no tiene número de WhatsApp registrado.'
+            ], 400);
         }
 
         $phone = $ad->user->phone;
 
+        $receiptLink = $ad->receipt_file 
+            ? asset($ad->receipt_file) 
+            : null;
+
+
         $messages = [
-            'pendiente' => "Hola {$ad->user->full_name}, tu anuncio '{$ad->title}' está en revisión y se encuentra pendiente de aprobación.",
-            'publicado' => "¡Hola {$ad->user->full_name}! Tu anuncio '{$ad->title}' ha sido aprobado y ya está publicado.",
-            'rechazado' => "Hola {$ad->user->full_name}, lamentamos informarte que tu anuncio '{$ad->title}' ha sido rechazado.",
-            'expirado'  => "Hola {$ad->user->full_name}, tu anuncio '{$ad->title}' ha expirado. Puedes renovarlo cuando desees."
+            'pendiente' => 
+                "Hola {$ad->user->full_name}, \n\n".
+                "Tu anuncio *{$ad->title}* está en revisión.",
+
+            'publicado' => 
+                "*¡Anuncio aprobado!* \n\n".
+                "Hola {$ad->user->full_name}, tu anuncio *{$ad->title}* ya está publicado.\n\n".
+                ($receiptLink 
+                    ? "*Comprobante de pago:*\n{$receiptLink}\n\n"
+                    : ""
+                ).
+                "Gracias por confiar en nosotros ",
+
+            'rechazado' => 
+                "Hola {$ad->user->full_name}, \n\n".
+                "Tu anuncio *{$ad->title}* ha sido rechazado.",
+
+            'expirado' => 
+                "Hola {$ad->user->full_name}, \n\n".
+                "Tu anuncio *{$ad->title}* ha expirado."
         ];
 
         return response()->json([
             'phone' => $phone,
-            'text'  => $messages[$status] ?? ""
+            'text'  => $messages[$status] ?? ''
         ]);
     }
 

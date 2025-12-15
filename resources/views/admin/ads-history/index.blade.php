@@ -257,6 +257,14 @@
     </div>
 </div>
 
+<script>
+function sendWhatsApp(phone, message) {
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+}
+
+</script>
+
 <style>
 @media (max-width: 768px) {
     .desktop-table { display: none !important; }

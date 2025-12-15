@@ -83,7 +83,6 @@ class MyAdRequestController extends Controller
      */
     public function store(Request $request)
     {
-        Log::info("REQUEST RAW", $request->all());
 
         $request->validate([
             'category_id' => 'required|exists:ad_categories,id',
@@ -134,12 +133,6 @@ class MyAdRequestController extends Controller
 
         $amount = $request->amount_visible == 1 ? $request->amount : 0;
 
-        Log::info("ANTES DE CREAR", [
-            'premiere_publication' => $request->premiere_publication,
-            'premiere_publication_bool' => $request->premiere_publication == 1 ? 1 : 0,
-            'premiere_price' => $premierePrice,
-        ]);
-
 
         // Crear ANUNCIO *PUBLICADO AUTOMÁTICAMENTE*
         $ad = Advertisement::create([
@@ -176,22 +169,35 @@ class MyAdRequestController extends Controller
         //  GENERAR COMPROBANTE Y GUARDARLO EN public/proof_payment/
 
         $folder = public_path('proof_payment');
-        if (!file_exists($folder)) mkdir($folder, 0777, true);
+
+        if (!file_exists($folder)) {
+            mkdir($folder, 0755, true);
+        }
 
         $receiptFile = "receipt_{$ad->id}.pdf";
-        $receiptPath = $folder . '/' . $receiptFile;
+        $receiptPath = $folder . DIRECTORY_SEPARATOR . $receiptFile;
 
-        // Renderizar PDF usando la vista
         $pdf = Pdf::loadView('public.pdf.receipt', [
             'ad' => $ad,
             'user' => $user,
             'finalPrice' => $finalPrice
         ]);
 
-        // Guardar PDF en el servidor
-        $pdf->save($receiptPath);
+        // CREAR PDF REAL
+        file_put_contents($receiptPath, $pdf->output());
 
-        // Guardar ruta en la BD
+        // VERIFICACIÓN REAL
+        if (!file_exists($receiptPath)) {
+            Log::error('PDF NO CREADO', [
+                'path' => $receiptPath
+            ]);
+        } else {
+            Log::info('PDF CREADO', [
+                'path' => $receiptPath
+            ]);
+        }
+
+        // Guardar ruta en BD
         $ad->update([
             'receipt_file' => "proof_payment/{$receiptFile}"
         ]);
