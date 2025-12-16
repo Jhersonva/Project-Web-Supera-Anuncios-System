@@ -2,8 +2,8 @@
 
     {{-- IZQUIERDA --}}
     <div class="d-flex align-items-center gap-2">
-        <img src="{{ asset('assets/icons/logo.jpg') }}" width="26">
-        <strong>Supera A.</strong>
+        {{--<img src="{{ asset('assets/icons/logo.jpg') }}" width="26">--}}
+        <strong>{{ system_company_name() }}</strong>
     </div>
 
     {{-- DERECHA --}}

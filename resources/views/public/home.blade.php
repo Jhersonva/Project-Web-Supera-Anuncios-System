@@ -8,9 +8,7 @@
 
     {{-- IMAGEN CENTRADA --}}
     <div class="text-center mb-3">
-        <img src="/assets/img/logo/logo-supera-anuncios.jpeg" 
-             alt="Banner" 
-             style="width:200px; max-width:100%; border-radius:12px;">
+        <img src="{{ system_logo() }}" alt="{{ system_company_name() }}" style="width:200px; max-width:100%; border-radius:12px;">
     </div>
 
     {{-- TEXTO CENTRADO --}}

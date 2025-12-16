@@ -28,6 +28,7 @@ use App\Http\Controllers\Admin\UrgentPriceController;
 use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\FeaturedPriceController;
 use App\Http\Controllers\Admin\PremierePriceController;
+use App\Http\Controllers\Admin\SystemSettingController;
 
 
 /*
@@ -290,7 +291,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         Route::post('/config/featured-price/update', [FeaturedPriceController::class, 'update'])->name('admin.config.featured-price.update');
         Route::post('/config/premiere-price/update', [PremierePriceController::class, 'update'])->name('admin.config.premiere-price.update');
 
-
         // Administracion de categorias
         Route::get('/config/categorias', [CategoryController::class, 'index'])->name('admin.config.categories');
         Route::post('/config/categorias/store', [CategoryController::class, 'store'])->name('admin.config.categories.store');
@@ -334,6 +334,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         Route::get('/config/payment-methods/edit/{id}', [PaymentMethodController::class, 'edit'])->name('admin.config.payment_methods.edit');
         Route::put('/config/payment-methods/update/{id}', [PaymentMethodController::class, 'update'])->name('admin.config.payment_methods.update');
         Route::delete('/config/payment-methods/delete/{id}', [PaymentMethodController::class, 'destroy'])->name('admin.config.payment_methods.delete');
+
+        // Configuración del sistema 
+        Route::get('/config/system', [SystemSettingController::class, 'edit'])->name('admin.config.system');
+        Route::put('/config/system', [SystemSettingController::class, 'update'])->name('admin.config.system.update');
     
     //Historial de Anuncios
     Route::get('/anuncios/historial', [AdsHistoryController::class, 'index'])->name('admin.ads-history.index');

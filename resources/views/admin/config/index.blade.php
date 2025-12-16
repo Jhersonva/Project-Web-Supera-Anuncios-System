@@ -174,6 +174,41 @@
             </div>
         </div>
         @endif
+
+        {{-- SOLO ADMIN (1): Configuración General del Sistema --}}
+        @if($role == 1)
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 p-3 mb-4" style="border-radius: 16px;">
+
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-dark text-white p-3 rounded-circle me-3"
+                        style="width: 55px; height: 55px; display:flex; justify-content:center; align-items:center;">
+                        <i class="fa-solid fa-gear fa-lg"></i>
+                    </div>
+
+                    <div>
+                        <h5 class="fw-bold m-0">Configuración del Sistema</h5>
+                        <small class="text-muted">
+                            Datos generales, logo y presentación
+                        </small>
+                    </div>
+                </div>
+
+                <p class="text-secondary mb-3">
+                    Administra el nombre del sistema, descripción general y el logo principal
+                    que se mostrará en todo el sistema.
+                </p>
+
+                <a href="{{ route('admin.config.system') }}"
+                class="btn btn-dark w-100 fw-semibold py-2">
+                    Administrar configuración
+                    <i class="fa-solid fa-chevron-right ms-2"></i>
+                </a>
+
+            </div>
+        </div>
+        @endif
+
     </div>
 </div>
 @endsection

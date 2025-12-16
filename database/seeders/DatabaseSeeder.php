@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             AdSubcategorySeeder::class,
             AdFieldSeeder::class,
             PaymentMethodSeeder::class,
+            SystemSettingsSeeder::class,
         ]);
     }
 }

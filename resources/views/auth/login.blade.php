@@ -9,6 +9,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{{ asset('css/auth.css') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="icon" href="{{ system_logo() }}" type="image/png">
 </head>
 <body>
 
@@ -22,8 +23,12 @@
     <h2 class="fw-bold mb-3 text-center">Bienvenido de nuevo</h2>
 
     <div class="text-center mb-3">
+      {{--
+      
       <img src="{{ asset('assets/icons/logo.jpg') }}" width="80" class="rounded-3 mb-2">
-      <h6 class="fw-bold">VIVA ANUNCIOS!</h6>
+      <h6 class="fw-bold">VIVA ANUNCIOS!</h6>-->
+      --}}
+      <img src="{{ system_logo() }}" alt="{{ system_company_name() }}" width="90" class="rounded-3 mb-2">
     </div>
 
     <form id="loginForm" class="w-100">
