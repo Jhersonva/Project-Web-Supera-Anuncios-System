@@ -11,7 +11,7 @@ class AdFieldSeeder extends Seeder
     {
         // SUBCATEGORÍA: EMPLEO (CATEGORÍA: EMPLEOS)
         $jobFields = [
-            ['name' => "Rubro", 'type' => 'multiple'], 
+            //['name' => "Rubro", 'type' => 'multiple'], 
             ['name' => "Razon Social", 'type' => 'string'],
             ['name' => "Cargo", 'type' => 'string'],
             ['name' => "Funciones", 'type' => 'string'],

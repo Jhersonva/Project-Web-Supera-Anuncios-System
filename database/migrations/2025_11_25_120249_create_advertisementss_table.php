@@ -26,8 +26,16 @@ return new class extends Migration {
             $table->decimal('featured_price', 10, 2)->nullable(); 
             $table->boolean('premiere_publication')->default(false);
             $table->decimal('premiere_price', 10, 2)->nullable();
+            $table->boolean('semi_new_publication')->default(false);
+            $table->decimal('semi_new_price', 10, 2)->nullable();
+            $table->boolean('new_publication')->default(false);
+            $table->decimal('new_price', 10, 2)->nullable();
+            $table->boolean('available_publication')->default(false);
+            $table->decimal('available_price', 10, 2)->nullable();
+            $table->boolean('top_publication')->default(false);
+            $table->decimal('top_price', 10, 2)->nullable();
             $table->enum('status', ['pendiente', 'publicado', 'rechazado', 'expirado'])->default('pendiente');
-            $table->enum('receipt_type', ['boleta', 'factura'])->nullable();
+            $table->enum('receipt_type', ['boleta', 'factura', 'nota_venta'])->nullable();
             $table->string('dni')->nullable();
             $table->string('full_name')->nullable();
             $table->string('ruc')->nullable();

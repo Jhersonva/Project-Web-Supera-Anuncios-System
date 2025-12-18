@@ -13,25 +13,25 @@ class AdCategorySeeder extends Seeder
             'empleos' => [
                 'name' => 'Empleos',
                 'icon' => 'fa-briefcase',
-                'is_property' => 0,
+                //'is_premiere' => 0,
             ],
 
             'comprar' => [
                 'name' => 'Comprar / Traspaso',
                 'icon' => 'fa-cart-shopping',
-                'is_property' => 1,
+                //'is_premiere' => 1,
             ],
 
             'alquiler' => [
                 'name' => 'Alquileres / Anticresis',
                 'icon' => 'fa-key',
-                'is_property' => 1,
+                //'is_premiere' => 1,
             ],
 
             'servicios' => [
                 'name' => 'Servicios',
                 'icon' => 'fa-screwdriver-wrench',
-                'is_property' => 0,
+                //'is_premiere' => 0,
             ]
         ];
 
@@ -39,7 +39,7 @@ class AdCategorySeeder extends Seeder
             DB::table('ad_categories')->insert([
                 'name'        => $data['name'],
                 'icon'        => $data['icon'],
-                'is_property' => $data['is_property'],
+                //'is_premiere' => $data['is_premiere'],
                 'created_at'  => now(),
                 'updated_at'  => now(),
             ]);

@@ -169,7 +169,7 @@ closeBtn?.addEventListener('click', () => {
 });
 
 
-let allAds = { urgent: [], normal: [] };
+//let allAds = { urgent: [], normal: [] };
 
  function loadSubcategories() {
     fetch('/api/subcategories')
@@ -258,7 +258,7 @@ function renderAds(data) {
 
     // DESTACADOS
     if (data.featured.data.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">⭐ Anuncios Destacados</h5>`;
+        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Anuncios Destacados</h5>`;
         data.featured.data.forEach(ad => container.innerHTML += createAdCard(ad));
 
         container.innerHTML += `<nav class="mt-2 d-flex justify-content-center">
@@ -268,7 +268,7 @@ function renderAds(data) {
 
     // URGENTES
     if (data.urgent.data.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">🚨 Anuncios Urgentes</h5>`;
+        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Anuncios Urgentes</h5>`;
         data.urgent.data.forEach(ad => container.innerHTML += createAdCard(ad));
 
         container.innerHTML += `<nav class="mt-2 d-flex justify-content-center">
@@ -278,7 +278,7 @@ function renderAds(data) {
 
     // ESTRENO
     if (data.premiere?.data?.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">🔥 Anuncios en Estreno</h5>`;
+        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Anuncios en Estreno</h5>`;
         data.premiere.data.forEach(ad => container.innerHTML += createAdCard(ad));
 
         container.innerHTML += `<nav class="mt-2 d-flex justify-content-center">
@@ -286,9 +286,33 @@ function renderAds(data) {
         </nav>`;
     }
 
+    // SEMI-NUEVO
+    if (data.semi_new?.data?.length > 0) {
+        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Semi-Nuevos</h5>`;
+        data.semi_new.data.forEach(ad => container.innerHTML += createAdCard(ad));
+    }
+
+    // NUEVOS
+    if (data.new?.data?.length > 0) {
+        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Nuevos</h5>`;
+        data.new.data.forEach(ad => container.innerHTML += createAdCard(ad));
+    }
+
+    // DISPONIBLES
+    if (data.available?.data?.length > 0) {
+        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Disponibles</h5>`;
+        data.available.data.forEach(ad => container.innerHTML += createAdCard(ad));
+    }
+
+    // TOP
+    if (data.top?.data?.length > 0) {
+        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Top</h5>`;
+        data.top.data.forEach(ad => container.innerHTML += createAdCard(ad));
+    }
+
     // NORMALES
     if (data.normal.data.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">📌 Otros Anuncios</h5>`;
+        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Otros Anuncios</h5>`;
         data.normal.data.forEach(ad => container.innerHTML += createAdCard(ad));
 
         container.innerHTML += `<nav class="mt-2 d-flex justify-content-center">
@@ -358,29 +382,35 @@ function createAdCard(ad){
 
                 <img src="${img}" class="w-100 home-card-img">
 
-                <!-- DESTACADO -->
-                ${ad.featured_publication == 1 ? `
-                    <div class="badge-destacado">DESTACADO</div>
-                ` : ''}
-
-                <!-- URGENTE -->
-                ${ad.urgent_publication == 1 ? `
-                    <div class="badge-urgente">URGENTE</div>
-                ` : ''}
-
-                <!-- ESTRENO -->
-                ${ad.premiere_publication == 1 ? `
-                    <div class="badge-estreno">ESTRENO</div>
-                ` : ''}
+                ${ad.urgent_publication == 1 ? `<div class="badge-urgente">URGENTE</div>` : ''}
+                ${ad.premiere_publication == 1 ? `<div class="badge-estreno">ESTRENO</div>` : ''}
+                ${ad.semi_new_publication ? `<div class="badge-seminew">SEMI-NUEVO</div>` : ''}
+                ${ad.new_publication ? `<div class="badge-new">NUEVO</div>` : ''}
+                ${ad.top_publication ? `<div class="badge-top">TOP</div>` : ''}
 
         </div>
 
 
             <div class="ad-content">
 
-                <h3 class="ad-title">${ad.title.substring(0, 70)}...</h3>
+               ${ad.available_publication ? `
+                    <div class="d-flex justify-content-center mb-1">
+                        <div class="badge-available-center">DISPONIBLE</div>
+                    </div>
+                ` : ''}
 
-                <p class="ad-desc">${ad.description.substring(0, 140)}...</p>
+                <h3 class="ad-title">
+                    ${ad.featured_publication == 1 ? `<span class="star-destacado">⭐</span>` : ''}
+                    <span class="ad-title-text">${ad.title}</span>
+
+                    <!-- Compartir -->
+                    <button class="btn btn-sm btn-secondary ms-auto"
+                        onclick='shareAd(${JSON.stringify(ad).replace(/"/g,"&quot;")})'>
+                        <i class="fa-solid fa-share-nodes"></i>
+                    </button>
+                </h3>
+
+                <p class="ad-desc">${ad.description}</p>
 
                 <div class="ad-tags">
                     <span class="ad-badge"><i class="fa-solid fa-tag"></i> ${subcategory}</span>
@@ -411,13 +441,6 @@ function createAdCard(ad){
                     <button class="btn btn-sm btn-info"
                         onclick="handleLlamada('${ad.call_phone}')">
                         <i class="fa-solid fa-phone"></i> Llamar
-                    </button>
-
-
-                    <!-- Compartir -->
-                    <button class="btn btn-sm btn-secondary"
-                        onclick='shareAd(${JSON.stringify(ad).replace(/"/g,"&quot;")})'>
-                        <i class="fa-solid fa-share"></i> Compartir
                     </button>
 
                 </div>
@@ -573,76 +596,112 @@ document.addEventListener("DOMContentLoaded", () => {
 
     .badge-urgente {
         position: absolute;
-        top: 15px;
-        right: -63px;        
+        top: 8px;
+        right: 8px;
         background: red;
         color: white;
-        padding: 6px 60px;   
-        font-size: 14px;
-        font-weight: bold;
+        padding: 3px 8px;
+        font-size: 11px;
+        font-weight: 600;
         text-transform: uppercase;
-        transform: rotate(45deg);
+        border-radius: 3px;
         z-index: 20;
-        box-shadow: 0 0 6px rgba(0,0,0,0.3);
-        pointer-events: none;  
-    }
-
-    .badge-urgente span {
-        position: absolute;
-        top: -50px;  
-        right: -3px; 
-        color: white;
-        font-size: 13px;
-        font-weight: bold;
-        transform: rotate(45deg); 
-        text-transform: uppercase;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.25);
     }
 
     .ad-banner {
         position: relative;
     }
 
-    .badge-destacado {
-        position: absolute;
-        bottom: 12px;
-        left: 12px;
-        background: linear-gradient(135deg, #f7d458, #e0b743);
-        color: #4a3a00;
-        padding: 6px 16px;
-        font-size: 13px;
-        font-weight: 700;
-        border-radius: 10px;
+    .ad-title {
         display: flex;
         align-items: center;
         gap: 6px;
-        box-shadow: 0 3px 8px rgba(0,0,0,0.25);
-        z-index: 20;
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        backdrop-filter: blur(2px);
+        font-weight: 600;
+        margin-bottom: 6px;
     }
 
-    /* Icono estrella más elegante */
-    .badge-destacado::before {
-        content: "⭐";
-        font-size: 14px;
-        filter: drop-shadow(0 0 2px rgba(255,255,255,0.7));
+    /* Estrella destacada */
+    .star-destacado {
+        font-size: 16px;
+        color: #ffc107;
+        filter: drop-shadow(0 0 2px rgba(255, 193, 7, 0.6));
+        flex-shrink: 0;
     }
 
     /* CINTA ESTRENO (izquierda, MISMA POSICIÓN Y TAMAÑO QUE URGENTE) */
     .badge-estreno {
         position: absolute;
-        top: 15px;
-        left: -63px;
+        top: 8px;
+        left: 8px;
         background: #ffa726;
         color: white;
-        padding: 6px 60px;      
-        font-size: 14px;      
-        font-weight: bold;
+        padding: 3px 8px;
+        font-size: 11px;
+        font-weight: 600;
         text-transform: uppercase;
-        transform: rotate(-45deg); 
-        z-index: 25;
-        box-shadow: 0 0 6px rgba(0,0,0,0.3);
-        pointer-events: none;
+        border-radius: 3px;
+        z-index: 20;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    }
+
+    /**/
+    .badge-seminew {
+        position: absolute;
+        bottom: 8px;
+        left: 8px;
+        background: #6d4c41;
+        color: #fff;
+        padding: 3px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 4px;
+    }
+
+    .badge-new {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        background: #2e7d32;
+        color: #fff;
+        padding: 3px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 4px;
+    }
+
+    .badge-available-center {
+        display: inline-block;
+        margin: 0 auto 6px auto;
+        background: #0288d1;
+        color: #fff;
+        padding: 4px 10px;
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 4px;
+        text-align: center;
+    }
+
+    .badge-top {
+        position: absolute;
+        top: 8px;
+        right: 50%;
+        transform: translateX(50%);
+        background: #8e24aa;
+        color: #fff;
+        padding: 3px 10px;
+        font-size: 11px;
+        font-weight: 700;
+        border-radius: 20px;
+    }
+
+    /*Solo una linea en la card de descripcion*/
+    .ad-desc {
+        display: -webkit-box;
+        -webkit-line-clamp: 1;  
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
    /* CARD HORIZONTAL PREMIUM */

@@ -30,17 +30,18 @@
     </div>
 
     <div id="priceCards" class="collapse">
-
         <div class="d-flex justify-content-center gap-4 mb-4 flex-wrap">
 
             <!-- CARD 1 -->
             <div class="card p-3 shadow-sm" style="width: 260px; border-radius: 12px;">
                 <h6 class="fw-bold mb-3">Publicación Urgente</h6>
 
-                <form action="{{ route('admin.config.urgent-price.update') }}" method="POST">
+                <form action="{{ route('admin.config.label-price.update') }}" method="POST">
                     @csrf
-                    <input type="number" step="0.01" name="urgent_price"
-                        class="form-control mb-2" value="{{ $urgentPrice }}">
+                    <input type="hidden" name="key" value="urgent_publication_price">
+                    <input type="number" step="0.01" name="price"
+                        class="form-control mb-2"
+                        value="{{ $urgentPrice }}">
                     <button class="btn btn-danger btn-sm w-100">Actualizar</button>
                 </form>
             </div>
@@ -49,10 +50,12 @@
             <div class="card p-3 shadow-sm" style="width: 260px; border-radius: 12px;">
                 <h6 class="fw-bold mb-3">Publicación Destacada</h6>
 
-                <form action="{{ route('admin.config.featured-price.update') }}" method="POST">
+                <form action="{{ route('admin.config.label-price.update') }}" method="POST">
                     @csrf
-                    <input type="number" step="0.01" name="featured_price"
-                        class="form-control mb-2" value="{{ $featuredPrice }}">
+                    <input type="hidden" name="key" value="featured_publication_price">
+                    <input type="number" step="0.01" name="price" 
+                        class="form-control mb-2"
+                        value="{{ $featuredPrice }}">
                     <button class="btn btn-danger btn-sm w-100">Actualizar</button>
                 </form>
             </div>
@@ -61,16 +64,73 @@
             <div class="card p-3 shadow-sm" style="width: 260px; border-radius: 12px;">
                 <h6 class="fw-bold mb-3">Publicación Estreno</h6>
 
-                <form action="{{ route('admin.config.premiere-price.update') }}" method="POST">
+                <form action="{{ route('admin.config.label-price.update') }}" method="POST">
                     @csrf
-                    <input type="number" step="0.01" name="premiere_price"
-                        class="form-control mb-2" value="{{ $premierePrice }}">
+                    <input type="hidden" name="key" value="premiere_publication_price">
+                    <input type="number" step="0.01" name="price" 
+                        class="form-control mb-2"
+                        value="{{ $premierePrice }}">
+                    <button class="btn btn-danger btn-sm w-100">Actualizar</button>
+                </form>
+            </div>
+
+            <!-- CARD 4 -->
+            <div class="card p-3 shadow-sm" style="width:260px; border-radius:12px;">
+                <h6 class="fw-bold mb-3">Etiqueta Seminuevo</h6>
+
+                <form action="{{ route('admin.config.label-price.update') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="key" value="semi_new_publication_price">
+                    <input type="number" step="0.01" name="price" 
+                        class="form-control mb-2"
+                        value="{{ $semiNewPrice }}">
+                    <button class="btn btn-danger btn-sm w-100">Actualizar</button>
+                </form>
+            </div>
+
+            <!-- CARD 5 -->
+            <div class="card p-3 shadow-sm" style="width:260px; border-radius:12px;">
+                <h6 class="fw-bold mb-3">Etiqueta Nuevo</h6>
+
+                <form action="{{ route('admin.config.label-price.update') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="key" value="new_publication_price">
+                    <input type="number" step="0.01" name="price" 
+                        class="form-control mb-2"
+                        value="{{ $newPrice }}">
+                    <button class="btn btn-danger btn-sm w-100">Actualizar</button>
+                </form>
+            </div>
+
+            <!-- CARD 6-->
+            <div class="card p-3 shadow-sm" style="width:260px; border-radius:12px;">
+                <h6 class="fw-bold mb-3">Etiqueta Disponible</h6>
+
+                <form action="{{ route('admin.config.label-price.update') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="key" value="available_publication_price">
+                    <input type="number" step="0.01" name="price" 
+                        class="form-control mb-2"
+                        value="{{ $availablePrice }}">
+                    <button class="btn btn-danger btn-sm w-100">Actualizar</button>
+                </form>
+            </div>
+
+            <!-- CARD 7-->
+            <div class="card p-3 shadow-sm" style="width:260px; border-radius:12px;">
+                <h6 class="fw-bold mb-3">Etiqueta Top</h6>
+
+                <form action="{{ route('admin.config.label-price.update') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="key" value="top_publication_price">
+                    <input type="number" step="0.01" name="price" 
+                        class="form-control mb-2"
+                        value="{{ $topPrice }}">
                     <button class="btn btn-danger btn-sm w-100">Actualizar</button>
                 </form>
             </div>
 
         </div>
-
     </div>
 
     @foreach ($categories as $category)
@@ -87,11 +147,19 @@
 
                     <div>
                         <button class="btn btn-sm btn-outline-secondary"
-                                data-bs-toggle="modal"
-                                data-bs-target="#modalEditCategory"
-                                data-id="{{ $category->id }}"
-                                data-name="{{ $category->name }}"
-                                data-icon="{{ $category->icon }}">
+                            data-bs-toggle="modal"
+                            data-bs-target="#modalEditCategory"
+                            data-id="{{ $category->id }}"
+                            data-name="{{ $category->name }}"
+                            data-icon="{{ $category->icon }}"
+                            data-is_urgent="{{ $category->is_urgent }}"
+                            data-is_premiere="{{ $category->is_premiere }}"
+                            data-is_featured="{{ $category->is_featured }}"
+                            data-is_semi_new="{{ $category->is_semi_new }}"
+                            data-is_new="{{ $category->is_new }}"
+                            data-is_available="{{ $category->is_available }}"
+                            data-is_top="{{ $category->is_top }}"
+                        >
                             <i class="fa-solid fa-pen"></i>
                         </button>
 
@@ -241,13 +309,29 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener("DOMContentLoaded", () => {
 
     // Editar Categoría
-    $('#modalEditCategory').on('show.bs.modal', function(e){
+    $('#modalEditCategory').on('show.bs.modal', function (e) {
         const btn = $(e.relatedTarget);
+
         $('#editCategoryId').val(btn.data('id'));
         $('#editCategoryName').val(btn.data('name'));
         $('#editCategoryIcon').val(btn.data('icon'));
 
-       $('#formEditCategory').attr('action',
+        const flags = [
+            'is_urgent',
+            'is_premiere',
+            'is_featured',
+            'is_semi_new',
+            'is_new',
+            'is_available',
+            'is_top'
+        ];
+
+        flags.forEach(flag => {
+            $('#edit_' + flag).prop('checked', btn.data(flag) == 1);
+        });
+
+        $('#formEditCategory').attr(
+            'action',
             `/admin/config/categorias/update/${btn.data('id')}`
         );
     });

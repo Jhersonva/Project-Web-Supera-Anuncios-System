@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use App\Models\Advertisement;
+
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\ChatController;
 
@@ -24,10 +26,8 @@ use App\Http\Controllers\Admin\AdsHistoryController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\CashBoxController;
-use App\Http\Controllers\Admin\UrgentPriceController;
+use App\Http\Controllers\Admin\LabelPriceController;
 use App\Http\Controllers\Admin\PaymentMethodController;
-use App\Http\Controllers\Admin\FeaturedPriceController;
-use App\Http\Controllers\Admin\PremierePriceController;
 use App\Http\Controllers\Admin\SystemSettingController;
 
 
@@ -44,119 +44,134 @@ Route::get('/', function () {
 
 Route::get('/api/ads', function (Request $request) {
 
-    $pageFeatured = $request->get('page_featured', 1);
-    $pageUrgent = $request->get('page_urgent', 1);
-    $pageNormal = $request->get('page_normal', 1);
-    $pagePremiere = $request->get('page_premiere', 1);
+    $pages = [
+        'featured'   => $request->get('page_featured', 1),
+        'urgent'     => $request->get('page_urgent', 1),
+        'premiere'   => $request->get('page_premiere', 1),
+        'semi_new'   => $request->get('page_semi_new', 1),
+        'new'        => $request->get('page_new', 1),
+        'available'  => $request->get('page_available', 1),
+        'top'        => $request->get('page_top', 1),
+        'normal'     => $request->get('page_normal', 1),
+    ];
 
-    $adsFeatured = \App\Models\Advertisement::where('published', 1)
+    /*
+    BASE QUERY
+    */
+    $baseQuery = Advertisement::where('published', 1)
         ->where('status', 'publicado')
-        ->where('featured_publication', 1)
         ->where('expires_at', '>=', now())
-        ->with(['category', 'subcategory', 'images'])
-        ->orderBy('created_at', 'desc')
-        ->paginate(20, ['*'], 'page_featured', $pageFeatured);
+        ->with(['user', 'category', 'subcategory', 'images'])
+        ->orderByDesc('created_at');
 
-    $adsUrgent = \App\Models\Advertisement::where('published', 1)
-        ->where('status', 'publicado')
+    /*
+    CONSULTAS POR TIPO
+    */
+    $adsFeatured = (clone $baseQuery)
+        ->where('featured_publication', 1)
+        ->paginate(20, ['*'], 'page_featured', $pages['featured']);
+
+    $adsUrgent = (clone $baseQuery)
         ->where('urgent_publication', 1)
         ->where('featured_publication', 0)
-        ->where('expires_at', '>=', now())
-        ->with(['category', 'subcategory', 'images'])
-        ->orderBy('created_at', 'desc')
-        ->paginate(20, ['*'], 'page_urgent', $pageUrgent); 
+        ->paginate(20, ['*'], 'page_urgent', $pages['urgent']);
 
-    $adsPremiere = \App\Models\Advertisement::where('published', 1)
-        ->where('status', 'publicado')
+    $adsPremiere = (clone $baseQuery)
         ->where('premiere_publication', 1)
-        ->where('featured_publication', 0)
-        ->where('urgent_publication', 0)
-        ->where('expires_at', '>=', now())
-        ->with(['category', 'subcategory', 'images'])
-        ->orderBy('created_at', 'desc')
-        ->paginate(20, ['*'], 'page_premiere', $pagePremiere);
-
-    $adsNormal = \App\Models\Advertisement::where('published', 1)
-        ->where('status', 'publicado')
         ->where('urgent_publication', 0)
         ->where('featured_publication', 0)
-        ->where('expires_at', '>=', now())
-        ->with(['category', 'subcategory', 'images'])
-        ->orderBy('created_at', 'desc')
-        ->paginate(50, ['*'], 'page_normal', $pageNormal);
+        ->paginate(20, ['*'], 'page_premiere', $pages['premiere']);
 
-    $adsFeatured->getCollection()->transform(function($ad){
-        $ad->full_url = $ad->detail_url;
+    $adsSemiNew = (clone $baseQuery)
+        ->where('semi_new_publication', 1)
+        ->paginate(20, ['*'], 'page_semi_new', $pages['semi_new']);
 
-        $date = $ad->approved_at ?: $ad->created_at;
-        $ad->time_ago = $date->locale('es')->diffForHumans();
+    $adsNew = (clone $baseQuery)
+        ->where('new_publication', 1)
+        ->paginate(20, ['*'], 'page_new', $pages['new']);
 
-        // Datos usuario
-        $ad->whatsapp = $ad->user->whatsapp ?? $ad->user->phone ?? null;
-        $ad->call_phone = $ad->user->call_phone ?? $ad->user->phone ?? null;
+    $adsAvailable = (clone $baseQuery)
+        ->where('available_publication', 1)
+        ->paginate(20, ['*'], 'page_available', $pages['available']);
 
-        // Montos
-        $ad->amount_visible = $ad->amount_visible;
-        $ad->amount = $ad->amount;
+    $adsTop = (clone $baseQuery)
+        ->where('top_publication', 1)
+        ->paginate(20, ['*'], 'page_top', $pages['top']);
 
-        return $ad;
-    });
+    /*
+    NORMALES (SIN NINGUNA ETIQUETA)
+    */
+    $adsNormal = (clone $baseQuery)
+        ->where('urgent_publication', 0)
+        ->where('featured_publication', 0)
+        ->where('premiere_publication', 0)
+        ->where('semi_new_publication', 0)
+        ->where('new_publication', 0)
+        ->where('available_publication', 0)
+        ->where('top_publication', 0)
+        ->paginate(50, ['*'], 'page_normal', $pages['normal']);
 
-    // Agregar URL completo
-    $adsUrgent->getCollection()->transform(function($ad){
-        $ad->full_url = $ad->detail_url;
+    /*
+    TRANSFORMADOR ÚNICO
+    */
+    $transform = function ($ad) {
 
-        $date = $ad->approved_at ?: $ad->created_at;
-        $ad->time_ago = $date->locale('es')->diffForHumans();
+        // URL segura
+        $ad->full_url = url('/ads/' . $ad->id);
 
-        // AGREGAR CAMPOS DEL USUARIO
-        $ad->whatsapp = $ad->user->whatsapp ?? $ad->user->phone ?? null;
-        $ad->call_phone = $ad->user->call_phone ?? $ad->user->phone ?? null;
+        // Tiempo (NO approved_at)
+        $ad->time_ago = $ad->created_at
+            ->locale('es')
+            ->diffForHumans();
 
-        $ad->amount_visible = $ad->amount_visible; 
-        $ad->amount = $ad->amount;                
+        // Usuario (user_id puede ser null)
+        $ad->whatsapp = optional($ad->user)->whatsapp
+            ?? optional($ad->user)->phone
+            ?? null;
 
-        return $ad;
-    });
+        $ad->call_phone = optional($ad->user)->call_phone
+            ?? optional($ad->user)->phone
+            ?? null;
 
-    $adsPremiere->getCollection()->transform(function($ad){
-        $ad->full_url = $ad->detail_url;
-
-        $date = $ad->approved_at ?: $ad->created_at;
-        $ad->time_ago = $date->locale('es')->diffForHumans();
-
-        $ad->whatsapp = $ad->user->whatsapp ?? $ad->user->phone ?? null;
-        $ad->call_phone = $ad->user->call_phone ?? $ad->user->phone ?? null;
-
-        $ad->amount_visible = $ad->amount_visible;
-        $ad->amount = $ad->amount;
-
-        return $ad;
-    });
-
-    $adsNormal->getCollection()->transform(function($ad){
-        $ad->full_url = $ad->detail_url;
-
-        $date = $ad->approved_at ?: $ad->created_at;
-        $ad->time_ago = $date->locale('es')->diffForHumans();
-
-        // Datos del usuario
-        $ad->whatsapp = $ad->user->whatsapp ?? $ad->user->phone ?? null;
-        $ad->call_phone = $ad->user->call_phone ?? $ad->user->phone ?? null;
-
-        // CAMPOS QUE FALTABAN
-        $ad->amount_visible = $ad->amount_visible;
-        $ad->amount = $ad->amount;
+        // Flags (para frontend)
+        $ad->urgent_publication    = (int) $ad->urgent_publication;
+        $ad->featured_publication  = (int) $ad->featured_publication;
+        $ad->premiere_publication  = (int) $ad->premiere_publication;
+        $ad->semi_new_publication  = (int) $ad->semi_new_publication;
+        $ad->new_publication       = (int) $ad->new_publication;
+        $ad->available_publication = (int) $ad->available_publication;
+        $ad->top_publication       = (int) $ad->top_publication;
 
         return $ad;
-    });
-        return response()->json([
-            'featured' => $adsFeatured,
-            'urgent' => $adsUrgent,
-            'premiere' => $adsPremiere,
-            'normal' => $adsNormal
-        ]);
-    });
+    };
+
+    foreach ([
+        $adsFeatured,
+        $adsUrgent,
+        $adsPremiere,
+        $adsSemiNew,
+        $adsNew,
+        $adsAvailable,
+        $adsTop,
+        $adsNormal
+    ] as $collection) {
+        $collection->getCollection()->transform($transform);
+    }
+
+    /*
+    RESPUESTA FINAL
+    */
+    return response()->json([
+        'featured'  => $adsFeatured,
+        'urgent'    => $adsUrgent,
+        'premiere'  => $adsPremiere,
+        'semi_new'  => $adsSemiNew,
+        'new'       => $adsNew,
+        'available' => $adsAvailable,
+        'top'       => $adsTop,
+        'normal'    => $adsNormal,
+    ]);
+});
 
 
 Route::get('/api/subcategories', function () {
@@ -199,7 +214,6 @@ Route::get('/chat/{id}/messages', [ChatController::class, 'getMessages'])
 /*
 |--------------------------------------------------------------------------
 | RUTAS DE AUTENTICACIÓN (PÚBLICAS)
-|--------------------------------------------------------------------------
 */
 Route::prefix('auth')->group(function () {
 
@@ -286,10 +300,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     // Configuración
     Route::get('/config', [ConfigController::class, 'index'])->name('admin.config');
 
-        // Administracion de categorias
-        Route::post('/config/urgent-price/update', [UrgentPriceController::class, 'update'])->name('admin.config.urgent-price.update');
-        Route::post('/config/featured-price/update', [FeaturedPriceController::class, 'update'])->name('admin.config.featured-price.update');
-        Route::post('/config/premiere-price/update', [PremierePriceController::class, 'update'])->name('admin.config.premiere-price.update');
+        // Administracion de precios de etiquetas
+        Route::post('/admin/config/label-price', [LabelPriceController::class,'update'])->name('admin.config.label-price.update');
 
         // Administracion de categorias
         Route::get('/config/categorias', [CategoryController::class, 'index'])->name('admin.config.categories');

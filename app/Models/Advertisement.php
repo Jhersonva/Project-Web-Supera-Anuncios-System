@@ -28,6 +28,14 @@ class Advertisement extends Model
         'featured_price',
         'premiere_publication',
         'premiere_price',
+        'semi_new_publication',
+        'semi_new_price',
+        'new_publication',
+        'new_price',
+        'available_publication',
+        'available_price',
+        'top_publication',
+        'top_price',
         'status',
         'receipt_type',
         'dni',
@@ -39,15 +47,33 @@ class Advertisement extends Model
     ];
 
     protected $casts = [
-        'amount'                => 'decimal:2',
-        'published'             => 'boolean',
-        'urgent_publication'    => 'boolean',
-        'urgent_price'          => 'decimal:2',
-        'featured_publication'  => 'boolean',
-        'featured_price'        => 'decimal:2',
-        'stars'                 => 'integer',
-        'days_active'           => 'integer',
-        'expires_at'            => 'datetime',
+        'amount' => 'decimal:2',
+        'published' => 'boolean',
+
+        'urgent_publication' => 'boolean',
+        'urgent_price' => 'decimal:2',
+
+        'featured_publication' => 'boolean',
+        'featured_price' => 'decimal:2',
+
+        'premiere_publication' => 'boolean',
+        'premiere_price' => 'decimal:2',
+
+        'semi_new_publication' => 'boolean',
+        'semi_new_price' => 'decimal:2',
+
+        'new_publication' => 'boolean',
+        'new_price' => 'decimal:2',
+
+        'available_publication' => 'boolean',
+        'available_price' => 'decimal:2',
+
+        'top_publication' => 'boolean',
+        'top_price' => 'decimal:2',
+
+        'stars' => 'integer',
+        'days_active' => 'integer',
+        'expires_at' => 'datetime',
     ];
 
     public function category()

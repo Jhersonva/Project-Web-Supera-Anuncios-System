@@ -16,7 +16,7 @@
 
     <div class="section box">
         <p><span class="label">ID Anuncio:</span> {{ $ad->id }}</p>
-        <p><span class="label">Usuario:</span> {{ $user->name }}</p>
+        <p><span class="label">Usuario:</span> {{ $user->full_name }}</p>
         <p><span class="label">Tipo de comprobante:</span> {{ strtoupper($ad->receipt_type) }}</p>
     </div>
 
@@ -30,6 +30,10 @@
             <p><span class="label">RUC:</span> {{ $ad->ruc }}</p>
             <p><span class="label">Razón social:</span> {{ $ad->company_name }}</p>
             <p><span class="label">Dirección:</span> {{ $ad->address }}</p>
+        @endif
+
+        @if($ad->receipt_type === 'nota_venta')
+            <p><span class="label">Nombre completo:</span> {{ $ad->full_name }}</p>
         @endif
     </div>
 

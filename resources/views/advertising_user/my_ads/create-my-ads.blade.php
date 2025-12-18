@@ -53,13 +53,22 @@
                     <select id="subcategorySelect" name="subcategory_id" class="form-select"></select>
                 </div>
 
-                {{-- LISTA DE CAMPOS DINÁMICOS --}}
-                <div id="fieldsContainer"></div>
-
                 {{-- Título --}}
                 <div class="field-card d-none" id="titleContainer">
                     <label class="fw-semibold">Título del Anuncio</label>
-                    <input type="text" class="form-control" name="title" placeholder="Ingresa un título descriptivo">
+
+                    <input type="text"
+                        class="form-control"
+                        name="title"
+                        id="titleInput"
+                        placeholder="Se busca Perforista / Ayudante de Cocina / Pintor"
+                        minlength="3"
+                        maxlength="70"
+                        required>
+
+                    <small class="text-muted">
+                        <span id="charCount">0</span>/70 caracteres
+                    </small>
                 </div>
 
                 {{-- Descripción --}}
@@ -67,6 +76,9 @@
                     <label class="fw-semibold">Descripción</label>
                     <textarea name="description" class="form-control" rows="4" placeholder="Describe tu anuncio"></textarea>
                 </div>
+
+                {{-- LISTA DE CAMPOS DINÁMICOS --}}
+                <div id="fieldsContainer"></div>
 
                 <div class="field-card d-none" id="contactLocationContainer">
                     <label class="fw-semibold">Ubicación de contacto</label>
@@ -117,13 +129,9 @@
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="urgent_publication" name="urgent_publication" value="1">
                         <label class="form-check-label" for="urgent_publication">
-                            Activar publicación urgente
+                            Activar publicación como urgente
                         </label>
                     </div>
-
-                    <small class="text-muted">
-                        Si activas esta opción, tu anuncio será marcado como "Urgente" y estara entre los primeros anuncios.
-                    </small>
 
                     <small class="text-danger fw-bold">
                         Precio por publicación urgente: S/. {{ number_format($urgentPrice, 2) }}
@@ -137,21 +145,18 @@
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="featured_publication" name="featured_publication" value="1">
                         <label class="form-check-label" for="featured_publication">
-                            Activar publicación destacada
+                            Activar publicación como destacada
                         </label>
                     </div>
-
-                    <small class="text-muted">
-                        Al activar esta opción, tu anuncio aparecerá en la sección de destacados con mayor visibilidad.
-                    </small>
-
+                    
                     <small class="text-danger fw-bold">
                         Precio por publicación destacada: S/. {{ number_format($featuredPrice, 2) }}
                     </small>
                 </div>
 
+                <!-- PUBLICACIÓN ESTRENO -->
                 <div class="field-card d-none" id="premiereContainer">
-                    <label class="fw-semibold">¿Publicación estreno?</label>
+                    <label class="fw-semibold">¿Publicación en estreno?</label>
 
                     <div class="form-check form-switch">
                         <input 
@@ -168,16 +173,88 @@
                         >
 
                         <label class="form-check-label" for="premiere_publication">
-                            Activar publicación estreno
+                            Activar publicación como estreno
                         </label>
                     </div>
 
-                    <small class="text-muted">
-                        Esta opción se muestra solo para categorías de tipo inmueble.
-                    </small>
-
                     <small class="text-danger fw-bold mt-1 d-block">
                         Precio de publicación estreno: S/. {{ number_format($premierePrice, 2) }}
+                    </small>
+                </div>
+
+                <!-- PUBLICACIÓN SEMI-NUEVO -->
+                <div class="field-card d-none" id="semiNewContainer">
+                    <label class="fw-semibold">¿Publicación seminuevo?</label>
+
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox"
+                            id="semi_new_publication"
+                            name="semi_new_publication"
+                            value="1">
+                        <label class="form-check-label" for="semi_new_publication">
+                            Activar publicación como seminuevo
+                        </label>
+                    </div>
+
+                    <small class="text-danger fw-bold mt-1 d-block">
+                        Precio publicación seminuevo: S/. {{ number_format($semiNewPrice, 2) }}
+                    </small>
+                </div>
+
+                <!-- PUBLICACIÓN SEMI-NUEVO -->
+                <div class="field-card d-none" id="newContainer">
+                    <label class="fw-semibold">¿Publicación nueva?</label>
+
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox"
+                            id="new_publication"
+                            name="new_publication"
+                            value="1">
+                        <label class="form-check-label" for="new_publication">
+                            Activar publicación como nuevo
+                        </label>
+                    </div>
+
+                    <small class="text-danger fw-bold mt-1 d-block">
+                        Precio publicación nuevo: S/. {{ number_format($newPrice, 2) }}
+                    </small>
+                </div>
+
+                <!-- PUBLICACIÓN DISPONIBLE -->
+                <div class="field-card d-none" id="availableContainer">
+                    <label class="fw-semibold">¿Publicación disponible?</label>
+
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox"
+                            id="available_publication"
+                            name="available_publication"
+                            value="1">
+                        <label class="form-check-label" for="available_publication">
+                            Activar publicación como disponible
+                        </label>
+                    </div>
+
+                    <small class="text-danger fw-bold mt-1 d-block">
+                        Precio publicación disponible: S/. {{ number_format($availablePrice, 2) }}
+                    </small>
+                </div>
+
+                <!-- PUBLICACIÓN TOP -->
+                <div class="field-card d-none" id="topContainer">
+                    <label class="fw-semibold">¿Publicación TOP?</label>
+
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox"
+                            id="top_publication"
+                            name="top_publication"
+                            value="1">
+                        <label class="form-check-label" for="top_publication">
+                             Activar publicación como TOP
+                        </label>
+                    </div>
+
+                    <small class="text-danger fw-bold mt-1 d-block">
+                        Precio publicación TOP: S/. {{ number_format($topPrice, 2) }}
                     </small>
                 </div>
 
@@ -215,9 +292,10 @@
                     <!-- Tipo de comprobante -->
                     <label class="fw-semibold mb-2">Tipo de comprobante</label>
                     <select class="form-select" name="receipt_type" id="receipt_type">
-                        <option value="">-- Selecciona --</option>
+                        <option value="">-- Sin comprobante --</option>
                         <option value="boleta">Boleta</option>
                         <option value="factura">Factura</option>
+                        <option value="nota_venta">Nota de Venta</option>
                     </select>
 
                     <!-- BOLETA -->
@@ -226,7 +304,7 @@
                         <input type="text" name="dni" class="form-control" maxlength="8">
 
                         <label class="fw-semibold mt-2">Nombre Completo</label>
-                        <input type="text" name="full_name" class="form-control">
+                        <input type="text" name="boleta_full_name" id="boleta_full_name" class="form-control">
                     </div>
 
                     <!-- FACTURA -->
@@ -241,6 +319,12 @@
                         <input type="text" name="address" class="form-control">
                     </div>
 
+                    <!-- NOTA DE VENTA -->
+                    <div id="notaVentaFields" class="mt-3 d-none">
+                        <label class="fw-semibold mt-2">Nombre Completo</label>
+                        <input type="text" name="nota_full_name" id="nota_full_name" class="form-control">
+                    </div>
+
                     <hr class="my-4">
 
                     <h5 class="fw-bold mb-2">Previsualización del Comprobante</h5>
@@ -250,7 +334,7 @@
 
                     <button type="button" id="confirmReceiptBtn"
                         class="btn btn-danger w-100 mt-3 d-none">
-                        Enviar Solicitud de Anuncio y Descargar Comprobante
+                        Enviar Solicitud de Anuncio
                     </button>
 
                 </div>
@@ -271,6 +355,21 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
+
+// CONTADOR DE CARACTERES EN TÍTULO
+const titleInput = document.getElementById('titleInput');
+const charCount = document.getElementById('charCount');
+
+titleInput.addEventListener('input', () => {
+    charCount.textContent = titleInput.value.length;
+});
+
+function safeListener(id, event, callback) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.addEventListener(event, callback);
+    }
+}
 
 // OBJETO BASE DEL PREVIEW
 let adPreview = {
@@ -302,28 +401,32 @@ function createAdCard(ad) {
                 <!-- Imagen -->
                 <img src="${img}" class="w-100" style="height:180px; object-fit:cover;">
 
-                <!-- DESTACADO -->
-                ${ad.featured_publication == 1 ? `
-                    <div class="badge-destacado">
-                        DESTACADO
-                    </div>
-                ` : ''}
-
-                <!-- URGENTE -->
-                ${ad.urgent_publication == 1 ? `
-                    <div class="badge-urgente">URGENTE</div>
-                ` : ''}
-
-                <!-- ESTRENO -->
-                ${ad.premiere_publication == 1 ? `
-                    <div class="badge-estreno">ESTRENO</div>
-                ` : ''}
+                ${ad.urgent_publication ? `<div class="badge-urgente">URGENTE</div>` : ''}
+                ${ad.premiere_publication ? `<div class="badge-estreno">ESTRENO</div>` : ''}
+                ${ad.semi_new_publication ? `<div class="badge-seminew">SEMI-NUEVO</div>` : ''}
+                ${ad.new_publication ? `<div class="badge-new">NUEVO</div>` : ''}
+                ${ad.top_publication ? `<div class="badge-top">TOP</div>` : ''}
 
             </div>
 
-            <div class="card-body">     
+            <div class="card-body"> 
+                
+                ${ad.available_publication ? `
+                    <div class="d-flex justify-content-center mb-1">
+                        <div class="badge-available-center">DISPONIBLE</div>
+                    </div>
+                ` : ''}
 
-                <h3 class="ad-title">${ad.title}</h3>
+                <h3 class="ad-title">
+                    ${ad.featured_publication == 1 ? `<span class="star-destacado">⭐</span>` : ''}
+                    ${ad.title}
+
+                    <!-- Compartir -->
+                    <button class="btn btn-sm btn-secondary ms-auto">
+                        <i class="fa-solid fa-share-nodes"></i>
+                    </button>
+                </h3>
+
                 <p class="ad-desc">${ad.description}</p>
 
                 <div class="ad-tags">
@@ -355,11 +458,6 @@ function createAdCard(ad) {
                         <i class="fa-solid fa-phone"></i> Llamar
                     </a>
 
-                    <!-- Compartir -->
-                    <button class="btn btn-sm btn-secondary">
-                        <i class="fa-solid fa-share"></i> Compartir
-                    </button>
-
                 </div>
 
             </div>
@@ -382,6 +480,10 @@ function updatePreview() {
         featured_publication: document.querySelector("#featured_publication")?.checked ? 1 : 0,
         urgent_publication: document.querySelector("#urgent_publication")?.checked ? 1 : 0,
         premiere_publication: document.querySelector("#premiere_publication_switch")?.checked ? 1 : 0,
+        semi_new_publication: document.querySelector("#semi_new_publication")?.checked ? 1 : 0,
+        new_publication: document.querySelector("#new_publication")?.checked ? 1 : 0,
+        available_publication: document.querySelector("#available_publication")?.checked ? 1 : 0,
+        top_publication: document.querySelector("#top_publication")?.checked ? 1 : 0,
 
         subcategory: {
             name: document.querySelector("#subcategorySelect option:checked")?.textContent || "Subcategoría"
@@ -436,25 +538,57 @@ document.addEventListener("DOMContentLoaded", () => {
     const categorySelect = document.getElementById('categorySelect');
     const subcatSelect = document.getElementById('subcategorySelect');
     const subcatContainer = document.getElementById('subcatContainer');
-    const premiereContainer = document.getElementById('premiereContainer');
-    const premiereSwitch = document.getElementById("premiere_publication_switch");
-    const premiereHidden = document.getElementById("premiere_publication");
 
-    if (premiereSwitch && premiereHidden) {
-        premiereSwitch.addEventListener("change", function () {
-            premiereHidden.value = this.checked ? "1" : "0";
-            console.log("PREMIERE VALUE ENVIADO:", premiereHidden.value);
-        });
-    }
+    const containers = {
+        urgent: document.getElementById('urgentContainer'),
+        featured: document.getElementById('featuredContainer'),
+        premiere: document.getElementById('premiereContainer'),
+        semi_new: document.getElementById('semiNewContainer'),
+        new: document.getElementById('newContainer'),
+        available: document.getElementById('availableContainer'),
+        top: document.getElementById('topContainer'),
+    };
 
-    // ---- CARGAR SUBCATEGORÍAS + DETECTAR CATEGORÍA ----
+    const tagMap = {
+        is_urgent: {
+            container: 'urgentContainer',
+            input: 'urgent_publication'
+        },
+        is_featured: {
+            container: 'featuredContainer',
+            input: 'featured_publication'
+        },
+        is_premiere: {
+            container: 'premiereContainer',
+            input: 'premiere_publication_switch'
+        },
+        is_semi_new: {
+            container: 'semiNewContainer',
+            input: 'semi_new_publication'
+        },
+        is_new: {
+            container: 'newContainer',
+            input: 'new_publication'
+        },
+        is_available: {
+            container: 'availableContainer',
+            input: 'available_publication'
+        },
+        is_top: {
+            container: 'topContainer',
+            input: 'top_publication'
+        }
+    };
+
     categorySelect.addEventListener('change', function () {
 
         const categoryId = this.value;
 
         subcatSelect.innerHTML = "";
         subcatContainer.classList.add('d-none');
-        premiereContainer.classList.add("d-none");
+
+        // Ocultar todo
+        Object.values(containers).forEach(c => c?.classList.add('d-none'));
 
         if (!categoryId) return;
 
@@ -462,9 +596,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(res => res.json())
             .then(data => {
 
-                const isProperty = data.category.is_property;
-
-                // Llenar subcategorías
+                // Subcategorías
                 let html = `<option value="">-- Selecciona --</option>`;
                 data.subcategories.forEach(sub => {
                     html += `<option value="${sub.id}">${sub.name}</option>`;
@@ -473,17 +605,32 @@ document.addEventListener("DOMContentLoaded", () => {
                 subcatSelect.innerHTML = html;
                 subcatContainer.classList.remove('d-none');
 
-                // Detectar selección de subcategoría
                 subcatSelect.onchange = function () {
-                    if (this.value && isProperty == 1) {
-                        premiereContainer.classList.remove("d-none");
-                    } else {
-                        premiereContainer.classList.add("d-none");
-                    }
+
+                    // Ocultar todo + resetear switches
+                    Object.values(tagMap).forEach(tag => {
+                        const c = document.getElementById(tag.container);
+                        const i = document.getElementById(tag.input);
+                        if (c) c.classList.add('d-none');
+                        if (i) i.checked = false;
+                    });
+
+                    if (!this.value) return;
+
+                    // Mostrar SOLO las etiquetas permitidas por la categoría
+                    Object.entries(tagMap).forEach(([flag, tag]) => {
+                        if (data.category[flag]) {
+                            const container = document.getElementById(tag.container);
+                            if (container) {
+                                container.classList.remove('d-none');
+                            }
+                        }
+                    });
                 };
             });
     });
 });
+
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -662,13 +809,21 @@ document.addEventListener("DOMContentLoaded", () => {
         let urgentPrice = {{ $urgentPrice }};
         let featuredPrice = {{ $featuredPrice }};
         let premierePrice  = {{ $premierePrice  }};
+        let semiNewPrice   = {{ $semiNewPrice }};
+        let newPrice       = {{ $newPrice }};
+        let availablePrice = {{ $availablePrice }};
+        let topPrice       = {{ $topPrice }};
+
 
         // escucha el cambio del switch de urgente
-        document.getElementById("urgent_publication").addEventListener("change", updateTotalCost);
-        // escucha el cambio del switch de destacado
-        document.getElementById("featured_publication").addEventListener("change", updateTotalCost);
-        // escucha el cambio del switch de estreno
-        document.getElementById("premiere_publication_switch").addEventListener("change", updateTotalCost);
+        safeListener("urgent_publication", "change", updateTotalCost);
+        safeListener("featured_publication", "change", updateTotalCost);
+        safeListener("premiere_publication_switch", "change", updateTotalCost);
+        safeListener("semi_new_publication", "change", updateTotalCost);
+        safeListener("new_publication", "change", updateTotalCost);
+        safeListener("available_publication", "change", updateTotalCost);
+        safeListener("top_publication", "change", updateTotalCost);
+
         // escucha cambios en días
         document.getElementById("days_active").addEventListener("input", updateTotalCost);
 
@@ -699,6 +854,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 total += premierePrice;
             }
 
+            // Semi-nuevo
+            if (document.getElementById("semi_new_publication")?.checked) {
+                total += semiNewPrice;
+            }
+
+            // Nuevo
+            if (document.getElementById("new_publication")?.checked) {
+                total += newPrice;
+            }
+
+            // Disponible
+            if (document.getElementById("available_publication")?.checked) {
+                total += availablePrice;
+            }
+
+            // TOP
+            if (document.getElementById("top_publication")?.checked) {
+                total += topPrice;
+            }
 
             document.getElementById("totalCost").value = `S/. ${total.toFixed(2)}`;
             document.getElementById("summaryTotalCost").textContent = `S/. ${total.toFixed(2)}`;
@@ -716,7 +890,6 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('featuredContainer').classList.remove('d-none');
         document.getElementById('summaryContainer').classList.remove('d-none');
         document.getElementById('receiptContainer').classList.remove('d-none');
-
     }
 
 });
@@ -756,7 +929,15 @@ function updateRubroHidden() {
 }
 
 
-// COMPROBANTE: BOLETA - FACTURA - PREVIEW - DESCARGA
+// COMPROBANTE: BOLETA - FACTURA - NOTA DE VENTA - PREVIEW - DESCARGA
+const notaVentaFields = document.getElementById("notaVentaFields");
+
+// Datos del usuario autenticado (Blade)
+const authUser = {
+    dni: "{{ auth()->user()->dni ?? '' }}",
+    full_name: "{{ auth()->user()->full_name ?? '' }}"
+};
+
 
 const receiptType = document.getElementById("receipt_type");
 const boletaFields = document.getElementById("boletaFields");
@@ -765,22 +946,38 @@ const receiptPreview = document.getElementById("receiptPreview");
 const confirmReceiptBtn = document.getElementById("confirmReceiptBtn");
 
 // Mostrar campos según tipo seleccionado
-receiptType.addEventListener("change", function () {
-    const type = this.value;
+document.addEventListener("DOMContentLoaded", () => {
 
-    boletaFields.classList.add("d-none");
-    facturaFields.classList.add("d-none");
-    confirmReceiptBtn.classList.add("d-none");
+    receiptType.addEventListener("change", function () {
+        const type = this.value;
 
-    if (type === "boleta") {
-        boletaFields.classList.remove("d-none");
-    }
-    if (type === "factura") {
-        facturaFields.classList.remove("d-none");
-    }
+        boletaFields.classList.add("d-none");
+        facturaFields.classList.add("d-none");
+        notaVentaFields.classList.add("d-none");
 
-    updateReceiptPreview();
+        if (type === "boleta") {
+            boletaFields.classList.remove("d-none");
+            document.getElementById("boleta_full_name").value = authUser.full_name;
+            document.querySelector("[name='dni']").value = authUser.dni;
+        }
+
+        if (type === "factura") {
+            facturaFields.classList.remove("d-none");
+        }
+
+        if (type === "nota_venta") {
+            notaVentaFields.classList.remove("d-none");
+            document.getElementById("nota_full_name").value = authUser.full_name;
+        }
+
+        confirmReceiptBtn.classList.remove("d-none");
+        updateReceiptPreview();
+    });
+
 });
+
+confirmReceiptBtn.classList.remove("d-none");
+
 
 // Actualizar preview al escribir datos
 document.addEventListener("input", function (e) {
@@ -796,7 +993,6 @@ document.addEventListener("input", function (e) {
 });
 
 function updateReceiptPreview() {
-console.log("Elemento:", document.getElementById("ID_DEL_ELEMENTO"));
 
     const type = receiptType.value;
     if (!type) {
@@ -808,7 +1004,7 @@ console.log("Elemento:", document.getElementById("ID_DEL_ELEMENTO"));
 
     if (type === "boleta") {
         const dni = document.querySelector("[name='dni']").value || "-";
-        const fullName = document.querySelector("[name='full_name']").value || "-";
+        const fullName = document.getElementById("boleta_full_name").value || "-";
 
         html += `
             <strong>DNI:</strong> ${dni}<br>
@@ -825,6 +1021,14 @@ console.log("Elemento:", document.getElementById("ID_DEL_ELEMENTO"));
             <strong>RUC:</strong> ${ruc}<br>
             <strong>Razón Social:</strong> ${company}<br>
             <strong>Dirección:</strong> ${address}<br><br>
+        `;
+    }
+
+    if (type === "nota_venta") {
+        const fullName = document.getElementById("nota_full_name").value || "-";
+
+        html += `
+            <strong>Cliente:</strong> ${fullName}<br><br>
         `;
     }
 
@@ -854,75 +1058,102 @@ console.log("Elemento:", document.getElementById("ID_DEL_ELEMENTO"));
 <style>
     .badge-urgente {
         position: absolute;
-        top: 15px;
-        right: -63px;        
+        top: 8px;
+        right: 8px;
         background: red;
         color: white;
-        padding: 6px 60px;   
-        font-size: 14px;
-        font-weight: bold;
+        padding: 3px 8px;
+        font-size: 11px;
+        font-weight: 600;
         text-transform: uppercase;
-        transform: rotate(45deg);
+        border-radius: 3px;
         z-index: 20;
-        box-shadow: 0 0 6px rgba(0,0,0,0.3);
-        pointer-events: none;  
-    }
-
-    .badge-urgente span {
-        position: absolute;
-        top: -50px;  
-        right: -3px; 
-        color: white;
-        font-size: 13px;
-        font-weight: bold;
-        transform: rotate(45deg); 
-        text-transform: uppercase;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.25);
     }
 
     .ad-banner {
         position: relative;
-    }
+    } 
 
-    .badge-destacado {
-        position: absolute;
-        bottom: 12px;
-        left: 12px;
-        background: linear-gradient(135deg, #f7d458, #e0b743);
-        color: #4a3a00;
-        padding: 6px 16px;
-        font-size: 13px;
-        font-weight: 700;
-        border-radius: 10px;
+    .ad-title {
         display: flex;
         align-items: center;
         gap: 6px;
-        box-shadow: 0 3px 8px rgba(0,0,0,0.25);
-        z-index: 20;
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        backdrop-filter: blur(2px);
+        font-weight: 600;
+        margin-bottom: 6px;
     }
 
-    /* Icono estrella más elegante */
-    .badge-destacado::before {
-        content: "⭐";
-        font-size: 14px;
-        filter: drop-shadow(0 0 2px rgba(255,255,255,0.7));
+    /* Estrella destacada */
+    .star-destacado {
+        font-size: 16px;
+        color: #ffc107;
+        filter: drop-shadow(0 0 2px rgba(255, 193, 7, 0.6));
+        flex-shrink: 0;
     }
 
-    /* CINTA ESTRENO (izquierda) */
     .badge-estreno {
         position: absolute;
-        top: 15px;
-        left: -63px;
+        top: 8px;
+        left: 8px;
         background: #ffa726;
         color: white;
-        padding: 6px 60px;
-        font-size: 14px;
-        font-weight: bold;
+        padding: 3px 8px;
+        font-size: 11px;
+        font-weight: 600;
         text-transform: uppercase;
-        transform: rotate(-45deg);
+        border-radius: 3px;
         z-index: 20;
-        box-shadow: 0 0 6px rgba(0,0,0,0.3);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    }
+
+    /**/
+    .badge-seminew {
+        position: absolute;
+        bottom: 8px;
+        left: 8px;
+        background: #6d4c41;
+        color: #fff;
+        padding: 3px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 4px;
+    }
+
+    .badge-new {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        background: #2e7d32;
+        color: #fff;
+        padding: 3px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 4px;
+    }
+
+    .badge-available-center {
+        display: inline-block;
+        margin: 0 auto 6px auto;
+        background: #0288d1;
+        color: #fff;
+        padding: 4px 10px;
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 4px;
+        text-align: center;
+    }
+
+    .badge-top {
+        position: absolute;
+        top: 8px;
+        right: 50%;
+        transform: translateX(50%);
+        background: #8e24aa;
+        color: #fff;
+        padding: 3px 10px;
+        font-size: 11px;
+        font-weight: 700;
+        border-radius: 20px;
     }
 
     /* === CARD HORIZONTAL PREMIUM === */

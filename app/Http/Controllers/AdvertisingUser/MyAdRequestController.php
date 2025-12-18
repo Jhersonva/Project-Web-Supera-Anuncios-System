@@ -23,11 +23,15 @@ class MyAdRequestController extends Controller
     {
         $categories = AdCategory::all();
 
-        $urgentPrice = Setting::get('urgent_publication_price', 5.00);
-        $featuredPrice  = Setting::get('featured_publication_price', 3.00);
-        $premierePrice  = Setting::get('premiere_publication_price', 3.00);
+        $urgentPrice = Setting::get('urgent_publication_price', 7.00);
+        $featuredPrice  = Setting::get('featured_publication_price', 6.00);
+        $premierePrice  = Setting::get('premiere_publication_price', 5.00);
+        $semiNewPrice  = Setting::get('semi_new_publication_price', 4.00);
+        $newPrice  = Setting::get('new_publication_price', 3.00);
+        $availablePrice  = Setting::get('available_publication_price', 2.00);
+        $topPrice  = Setting::get('top_publication_price', 1.00);
 
-        return view('advertising_user.my_ads.create-my-ads', compact('categories', 'urgentPrice', 'featuredPrice', 'premierePrice'));
+        return view('advertising_user.my_ads.create-my-ads', compact('categories', 'urgentPrice', 'featuredPrice', 'premierePrice', 'semiNewPrice', 'newPrice', 'availablePrice', 'topPrice'));
     }
 
     public function show($id)
@@ -82,7 +86,7 @@ class MyAdRequestController extends Controller
      * Guardar y publicar el anuncio
      */
     public function store(Request $request)
-    {
+    { 
 
         $request->validate([
             'category_id' => 'required|exists:ad_categories,id',
@@ -117,10 +121,29 @@ class MyAdRequestController extends Controller
         $premierePrice = $request->premiere_publication == 1
             ? (float) Setting::get('premiere_publication_price', 0)
             : 0;
+        
+        // Precio semi-nuevo
+        $semiNewPrice = $request->semi_new_publication == 1
+            ? (float) Setting::get('semi_new_publication_price', 0)
+            : 0;
+
+        // Precio nuevo
+        $newPrice = $request->new_publication == 1
+            ? (float) Setting::get('new_publication_price', 0)
+            : 0;
+
+        // Precio disponible
+        $availablePrice = $request->available_publication == 1
+            ? (float) Setting::get('available_publication_price', 0)
+            : 0;
+
+        // Precio TOP
+        $topPrice = $request->top_publication == 1
+            ? (float) Setting::get('top_publication_price', 0)
+            : 0;
 
         // Total final
-       $finalPrice = ($basePrice * $days) + $urgentPrice + $featuredPrice + $premierePrice;
-
+       $finalPrice = ($basePrice * $days) + $urgentPrice + $featuredPrice + $premierePrice + $semiNewPrice + $newPrice + $availablePrice + $topPrice;
 
         // Validación de saldo
         if ($user->virtual_wallet < $finalPrice) {
@@ -133,6 +156,39 @@ class MyAdRequestController extends Controller
 
         $amount = $request->amount_visible == 1 ? $request->amount : 0;
 
+        $receiptType = $request->filled('receipt_type')
+        ? $request->receipt_type
+        : 'nota_venta';
+
+        $receiptData = [
+            'receipt_type' => $receiptType,
+            'dni'          => null,
+            'ruc'          => null,
+            'company_name' => null,
+            'address'      => null,
+            'full_name'    => $user->full_name,
+        ];
+
+        // BOLETA
+        if ($receiptType === 'boleta') {
+            $receiptData['dni'] = $request->dni ?? $user->dni;
+            $receiptData['full_name'] = $request->boleta_full_name ?: $user->full_name;
+        }
+
+        // FACTURA
+        if ($receiptType === 'factura') {
+            $receiptData['ruc'] = $request->ruc;
+            $receiptData['company_name'] = $request->company_name;
+            $receiptData['address'] = $request->address;
+            $receiptData['full_name'] = $request->company_name; 
+        }
+
+        // NOTA DE VENTA (explícita o implícita)
+        if ($receiptType === 'nota_venta') {
+            $receiptData['full_name'] = filled($request->nota_full_name)
+                ? $request->nota_full_name
+                : $user->full_name;
+        }
 
         // Crear ANUNCIO *PUBLICADO AUTOMÁTICAMENTE*
         $ad = Advertisement::create([
@@ -149,21 +205,35 @@ class MyAdRequestController extends Controller
             'published'             => false,
             'status'                => 'pendiente',
 
-            'urgent_publication'    => $request->has('urgent_publication'),
+            // ===== PUBLICACIONES =====
+            'urgent_publication'    => $request->boolean('urgent_publication'),
             'urgent_price'          => $urgentPrice,
 
-            'featured_publication'  => $request->has('featured_publication'),
-            'featured_price' => $featuredPrice,
+            'featured_publication'  => $request->boolean('featured_publication'),
+            'featured_price'        => $featuredPrice,
 
-            'premiere_publication' => $request->premiere_publication == 1,
-            'premiere_price'       => $premierePrice,
+            'premiere_publication'  => $request->boolean('premiere_publication'),
+            'premiere_price'        => $premierePrice,
 
-            'receipt_type'          => $request->receipt_type,
-            'dni'                   => $request->dni,
-            'full_name'             => $request->full_name,
-            'ruc'                   => $request->ruc,
-            'company_name'          => $request->company_name,
-            'address'               => $request->address,
+            'semi_new_publication'  => $request->boolean('semi_new_publication'),
+            'semi_new_price'        => $semiNewPrice,
+
+            'new_publication'       => $request->boolean('new_publication'),
+            'new_price'             => $newPrice,
+
+            'available_publication' => $request->boolean('available_publication'),
+            'available_price'       => $availablePrice,
+
+            'top_publication'       => $request->boolean('top_publication'),
+            'top_price'             => $topPrice,
+
+            // ===== COMPROBANTE =====
+            'receipt_type' => $receiptData['receipt_type'],
+            'dni'          => $receiptData['dni'],
+            'full_name'    => $receiptData['full_name'],
+            'ruc'          => $receiptData['ruc'],
+            'company_name' => $receiptData['company_name'],
+            'address'      => $receiptData['address'],
         ]);
 
         //  GENERAR COMPROBANTE Y GUARDARLO EN public/proof_payment/

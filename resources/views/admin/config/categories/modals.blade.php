@@ -15,9 +15,38 @@
                 <label class="form-label mt-3">Icono (FontAwesome)</label>
                 <input type="text" name="icon" class="form-control" required>
                 <small class="text-muted">Ejemplo: fa-car, fa-house</small>
-                <div class="form-check mt-3">
-                    <input type="checkbox" name="is_property" value="1" class="form-check-input">
-                    <label class="form-check-label">¿Es un inmueble?</label>
+                <hr>
+                <h6 class="fw-bold">Etiquetas de la categoría</h6>
+
+                <div class="row">
+
+                    @php
+                        $labels = [
+                            'is_urgent'    => 'URGENTE',
+                            'is_premiere'  => 'ESTRENO',
+                            'is_featured'  => 'DESTACADO',
+                            'is_semi_new'  => 'SEMINUEVO',
+                            'is_new'       => 'NUEVO',
+                            'is_available' => 'DISPONIBLE',
+                            'is_top'       => 'TOP',
+                        ];
+                    @endphp
+
+                    @foreach ($labels as $field => $label)
+                        <div class="col-6 col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                    type="checkbox"
+                                    name="{{ $field }}"
+                                    value="1"
+                                    id="add_{{ $field }}">
+                                <label class="form-check-label" for="add_{{ $field }}">
+                                    {{ $label }}
+                                </label>
+                            </div>
+                        </div>
+                    @endforeach
+
                 </div>
 
             </div>
@@ -45,6 +74,29 @@
 
                 <label class="mt-3">Icono</label>
                 <input type="text" class="form-control" id="editCategoryIcon" name="icon">
+
+                <hr>
+                <h6 class="fw-bold">Etiquetas de la categoría</h6>
+
+                <div class="row">
+
+                    @foreach ($labels as $field => $label)
+                        <div class="col-6 col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                    type="checkbox"
+                                    name="{{ $field }}"
+                                    value="1"
+                                    id="edit_{{ $field }}">
+                                <label class="form-check-label" for="edit_{{ $field }}">
+                                    {{ $label }}
+                                </label>
+                            </div>
+                        </div>
+                    @endforeach
+
+                </div>
+
             </div>
 
             <div class="modal-footer">
