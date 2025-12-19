@@ -6,6 +6,8 @@ use App\Models\Advertisement;
 
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\ComplaintBookSettingController;
+use App\Http\Controllers\ComplaintController;
 
 
 use App\Http\Controllers\AdvertisingUser\AdvertisementController;
@@ -61,7 +63,7 @@ Route::get('/api/ads', function (Request $request) {
     $baseQuery = Advertisement::where('published', 1)
         ->where('status', 'publicado')
         ->where('expires_at', '>=', now())
-        ->with(['user', 'category', 'subcategory', 'images'])
+        ->with(['user', 'category', 'subcategory', 'images', 'dynamicFields.field'])
         ->orderByDesc('created_at');
 
     /*
@@ -132,6 +134,18 @@ Route::get('/api/ads', function (Request $request) {
         $ad->call_phone = optional($ad->user)->call_phone
             ?? optional($ad->user)->phone
             ?? null;
+        
+        $ad->dynamic_fields = $ad->dynamicFields
+            ->take(4)
+            ->map(function ($df) {
+            return [
+                'label' => $df->field->name ?? '',
+                'value' => $df->value
+            ];
+        })
+        ->values();
+
+        unset($ad->dynamicFields);
 
         // Flags (para frontend)
         $ad->urgent_publication    = (int) $ad->urgent_publication;
@@ -236,6 +250,9 @@ Route::prefix('auth')->group(function () {
     // Logout
     Route::post('/logout', [AuthController::class, 'logout'])
         ->name('auth.logout');
+
+    Route::get('/libro-de-reclamaciones', [ComplaintBookSettingController::class, 'publicView'])->name('public.complaint-book');
+
 });
 
 
@@ -280,6 +297,16 @@ Route::middleware(['auth'])->prefix('advertising')->group(function () {
     */
     Route::get('/profile', [UserProfileController::class, 'index'])->name('profile.index');
     Route::post('/profile/update', [UserProfileController::class, 'update'])->name('profile.update');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Configuración del libro de reclamaciones
+    |--------------------------------------------------------------------------
+    */
+    //Route::get('/complaint-book', [ComplaintBookSettingController::class, 'index'])->name('admin.config.complaint_book_settings.index');
+    //Route::put('/complaint-book', [ComplaintBookSettingController::class, 'updateView'])->name('admin.config.complaint_book_settings.update');
+    Route::get('/complaint-book', [ComplaintBookSettingController::class, 'show']);
+    Route::post('/complaints', [ComplaintController::class, 'store']);
 
 });
 
@@ -356,4 +383,30 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/ad/{id}/notify/{status}', [AdsHistoryController::class, 'notifyUser'])->name('admin.ads.notify');
     Route::post('/ad/{id}/approve', [AdsHistoryController::class, 'approve'])->name('admin.ads.approve');
     Route::post('/ad/{id}/reject', [AdsHistoryController::class, 'reject'])->name('admin.ads.reject');
+
+    // Libro de reclamaciones (configuración)
+    Route::get('/config/complaint-book',[ComplaintBookSettingController::class, 'index'])->name('admin.config.complaint_book_settings.index');
+    Route::put('/config/complaint-book',[ComplaintBookSettingController::class, 'updateView'])->name('admin.config.complaint_book_settings.update');
+    Route::get('/complaint-book', [ComplaintBookSettingController::class, 'show']);
+    Route::put('/complaint-book', [ComplaintBookSettingController::class, 'update']);
+
+    // Gestión de reclamos (admin)
+    Route::get('/complaints-management', [ComplaintController::class, 'indexView'])
+        ->name('admin.config.complaints.index');
+
+    Route::get('/complaints/{complaint}', [ComplaintController::class, 'show'])
+        ->name('admin.config.complaints.show');
+
+    Route::put('/complaints/{complaint}', [ComplaintController::class, 'update'])
+        ->name('admin.config.complaints.update');
+
+    Route::delete('/complaints/{complaint}', [ComplaintController::class, 'destroy'])
+        ->name('admin.config.complaints.destroy');
+
+
+    // CRUD reclamos
+    //Route::get('/complaints', [ComplaintController::class, 'index']);
+    //Route::get('/complaints/{complaint}', [ComplaintController::class, 'show']);
+    //Route::put('/complaints/{complaint}', [ComplaintController::class, 'update']);
+    //Route::delete('/complaints/{complaint}', [ComplaintController::class, 'destroy']);
 });

@@ -106,6 +106,7 @@
 </div>
 
 
+
 <script>
 
 const isAuthenticated = {{ auth()->check() ? 'true' : 'false' }};
@@ -412,9 +413,19 @@ function createAdCard(ad){
 
                 <p class="ad-desc">${ad.description}</p>
 
+                ${ad.dynamic_fields?.length ? `
+                    <ul class="ad-dynamic-fields mt-2">
+                        ${ad.dynamic_fields.map(f => `
+                            <li>
+                                <strong>${f.label}:</strong> ${f.value}
+                            </li>
+                        `).join("")}
+                    </ul>
+                ` : ''}
+
                 <div class="ad-tags">
                     <span class="ad-badge"><i class="fa-solid fa-tag"></i> ${subcategory}</span>
-                    <span class="ad-location"><i class="fa-solid fa-location-dot"></i> ${ad.contact_location ?? "Sin ubicación"}</span>
+                    <span class="ad-location"><i class="fa-solid fa-location-dot"></i>${ad.department && ad.province ? `${ad.department} - ${ad.province}` : 'Sin ubicación'}</span>
                 </div>
 
                 <div class="ad-price-box">
@@ -704,8 +715,34 @@ document.addEventListener("DOMContentLoaded", () => {
         text-overflow: ellipsis;
     }
 
-   /* CARD HORIZONTAL PREMIUM */
+    /* CAMPOS DINÁMICOS EN PREVIEW */
+    .ad-dynamic-fields {
+        list-style: none;
+        padding-left: 0;
+        margin: 6px 0 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        font-size: 0.75rem;
+        color: #555555;
+    }
 
+    .ad-dynamic-fields li {
+        background: #eef4ff;
+        border: 1px solid #d6e4ff;
+        border-radius: 6px;
+        padding: 3px 8px;
+        white-space: nowrap;
+        display: flex;
+        gap: 4px;
+    }
+
+    .ad-dynamic-fields li strong {
+        font-weight: 600;
+        color: #333;
+    }
+
+   /* CARD HORIZONTAL PREMIUM */
     .ad-card-horizontal {
         display: flex;
         flex-direction: column;

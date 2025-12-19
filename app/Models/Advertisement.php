@@ -16,6 +16,9 @@ class Advertisement extends Model
         'title',
         'description',
         'contact_location',
+        'department',
+        'province',
+        'district',
         'amount',
         'amount_visible',
         'days_active',
@@ -89,6 +92,11 @@ class Advertisement extends Model
     public function fields_values()
     {
         return $this->hasMany(ValueFieldAd::class, 'advertisementss_id');
+    }
+
+    public function dynamicFields()
+    {
+        return $this->hasMany(ValueFieldAd::class,'advertisementss_id')->with('field'); // relación al campo
     }
 
     public function user()

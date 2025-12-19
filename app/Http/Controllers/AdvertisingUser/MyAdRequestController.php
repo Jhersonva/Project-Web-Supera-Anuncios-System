@@ -12,6 +12,7 @@ use App\Models\AdvertisementImage;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use App\Support\AdPrices;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class MyAdRequestController extends Controller
@@ -22,6 +23,7 @@ class MyAdRequestController extends Controller
     public function create()
     {
         $categories = AdCategory::all();
+        $user = auth()->user();
 
         $urgentPrice = Setting::get('urgent_publication_price', 7.00);
         $featuredPrice  = Setting::get('featured_publication_price', 6.00);
@@ -31,7 +33,7 @@ class MyAdRequestController extends Controller
         $availablePrice  = Setting::get('available_publication_price', 2.00);
         $topPrice  = Setting::get('top_publication_price', 1.00);
 
-        return view('advertising_user.my_ads.create-my-ads', compact('categories', 'urgentPrice', 'featuredPrice', 'premierePrice', 'semiNewPrice', 'newPrice', 'availablePrice', 'topPrice'));
+        return view('advertising_user.my_ads.create-my-ads', compact('categories', 'urgentPrice', 'featuredPrice', 'premierePrice', 'semiNewPrice', 'newPrice', 'availablePrice', 'topPrice', 'user'));
     }
 
     public function show($id)
@@ -93,6 +95,9 @@ class MyAdRequestController extends Controller
             'subcategory_id' => 'required|exists:ad_subcategories,id',
             'title' => 'required|string|max:255',
             'description' => 'required|string',
+            'department' => 'nullable|string|max:255',
+            'province'   => 'nullable|string|max:255',
+            'district'   => 'nullable|string|max:255',
             'amount_visible' => 'required|in:0,1',
             'amount' => 'required_if:amount_visible,1|nullable|numeric|min:0',
             'days_active' => 'required|integer|min:1',
@@ -107,40 +112,15 @@ class MyAdRequestController extends Controller
         $subcategory = AdSubcategory::findOrFail($request->subcategory_id);
         $basePrice = (float) $subcategory->price;
 
-        // Precio urgente
-        $urgentPrice = $request->urgent_publication == 1
-            ? (float) Setting::get('urgent_publication_price', 5.00)
-            : 0;
+        $prices = AdPrices::all();
 
-        // Precio destacado
-        $featuredPrice = $request->featured_publication == 1
-            ? (float) Setting::get('featured_publication_price', 10.00)
-            : 0;
-        
-        // Precio estreno
-        $premierePrice = $request->premiere_publication == 1
-            ? (float) Setting::get('premiere_publication_price', 0)
-            : 0;
-        
-        // Precio semi-nuevo
-        $semiNewPrice = $request->semi_new_publication == 1
-            ? (float) Setting::get('semi_new_publication_price', 0)
-            : 0;
-
-        // Precio nuevo
-        $newPrice = $request->new_publication == 1
-            ? (float) Setting::get('new_publication_price', 0)
-            : 0;
-
-        // Precio disponible
-        $availablePrice = $request->available_publication == 1
-            ? (float) Setting::get('available_publication_price', 0)
-            : 0;
-
-        // Precio TOP
-        $topPrice = $request->top_publication == 1
-            ? (float) Setting::get('top_publication_price', 0)
-            : 0;
+        $urgentPrice = $request->boolean('urgent_publication') ? $prices['urgent'] : 0;
+        $featuredPrice = $request->boolean('featured_publication') ? $prices['featured'] : 0;
+        $premierePrice = $request->boolean('premiere_publication') ? $prices['premiere'] : 0;
+        $semiNewPrice = $request->boolean('semi_new_publication') ? $prices['semi_new'] : 0;
+        $newPrice = $request->boolean('new_publication') ? $prices['new'] : 0;
+        $availablePrice = $request->boolean('available_publication') ? $prices['available'] : 0;
+        $topPrice = $request->boolean('top_publication') ? $prices['top'] : 0;
 
         // Total final
        $finalPrice = ($basePrice * $days) + $urgentPrice + $featuredPrice + $premierePrice + $semiNewPrice + $newPrice + $availablePrice + $topPrice;
@@ -197,6 +177,9 @@ class MyAdRequestController extends Controller
             'user_id'               => $user->id,
             'title'                 => $request->title,
             'description'           => $request->description,
+            'department'          => $request->department,
+            'province'            => $request->province,
+            'district'            => $request->district,
             'contact_location'      => $request->contact_location,
             'amount'                => $amount,
             'amount_visible'        => $request->amount_visible,
@@ -236,8 +219,12 @@ class MyAdRequestController extends Controller
             'address'      => $receiptData['address'],
         ]);
 
-        //  GENERAR COMPROBANTE Y GUARDARLO EN public/proof_payment/
+        $user->update([
+            'whatsapp'   => $request->whatsapp,
+            'call_phone' => $request->call_phone,
+        ]);
 
+        //  GENERAR COMPROBANTE Y GUARDARLO EN public/proof_payment/
         $folder = public_path('proof_payment');
 
         if (!file_exists($folder)) {
@@ -302,15 +289,29 @@ class MyAdRequestController extends Controller
         $ad = Advertisement::with(['mainImage', 'images', 'fields_values'])->findOrFail($id);
 
         $categories = AdCategory::all();
-
         $subcategories = AdSubcategory::where('ad_categories_id', $ad->ad_categories_id)->get();
-
         $fields = FieldSubcategoryAd::where('ad_subcategories_id', $ad->ad_subcategories_id)->get();
 
-        $urgentPrice = Setting::get('urgent_publication_price', 5.00);
+        $urgentPrice     = Setting::get('urgent_publication_price', 7.00);
+        $featuredPrice   = Setting::get('featured_publication_price', 6.00);
+        $premierePrice   = Setting::get('premiere_publication_price', 5.00);
+        $semiNewPrice    = Setting::get('semi_new_publication_price', 4.00);
+        $newPrice        = Setting::get('new_publication_price', 3.00);
+        $availablePrice  = Setting::get('available_publication_price', 2.00);
+        $topPrice        = Setting::get('top_publication_price', 1.00);
 
         return view('advertising_user.my_ads.edit-my-ads', compact(
-            'ad', 'categories', 'subcategories', 'fields', 'urgentPrice'
+            'ad',
+            'categories',
+            'subcategories',
+            'fields',
+            'urgentPrice',
+            'featuredPrice',
+            'premierePrice',
+            'semiNewPrice',
+            'newPrice',
+            'availablePrice',
+            'topPrice'
         ));
     }
 
@@ -330,6 +331,9 @@ class MyAdRequestController extends Controller
 
         $amount = $request->amount_visible == 1 ? $request->amount : 0;
 
+        $days = (int) $request->days_active;
+        $expiresAt = now()->addDays($days);
+
         $ad->update([
             'ad_categories_id' => $request->category_id,
             'ad_subcategories_id' => $request->subcategory_id,
@@ -338,7 +342,16 @@ class MyAdRequestController extends Controller
             'contact_location' => $request->contact_location,
             'amount_visible' => $request->amount_visible,
             'amount' => $amount,
-            'urgent_publication' => $request->has('urgent_publication'),
+            'days_active' => $days,
+            'expires_at' => $expiresAt,
+
+            'urgent_publication'    => $request->boolean('urgent_publication'),
+            'featured_publication'  => $request->boolean('featured_publication'),
+            'premiere_publication'  => $request->boolean('premiere_publication'),
+            'semi_new_publication'  => $request->boolean('semi_new_publication'),
+            'new_publication'       => $request->boolean('new_publication'),
+            'available_publication' => $request->boolean('available_publication'),
+            'top_publication'       => $request->boolean('top_publication'),
         ]);
 
         // ACTUALIZAR CAMPOS DINÁMICOS

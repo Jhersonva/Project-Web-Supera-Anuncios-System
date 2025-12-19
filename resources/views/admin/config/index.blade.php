@@ -111,8 +111,6 @@
         </div>
         @endif
 
-
-
         {{-- ADMIN (1) Y EMPLOYEE (3): Caja --}}
         @if(in_array($role, [1, 3]))
         <!-- CARD: GESTIÓN DE CAJA -->
@@ -202,6 +200,67 @@
                 <a href="{{ route('admin.config.system') }}"
                 class="btn btn-dark w-100 fw-semibold py-2">
                     Administrar configuración
+                    <i class="fa-solid fa-chevron-right ms-2"></i>
+                </a>
+
+            </div>
+        </div>
+        @endif
+
+        {{-- ADMIN (1) Y EMPLOYEE (3): Libro de Reclamaciones --}}
+        @if(in_array($role, [1, 3]))
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 p-3 mb-4" style="border-radius: 16px;">
+
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-danger text-white p-3 rounded-circle me-3"
+                        style="width: 55px; height: 55px; display:flex; justify-content:center; align-items:center;">
+                        <i class="fa-solid fa-book fa-lg"></i>
+                    </div>
+
+                    <div>
+                        <h5 class="fw-bold m-0">Libro de Reclamaciones</h5>
+                        <small class="text-muted">Texto legal y datos de la empresa</small>
+                    </div>
+                </div>
+
+                <p class="text-secondary mb-3">
+                    Administra el texto legal y la información que verán los usuarios al enviar un reclamo.
+                </p>
+
+                <a href="{{ route('admin.config.complaint_book_settings.index') }}"
+                class="btn btn-danger w-100 fw-semibold py-2 text-white">
+                    Gestionar libro
+                    <i class="fa-solid fa-chevron-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+        @endif
+
+        {{-- ADMIN (1) Y EMPLOYEE (3): Gestión de Reclamos --}}
+        @if(in_array($role, [1, 3]))
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 p-3 mb-4" style="border-radius: 16px;">
+
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-warning text-white p-3 rounded-circle me-3"
+                        style="width: 55px; height: 55px; display:flex; justify-content:center; align-items:center;">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+
+                    <div>
+                        <h5 class="fw-bold m-0">Gestión de Reclamos</h5>
+                        <small class="text-muted">Reclamos y quejas recibidas</small>
+                    </div>
+                </div>
+
+                <p class="text-secondary mb-3">
+                    Revisa, responde, actualiza y elimina reclamos enviados por los usuarios desde aqui.
+                </p>
+
+                <a href="{{ route('admin.config.complaints.index') }}"
+                class="btn btn-warning w-100 fw-semibold py-2 text-white">
+                    Ver reclamos
                     <i class="fa-solid fa-chevron-right ms-2"></i>
                 </a>
 

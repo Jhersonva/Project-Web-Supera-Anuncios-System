@@ -17,7 +17,8 @@
     <meta name="theme-color" content="#3a68d6">
 </head>
 
-<body class="bg-light">
+<body class="bg-light d-flex flex-column min-vh-100">
+
 
     {{-- SI LA VISTA DEFINE UN NAV PERSONALIZADO, SE USA ESE --}}
     @if(View::hasSection('custom-navbar'))
@@ -27,9 +28,12 @@
         @include('components.navbar-top')
     @endif
 
-    <main class="pt-5 mt-4 mb-5">
+    <main class="flex-grow-1 pt-5 mt-4"
+        style="padding-bottom: calc(var(--bottom-nav-height) + 1rem);">
         @yield('content')
     </main>
+
+    @include('partials.footer')
 
     {{-- SI LA VISTA TIENE UN NAV INFERIOR PERSONALIZADO, MOSTRARLO --}}
     @if(View::hasSection('custom-bottom-nav'))

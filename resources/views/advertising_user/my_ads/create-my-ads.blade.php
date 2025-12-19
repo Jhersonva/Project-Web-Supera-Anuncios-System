@@ -77,6 +77,35 @@
                     <textarea name="description" class="form-control" rows="4" placeholder="Describe tu anuncio"></textarea>
                 </div>
 
+                {{-- UBICACIÓN DEL ANUNCIO --}}
+                <div class="field-card d-none" id="locationAdContainer">
+
+                    <label class="fw-semibold">Departamento</label>
+                    <input
+                        type="text"
+                        name="department"
+                        class="form-control"
+                        placeholder="Ej: Lima"
+                    >
+
+                    <label class="fw-semibold mt-2">Provincia</label>
+                    <input
+                        type="text"
+                        name="province"
+                        class="form-control"
+                        placeholder="Ej: Lima"
+                    >
+
+                    <label class="fw-semibold mt-2">Distrito</label>
+                    <input
+                        type="text"
+                        name="district"
+                        class="form-control"
+                        placeholder="Ej: San Juan de Miraflores"
+                    >
+
+                </div>
+
                 {{-- LISTA DE CAMPOS DINÁMICOS --}}
                 <div id="fieldsContainer"></div>
 
@@ -85,7 +114,30 @@
                     <input type="text" name="contact_location" class="form-control" placeholder="Ej: Lima, Perú">
                 </div>
 
-                <!-- REEMPLAZAR: div id="amountContainer" -->
+                {{-- DATOS DE CONTACTO DEL USUARIO --}}
+                <div class="field-card d-none" id="contactDataContainer">
+
+                    <label class="fw-semibold">WhatsApp</label>
+                    <input
+                        type="text"
+                        name="whatsapp"
+                        class="form-control"
+                        value="{{ $user->whatsapp }}"
+                        placeholder="Ej: +51 999 888 777"
+                    >
+
+                    <label class="fw-semibold mt-2">Teléfono de llamadas</label>
+                    <input
+                        type="text"
+                        name="call_phone"
+                        class="form-control"
+                        value="{{ $user->call_phone }}"
+                        placeholder="Ej: 01 555 4444"
+                    >
+
+                </div>
+
+                <!-- MONTO -->
                 <div class="field-card d-none" id="amountContainer">
                     <div class="d-flex justify-content-between align-items-start gap-3">
                         <div style="flex:1">
@@ -122,7 +174,7 @@
                     <input type="text" id="expiresAt" class="form-control" readonly>
                 </div>
 
-                <!-- PUBLICACIÓN URGENTE (Afuera, independiente) -->
+                <!-- PUBLICACIÓN URGENTE -->
                 <div class="field-card d-none" id="urgentContainer">
                     <label class="fw-semibold">¿Publicación urgente?</label>
 
@@ -138,7 +190,7 @@
                     </small>
                 </div>
 
-                <!-- PUBLICACIÓN DESTACADA (Afuera, independiente, igual que urgente) -->
+                <!-- PUBLICACIÓN DESTACADA -->
                 <div class="field-card d-none" id="featuredContainer">
                     <label class="fw-semibold">¿Publicación destacada?</label>
 
@@ -371,13 +423,15 @@ function safeListener(id, event, callback) {
     }
 }
 
+//    //contact_location: "",
 // OBJETO BASE DEL PREVIEW
 let adPreview = {
     images: [],
     title: "Título del anuncio",
     description: "Escribe una descripción...",
     subcategory: { name: "Subcategoría" },
-    contact_location: "",
+    department: "",
+    province: "",
     amount: "",
     amount_visible: 1,   
     whatsapp: "",
@@ -386,8 +440,36 @@ let adPreview = {
     featured_publication: 0
 };
 
+// OBTENER CAMPOS DINÁMICOS PARA PREVIEW
+function getPreviewDynamicFields(limit = 4) {
+
+    const fields = [];
+    const fieldCards = document.querySelectorAll("#fieldsContainer .field-card");
+
+    fieldCards.forEach((card, index) => {
+
+        if (index >= limit) return;
+
+        const label = card.querySelector("label")?.innerText;
+        const input = card.querySelector("input, textarea, select");
+
+        if (!label || !input) return;
+
+        const value = input.value?.trim();
+
+        if (!value) return;
+
+        fields.push({
+            label,
+            value
+        });
+    });
+
+    return fields;
+}
 
 // CREA LA CARD DE PREVISUALIZACIÓN
+//<!--<span class="ad-location"><i class="fa-solid fa-location-dot"></i> ${ad.contact_location ?? "Sin ubicación"}</span>-->
 function createAdCard(ad) {
 
     const img = ad.images.length > 0 
@@ -429,9 +511,19 @@ function createAdCard(ad) {
 
                 <p class="ad-desc">${ad.description}</p>
 
+                ${ad.dynamic_fields?.length ? `
+                    <ul class="ad-dynamic-fields mt-2">
+                        ${ad.dynamic_fields.map(f => `
+                            <li>
+                                <strong>${f.label}:</strong> ${f.value}
+                            </li>
+                        `).join("")}
+                    </ul>
+                ` : ''}
+
                 <div class="ad-tags">
                     <span class="ad-badge"><i class="fa-solid fa-tag"></i> ${ad.subcategory.name}</span>
-                    <span class="ad-location"><i class="fa-solid fa-location-dot"></i> ${ad.contact_location ?? "Sin ubicación"}</span>
+                    <span class="ad-location"><i class="fa-solid fa-location-dot"></i> ${ad.department && ad.province ? `${ad.department} - ${ad.province}` : 'Sin ubicación'}</span>
                 </div>
 
                 <div class="ad-price-box">
@@ -469,10 +561,16 @@ function createAdCard(ad) {
 //PREVIEW DEL ANUNCIO
 function updatePreview() {
 
+    const dynamicPreviewFields = getPreviewDynamicFields();
+
+
     const ad = {
         title: document.querySelector("input[name='title']")?.value || "Título del anuncio",
         description: document.querySelector("textarea[name='description']")?.value || "Descripción del anuncio...",
-        contact_location: document.querySelector("input[name='contact_location']")?.value || "Ubicación",
+        dynamic_fields: dynamicPreviewFields,
+        //contact_location: document.querySelector("input[name='contact_location']")?.value || "Ubicación",
+        department: document.querySelector("input[name='department']")?.value || "",
+        province: document.querySelector("input[name='province']")?.value || "",
 
         amount: document.querySelector("#amountInput")?.value || "",
         amount_visible: document.querySelector("#amountVisibleInput")?.value || "1",
@@ -531,6 +629,20 @@ document.querySelector("input[name='images[]']").addEventListener("change", func
 });
 
 updatePreview();
+
+// Escuchar cambios en campos dinámicos
+document.getElementById("fieldsContainer")
+    .addEventListener("input", function (e) {
+
+        if (
+            e.target.matches("input") ||
+            e.target.matches("textarea") ||
+            e.target.matches("select")
+        ) {
+            updatePreview();
+        }
+    });
+
 
 // Seleccionar Categoria y Sub
 document.addEventListener("DOMContentLoaded", () => {
@@ -641,6 +753,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('subcategorySelect').addEventListener('change', function () {
 
         const subcatId = this.value;
+        const categoryId = document.getElementById('categorySelect').value;
         const fieldsContainer = document.getElementById('fieldsContainer');
 
         fieldsContainer.innerHTML = "";
@@ -648,57 +761,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!subcatId) return;
 
-        // Obtener precio de subcategoría
-        fetch(`/advertising/my-ads/subcategories/${document.getElementById('categorySelect').value}`)
+        // OBTENER PRECIO DE SUBCATEGORÍA
+        fetch(`/advertising/my-ads/subcategories/${categoryId}`)
             .then(res => res.json())
-            .then(data => {
+            .then(subcategories => {
 
-                const selected = data.find(s => s.id == subcatId);
+                const selected = subcategories.find(s => s.id == subcatId);
+
+                if (!selected) return;
 
                 subcatPrice = parseFloat(selected.price ?? 0);
-
                 document.getElementById("pricePerDay").value = `S/. ${subcatPrice.toFixed(2)}`;
                 document.getElementById("costContainer").classList.remove("d-none");
             });
 
-        // Cargar campos dinámicos
+        // OBTENER CAMPOS DINÁMICOS (ESTO FALTABA)
         fetch(`/advertising/fields/${subcatId}`)
             .then(res => res.json())
             .then(fields => {
 
+                if (!fields.length) return;
+
                 fields.forEach(field => {
 
-                    // CAMPO ESPECIAL SOLO PARA EMPLEO → "Rubro"
-                    if (field.type === 'multiple' && field.name === 'Rubro') {
+                    let input = '';
 
-                        fieldsContainer.innerHTML += `
-                            <div class="field-card">
-                                <label class="fw-semibold">${field.name} (máx 4)</label>
+                    switch (field.type) {
+                        case 'number':
+                            input = `<input type="number" class="form-control" name="dynamic[${field.id}]">`;
+                            break;
 
-                                <div id="rubroList"></div>
+                        case 'textarea':
+                            input = `<textarea class="form-control" name="dynamic[${field.id}]" rows="3"></textarea>`;
+                            break;
 
-                                <button type="button" class="btn btn-sm btn-primary mt-2" id="addRubroBtn">
-                                    Agregar Rubro
-                                </button>
-
-                                <input type="hidden" name="dynamic[${field.id}]" id="rubroHidden">
-                            </div>
-                        `;
-
-                    } else {
-
-                        fieldsContainer.innerHTML += `
-                            <div class="field-card">
-                                <label class="fw-semibold">${field.name}</label>
-                                <input type="text" class="form-control" name="dynamic[${field.id}]">
-                            </div>
-                        `;
+                        default:
+                            input = `<input type="text" class="form-control" name="dynamic[${field.id}]">`;
                     }
-                });
 
-            })
-            .catch(err => console.error("Error cargando campos:", err));
-        });
+                    fieldsContainer.innerHTML += `
+                        <div class="field-card">
+                            <label class="fw-semibold">${field.name}</label>
+                            ${input}
+                        </div>
+                    `;
+                });
+            });
+    });
 
     //Mostrar Monto o No
     const amountContainer = document.getElementById('amountContainer');
@@ -882,7 +991,9 @@ document.addEventListener("DOMContentLoaded", () => {
     function showMainFields() {
         document.getElementById('titleContainer').classList.remove('d-none');
         document.getElementById('descriptionContainer').classList.remove('d-none');
-        document.getElementById('contactLocationContainer').classList.remove('d-none');
+        document.getElementById('locationAdContainer').classList.remove('d-none');
+        //document.getElementById('contactLocationContainer').classList.remove('d-none');
+        document.getElementById('contactDataContainer').classList.remove('d-none');
         document.getElementById('amountContainer').classList.remove('d-none');
         document.getElementById('imagesContainer').classList.remove('d-none');
         document.getElementById('costContainer').classList.remove('d-none');
@@ -893,41 +1004,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 });
-
-// SISTEMA DE RUBROS DINÁMICOS
-let rubroCount = 0;
-
-$(document).on("click", "#addRubroBtn", function () {
-    if (rubroCount >= 4) {
-        alert("Solo puedes agregar hasta 4 rubros.");
-        return;
-    }
-
-    rubroCount++;
-
-    $("#rubroList").append(`
-        <input type="text" class="form-control mt-2 rubroInput" placeholder="Ej: Cocinero">
-    `);
-
-    updateRubroHidden();
-});
-
-$(document).on("input", ".rubroInput", function () {
-    updateRubroHidden();
-});
-
-function updateRubroHidden() {
-    let values = [];
-
-    $(".rubroInput").each(function () {
-        if ($(this).val().trim() !== "") {
-            values.push($(this).val().trim());
-        }
-    });
-
-    $("#rubroHidden").val(values.join(", "));
-}
-
 
 // COMPROBANTE: BOLETA - FACTURA - NOTA DE VENTA - PREVIEW - DESCARGA
 const notaVentaFields = document.getElementById("notaVentaFields");
@@ -1154,6 +1230,33 @@ function updateReceiptPreview() {
         font-size: 11px;
         font-weight: 700;
         border-radius: 20px;
+    }
+
+    /* CAMPOS DINÁMICOS EN PREVIEW */
+    .ad-dynamic-fields {
+        list-style: none;
+        padding-left: 0;
+        margin: 6px 0 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        font-size: 0.75rem;
+        color: #555555;
+    }
+
+    .ad-dynamic-fields li {
+        background: #eef4ff;
+        border: 1px solid #d6e4ff;
+        border-radius: 6px;
+        padding: 3px 8px;
+        white-space: nowrap;
+        display: flex;
+        gap: 4px;
+    }
+
+    .ad-dynamic-fields li strong {
+        font-weight: 600;
+        color: #333;
     }
 
     /* === CARD HORIZONTAL PREMIUM === */

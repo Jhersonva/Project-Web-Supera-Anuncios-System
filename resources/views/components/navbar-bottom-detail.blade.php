@@ -1,3 +1,4 @@
+<!-- views/components/navbar-bottom.blade.php -->
 <div class="navbar-bottom-detail shadow-lg bg-white p-3 position-fixed bottom-0 start-0 end-0">
 
     <!-- BOTÓN CONTACTAR -->
