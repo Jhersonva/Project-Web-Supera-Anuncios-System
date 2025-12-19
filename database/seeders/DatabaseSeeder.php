@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
             AdFieldSeeder::class,
             PaymentMethodSeeder::class,
             SystemSettingsSeeder::class,
+            PrivacyPolicySettingSeeder::class,
+            ComplaintBookSettingSeeder::class,
         ]);
     }
 }

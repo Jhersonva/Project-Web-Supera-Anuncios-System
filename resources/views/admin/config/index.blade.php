@@ -268,6 +268,38 @@
         </div>
         @endif
 
+        {{-- ADMIN (1) Y EMPLOYEE (3): Políticas de Privacidad --}}
+        @if(in_array($role, [1, 3]))
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 p-3 mb-4" style="border-radius: 16px;">
+
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary text-white p-3 rounded-circle me-3"
+                        style="width: 55px; height: 55px; display:flex; justify-content:center; align-items:center;">
+                        <i class="fa-solid fa-shield-halved fa-lg"></i>
+                    </div>
+
+                    <div>
+                        <h5 class="fw-bold m-0">Políticas de Privacidad</h5>
+                        <small class="text-muted">Contenido legal y restricciones</small>
+                    </div>
+                </div>
+
+                <p class="text-secondary mb-3">
+                    Administra el texto de privacidad, contenido explícito y validación de edad.
+                </p>
+
+                <a href="{{ route('admin.config.privacy-policy.index') }}"
+                class="btn btn-primary w-100 fw-semibold py-2 text-white">
+                    Gestionar políticas
+                    <i class="fa-solid fa-chevron-right ms-2"></i>
+                </a>
+
+            </div>
+        </div>
+        @endif
+
+
     </div>
 </div>
 @endsection

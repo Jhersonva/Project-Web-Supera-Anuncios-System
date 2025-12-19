@@ -1,3 +1,4 @@
+<!-- views/layouts/app.blade.php -->
 <!doctype html>
 <html lang="es">
 <head>
