@@ -10,6 +10,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ComplaintBookSettingController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\PrivacyPolicyAcceptanceController;
+use App\Http\Controllers\PublicAdController;
 
 
 use App\Http\Controllers\AdvertisingUser\AdvertisementController;
@@ -43,10 +44,14 @@ use App\Http\Controllers\Admin\PrivacyPolicySettingController;
 */
 
 // Página principal
+
 Route::get('/', function () {
     $policy = PrivacyPolicySetting::first();
     return view('public.home', compact('policy'));
 })->name('home');
+/*Route::get('/', function () {
+    return view('public.home');
+    })->name('home');*/
 
 Route::get('/api/ads', function (Request $request) {
 
@@ -266,6 +271,8 @@ Route::post('/privacy-policy/accept', [PrivacyPolicyAcceptanceController::class,
 Route::post('/privacy-policy/reject', [PrivacyPolicyAcceptanceController::class, 'reject'])
     ->name('privacy-policy.reject');
 
+Route::get('/', [PublicAdController::class, 'index'])->name('home');
+
 /*
 |--------------------------------------------------------------------------
 | RUTAS PRIVADAS — SOLO advertising_user
@@ -313,8 +320,6 @@ Route::middleware(['auth'])->group(function () {
         | Configuración del libro de reclamaciones
         |--------------------------------------------------------------------------
         */
-        //Route::get('/complaint-book', [ComplaintBookSettingController::class, 'index'])->name('admin.config.complaint_book_settings.index');
-        //Route::put('/complaint-book', [ComplaintBookSettingController::class, 'updateView'])->name('admin.config.complaint_book_settings.update');
         Route::get('/complaint-book', [ComplaintBookSettingController::class, 'show']);
         Route::post('/complaints', [ComplaintController::class, 'store']);
 

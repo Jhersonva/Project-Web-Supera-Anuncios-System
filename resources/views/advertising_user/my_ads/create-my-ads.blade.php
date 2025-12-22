@@ -63,11 +63,11 @@
                         id="titleInput"
                         placeholder="Se busca Perforista / Ayudante de Cocina / Pintor"
                         minlength="3"
-                        maxlength="70"
+                        maxlength="55"
                         required>
 
                     <small class="text-muted">
-                        <span id="charCount">0</span>/70 caracteres
+                        <span id="charCount">0</span>/55 caracteres
                     </small>
                 </div>
 
@@ -106,13 +106,13 @@
 
                 </div>
 
+                <div class="field-card d-none" id="contactLocationContainer">
+                    <label class="fw-semibold">Dirección</label>
+                    <input type="text" name="contact_location" class="form-control" placeholder="Ej: Av. Mantaro 123">
+                </div>
+
                 {{-- LISTA DE CAMPOS DINÁMICOS --}}
                 <div id="fieldsContainer"></div>
-
-                <div class="field-card d-none" id="contactLocationContainer">
-                    <label class="fw-semibold">Ubicación de contacto</label>
-                    <input type="text" name="contact_location" class="form-control" placeholder="Ej: Lima, Perú">
-                </div>
 
                 {{-- DATOS DE CONTACTO DEL USUARIO --}}
                 <div class="field-card d-none" id="contactDataContainer">
@@ -142,8 +142,21 @@
                     <div class="d-flex justify-content-between align-items-start gap-3">
                         <div style="flex:1">
                             <label class="fw-semibold">Monto / Precio / Sueldo *</label>
+
+                            <!-- Input -->
                             <input type="number" step="0.01" min="0" name="amount" id="amountInput" class="form-control" required>
-                            <small id="amountHelp" class="text-muted">Si marcas "Ocultar monto", el público verá "No especificado".</small>
+
+                            <!-- Opciones de texto por defecto -->
+                            <select id="amountTextSelect" class="form-select mt-2 d-none">
+                                <option value="">Selecciona texto por defecto...</option>
+                                <option value="Sueldo a tratar">(Sueldo a tratar)</option>
+                                <option value="Sueldo por comisiones">(Sueldo por comisiones)</option>
+                                <option value="No especificado">(No especificado)</option>
+                            </select>
+
+                            <small id="amountHelp" class="text-muted">
+                                Si marcas "Ocultar monto", el público verá el texto seleccionado o "No especificado".
+                            </small>
                         </div>
 
                         <div style="min-width:170px; display:flex; align-items:center; justify-content:center;">
@@ -154,7 +167,7 @@
                         </div>
                     </div>
 
-                    <!-- hidden field para enviar al backend si quiere controlarlo -->
+                    <!-- hidden field para enviar al backend -->
                     <input type="hidden" name="amount_visible" id="amountVisibleInput" value="1">
                 </div>
 
@@ -483,22 +496,27 @@ function createAdCard(ad) {
                 <!-- Imagen -->
                 <img src="${img}" class="w-100" style="height:180px; object-fit:cover;">
 
-                ${ad.urgent_publication ? `<div class="badge-urgente">URGENTE</div>` : ''}
-                ${ad.premiere_publication ? `<div class="badge-estreno">ESTRENO</div>` : ''}
+                ${ad.top_publication
+                    ? `<div class="badge-top">TOP</div>`
+                    : ad.urgent_publication
+                        ? `<div class="badge-urgente">URGENTE</div>`
+                        : ''
+                }
+
+                ${ad.premiere_publication
+                    ? `<div class="badge-estreno">ESTRENO</div>`
+                    : ad.available_publication
+                        ? `<div class="badge-available">DISPONIBLE</div>`
+                        : ''
+                }
+
                 ${ad.semi_new_publication ? `<div class="badge-seminew">SEMI-NUEVO</div>` : ''}
-                ${ad.new_publication ? `<div class="badge-new">NUEVO</div>` : ''}
-                ${ad.top_publication ? `<div class="badge-top">TOP</div>` : ''}
+                ${ad.new_publication ? `<div class="badge-new">NUEVO</div>` : ''}         
 
             </div>
 
             <div class="card-body"> 
                 
-                ${ad.available_publication ? `
-                    <div class="d-flex justify-content-center mb-1">
-                        <div class="badge-available-center">DISPONIBLE</div>
-                    </div>
-                ` : ''}
-
                 <h3 class="ad-title">
                     ${ad.featured_publication == 1 ? `<span class="star-destacado">⭐</span>` : ''}
                     ${ad.title}
@@ -528,7 +546,10 @@ function createAdCard(ad) {
 
                 <div class="ad-price-box">
                     <p class="fw-bold ${ad.amount_visible == 0 ? 'text-secondary' : 'text-success'}">
-                        ${ad.amount_visible == 1 ? `S/. ${ad.amount}` : "S/ No especificado"}
+                        ${ad.amount_visible == 1 
+                            ? `S/. ${ad.amount}` 
+                            : `S/. ${ad.amount && ad.amount !== "" ? ad.amount : "No especificado"}`
+                        }
                     </p>   
                 </div>
 
@@ -548,6 +569,10 @@ function createAdCard(ad) {
                     <a href="#" 
                         class="btn btn-sm btn-info">
                         <i class="fa-solid fa-phone"></i> Llamar
+                    </a>
+
+                    <a href="#" class="btn btn-sm btn-danger">
+                        <i class="fa-solid fa-comments"></i> Chat
                     </a>
 
                 </div>
@@ -814,80 +839,66 @@ document.addEventListener("DOMContentLoaded", () => {
     const amountInput = document.getElementById('amountInput');
     const amountVisibleCheckbox = document.getElementById('amountVisibleCheckbox');
     const amountVisibleInput = document.getElementById('amountVisibleInput');
+    const amountTextSelect = document.getElementById('amountTextSelect');
 
-    // Función para actualizar el comportamiento del input
+    // Función para actualizar el input
     function updateAmountInputVisibility(visible) {
-
-        if (!visible) {
-            // Ocultar monto
-            amountInput.type = "text";
-            amountInput.value = "S/ No especificado";
-            amountInput.disabled = true;
-        } else {
-            // Mostrar monto
+        if (visible) {
             amountInput.type = "number";
             amountInput.disabled = false;
-
-            if (amountInput.value === "S/ No especificado") {
-                amountInput.value = "";
+            amountInput.required = true;
+            amountTextSelect.classList.add('d-none');
+            // Restaurar valor temporal si existe
+            if (amountInput.dataset.tmpVal) {
+                amountInput.value = amountInput.dataset.tmpVal;
+                delete amountInput.dataset.tmpVal;
             }
-        }
-    }
+        } else {
+            amountInput.dataset.tmpVal = amountInput.value;
+            amountInput.value = "";
+            amountInput.type = "text";
+            amountInput.disabled = true;
+            amountInput.required = false;
+            amountTextSelect.classList.remove('d-none');
 
-    // Asegurarnos que existen (evita errores si no se cargó el campo aún)
-    if (amountContainer && amountInput && amountVisibleCheckbox && amountVisibleInput) {
-
-        // Función para aplicar estado (llamada al cambiar o al mostrar campos)
-        function applyAmountVisibility(visible) {
-            if (visible) {
-                amountInput.removeAttribute('disabled');
-                amountInput.required = true;
-                amountInput.placeholder = '';
-                amountVisibleInput.value = "1";
-                // si antes habías guardado un valor temporal en data, restáuralo
-                if (amountInput.dataset.tmpVal) {
-                    amountInput.value = amountInput.dataset.tmpVal;
-                    delete amountInput.dataset.tmpVal;
-                }
+            // Usar valor seleccionado del select por defecto
+            if (amountTextSelect.value) {
+                amountInput.value = amountTextSelect.value;
             } else {
-                // guardamos temporalmente el valor para no perderlo
-                amountInput.dataset.tmpVal = amountInput.value;
-                amountInput.value = '';
-                amountInput.setAttribute('disabled', 'disabled');
-                amountInput.required = false;
-                amountInput.placeholder = 'No especificado';
-                amountVisibleInput.value = "0";
+                amountInput.value = "(No especificado)";
             }
         }
-
-        // Inicializar según estado actual del checkbox
-        applyAmountVisibility(amountVisibleCheckbox.checked);
-
-        // Escuchar cambios del checkbox
-        amountVisibleCheckbox.addEventListener('change', function () {
-            const visible = this.checked;
-            // Guardar en el input oculto (backend)
-            amountVisibleInput.value = visible ? 1 : 0;
-            // Guardar en la data del preview
-            adPreview.amount_visible = visible ? 1 : 0;
-            // Actualizar visualmente el input del formulario
-            updateAmountInputVisibility(visible);
-            // Actualizar tarjeta del preview
-            updatePreview();
-        });
-
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(mutation => {
-                if (mutation.attributeName === 'class') {
-                    const hasDnone = amountContainer.classList.contains('d-none');
-                    if (!hasDnone) {
-                        applyAmountVisibility(amountVisibleCheckbox.checked);
-                    }
-                }
-            });
-        });
-        observer.observe(amountContainer, { attributes: true });
     }
+
+    // Inicializar estado
+    updateAmountInputVisibility(amountVisibleCheckbox.checked);
+
+    // Cambios del checkbox
+    amountVisibleCheckbox.addEventListener('change', function () {
+        const visible = this.checked;
+        amountVisibleInput.value = visible ? 1 : 0;
+        adPreview.amount_visible = visible ? 1 : 0;
+
+        // Guardar el texto por defecto si el monto está oculto
+        if (!visible) {
+            adPreview.amount = amountTextSelect.value || "(No especificado)";
+        } else {
+            // Restaurar valor numérico
+            adPreview.amount = amountInput.value;
+        }
+
+        updateAmountInputVisibility(visible);
+        updatePreview();
+    });
+
+    // Cambios del select de texto por defecto
+    amountTextSelect.addEventListener('change', function() {
+        if (!amountVisibleCheckbox.checked) {
+            amountInput.value = this.value || "(No especificado)";
+            adPreview.amount = this.value || "(No especificado)";
+            updatePreview();
+        }
+    });
 
     // CALCULAR TOTAL + FECHA 
     document.getElementById("days_active")
@@ -992,7 +1003,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('titleContainer').classList.remove('d-none');
         document.getElementById('descriptionContainer').classList.remove('d-none');
         document.getElementById('locationAdContainer').classList.remove('d-none');
-        //document.getElementById('contactLocationContainer').classList.remove('d-none');
+        document.getElementById('contactLocationContainer').classList.remove('d-none');
         document.getElementById('contactDataContainer').classList.remove('d-none');
         document.getElementById('amountContainer').classList.remove('d-none');
         document.getElementById('imagesContainer').classList.remove('d-none');
@@ -1132,11 +1143,11 @@ function updateReceiptPreview() {
 </script>
 
 <style>
+    .badge-top,
     .badge-urgente {
         position: absolute;
         top: 8px;
         right: 8px;
-        background: red;
         color: white;
         padding: 3px 8px;
         font-size: 11px;
@@ -1145,6 +1156,14 @@ function updateReceiptPreview() {
         border-radius: 3px;
         z-index: 20;
         box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    }
+
+    .badge-top {
+        background: #8e24aa;
+    }
+
+    .badge-urgente {
+        background: red;
     }
 
     .ad-banner {
@@ -1165,21 +1184,6 @@ function updateReceiptPreview() {
         color: #ffc107;
         filter: drop-shadow(0 0 2px rgba(255, 193, 7, 0.6));
         flex-shrink: 0;
-    }
-
-    .badge-estreno {
-        position: absolute;
-        top: 8px;
-        left: 8px;
-        background: #ffa726;
-        color: white;
-        padding: 3px 8px;
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        border-radius: 3px;
-        z-index: 20;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.25);
     }
 
     /**/
@@ -1207,30 +1211,27 @@ function updateReceiptPreview() {
         border-radius: 4px;
     }
 
-    .badge-available-center {
-        display: inline-block;
-        margin: 0 auto 6px auto;
-        background: #0288d1;
-        color: #fff;
-        padding: 4px 10px;
-        font-size: 11px;
-        font-weight: 600;
-        border-radius: 4px;
-        text-align: center;
-    }
-
-    .badge-top {
+    .badge-estreno,
+    .badge-available {
         position: absolute;
         top: 8px;
-        right: 50%;
-        transform: translateX(50%);
-        background: #8e24aa;
-        color: #fff;
-        padding: 3px 10px;
+        left: 8px;
+        background: #ffa726;
+        color: white;
+        padding: 3px 8px;
         font-size: 11px;
-        font-weight: 700;
-        border-radius: 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        border-radius: 3px;
+        z-index: 20;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.25);
     }
+
+    .badge-available {
+        background: #0288d1;
+    }
+
+
 
     /* CAMPOS DINÁMICOS EN PREVIEW */
     .ad-dynamic-fields {
@@ -1305,6 +1306,15 @@ function updateReceiptPreview() {
         font-weight: 800;
         color: #202020;
         line-height: 1.3;
+    }
+
+    /*Solo una linea en la card de descripcion*/
+    .ad-desc {
+        display: -webkit-box;
+        -webkit-line-clamp: 1;  
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .ad-desc {

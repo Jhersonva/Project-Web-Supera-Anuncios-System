@@ -16,26 +16,49 @@
         Lo que buscas, Aquí lo encuentras
     </h5>
 
-    {{-- BUSCADOR + SELECTOR DE SUBCATEGORÍAS EN UNA MISMA FILA --}}
-    <div class="row g-2 mb-4 align-items-center">
+    {{-- BUSCADOR  --}}
+    <div class="row justify-content-center mb-5">
+        <div class="col-12 col-lg-10">
+            <div class="search-bar d-flex flex-wrap gap-2 p-3 bg-white shadow-sm rounded-3 align-items-center">
+                
+                {{-- Input título --}}
+                <div class="search-input flex-grow-1 position-relative">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input id="inputSearch" type="text" class="form-control" placeholder="Buscar anuncios por título...">
+                </div>
 
-        <div class="col-12 col-md-8">
-            <div class="input-group">
-                <span class="input-group-text bg-white">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                </span>
-                <input id="inputSearch" type="text" class="form-control"
-                    placeholder="Buscar anuncios...">
+                {{-- Input ubicación --}}
+                <div class="search-input flex-grow-1 position-relative">
+                    <i class="fa-solid fa-location-dot search-icon"></i>
+                    <input id="inputLocation" type="text" class="form-control" placeholder="Provincia o Distrito...">
+                </div>
+
+                {{-- Select categoría --}}
+                <div class="flex-grow-1">
+                    <select id="selectCategory" class="form-select">
+                        <option value="">Todas las categorías</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Select subcategoría --}}
+                <div class="flex-grow-1">
+                    <select id="selectSubcategory" class="form-select">
+                        <option value="">Todas las subcategorías</option>
+                    </select>
+                </div>
+
+                {{-- Botones --}}
+                <div class="d-flex gap-2 flex-wrap">
+                    <button id="btnSearch" class="btn btn-primary px-4">Buscar</button>
+                    <button id="btnClear" class="btn btn-outline-secondary px-4">Limpiar</button>
+                </div>
             </div>
         </div>
-
-        <div class="col-12 col-md-4">
-            <select id="filterSubcategory" class="form-select">
-                <option value="all">Todas las subcategorías</option>
-            </select>
-        </div>
-
     </div>
+
 
     {{-- CARDS DE ANUNCIOS --}}
     <div id="listaAnuncios" class="row g-3"></div>
@@ -105,12 +128,17 @@
     </div>
 </div>
 
+<script>
+    window.IS_AUTHENTICATED = @json(auth()->check());
+    const allSubcategories = @json($subcategories);
+</script>
+
+<script src="{{ asset('js/home.js') }}"></script>
 
 @auth
 @if(request()->get('showPrivacy') == 1 && !auth()->user()->privacy_policy_accepted)
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-
 document.addEventListener('DOMContentLoaded', function () {
     Swal.fire({
         title: 'Políticas de Privacidad',
@@ -139,499 +167,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
-
-const isAuthenticated = {{ auth()->check() ? 'true' : 'false' }};
-
-function requireLogin(action, payload = null) {
-
-    // Guardamos lo que intentó hacer
-    localStorage.setItem("pending_action", action);
-    if (payload !== null) {
-        localStorage.setItem("pending_payload", JSON.stringify(payload));
-    }
-
-    Swal.fire({
-        icon: "warning",
-        title: "Inicia sesión",
-        text: "Para realizar esta acción necesitas iniciar sesión o crear una cuenta.",
-        showCancelButton: true,
-        confirmButtonText: "Iniciar sesión",
-        cancelButtonText: "Crear cuenta"
-    }).then((result) => {
-        if (result.isConfirmed) {
-            window.location.href = "/auth/login";
-        } else {
-            window.location.href = "/auth/register";
-        }
-    });
-}
-
-let deferredPrompt;
-const banner = document.getElementById('installBanner');
-const installBtn = document.getElementById('installBtn');
-const closeBtn = document.getElementById('closeInstall');
-
-// Detecta si ya está instalada
-const isInstalled =
-    window.matchMedia('(display-mode: standalone)').matches ||
-    window.navigator.standalone === true;
-
-if (!isInstalled) {
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-
-        // Mostrar banner SIEMPRE que se recargue
-        banner.classList.remove('d-none');
-    });
-}
-
-installBtn?.addEventListener('click', async () => {
-    if (!deferredPrompt) return;
-
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-
-    deferredPrompt = null;
-    banner.classList.add('d-none');
-});
-
-closeBtn?.addEventListener('click', () => {
-    banner.classList.add('d-none');
-});
-
-
-//let allAds = { urgent: [], normal: [] };
-
- function loadSubcategories() {
-    fetch('/api/subcategories')
-        .then(res => res.json())
-        .then(data => {
-            const select = document.getElementById("filterSubcategory");
-
-            data.forEach(sub => {
-                let opt = document.createElement("option");
-                opt.value = sub.id;
-                opt.textContent = sub.name;
-                select.appendChild(opt);
-            });
-        });
-    }
-
-
-document.addEventListener("DOMContentLoaded", function () {
-    loadAds();
-    loadSubcategories();
-
-    const input = document.getElementById("inputSearch");
-
-    input.addEventListener("keyup", function () {
-        const text = this.value.toLowerCase().trim();
-
-        // Si el buscador queda vacío → mostrar todo
-        if (text === "") {
-            renderAds(allAds);
-            return;
-        }
-
-        const filteredUrgent = allAds.urgent.filter(ad =>
-            ad.title.toLowerCase().includes(text) ||
-            (ad.subcategory?.name ?? "").toLowerCase().includes(text) ||
-            (ad.category?.name ?? "").toLowerCase().includes(text)
-        );
-
-        const filteredNormal = allAds.normal.filter(ad =>
-            ad.title.toLowerCase().includes(text) ||
-            (ad.subcategory?.name ?? "").toLowerCase().includes(text) ||
-            (ad.category?.name ?? "").toLowerCase().includes(text)
-        );
-
-        renderAds({
-            urgent: filteredUrgent,
-            normal: filteredNormal
-        });
-    });
-
-    document.getElementById("filterSubcategory").addEventListener("change", function () {
-        const selected = this.value;
-
-        // Si elige "Todas"
-        if (selected === "all") {
-            renderAds(allAds);
-            return;
-        }
-
-        const filteredUrgent = allAds.urgent.filter(ad =>
-            ad.subcategory?.id == selected
-        );
-        const filteredNormal = allAds.normal.filter(ad =>
-            ad.subcategory?.id == selected
-        );
-
-        renderAds({
-            urgent: filteredUrgent,
-            normal: filteredNormal
-        });
-    });
-});
-
-function loadAds() {
-    fetch('/api/ads')
-        .then(res => res.json())
-        .then(data => {
-            allAds = data;  
-            renderAds(data);
-        });
-}
-
-function renderAds(data) {
-    const container = document.getElementById('listaAnuncios');
-    container.innerHTML = '';
-
-    // DESTACADOS
-    if (data.featured.data.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Anuncios Destacados</h5>`;
-        data.featured.data.forEach(ad => container.innerHTML += createAdCard(ad));
-
-        container.innerHTML += `<nav class="mt-2 d-flex justify-content-center">
-            ${renderPagination(data.featured, 'featured')}
-        </nav>`;
-    }
-
-    // URGENTES
-    if (data.urgent.data.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Anuncios Urgentes</h5>`;
-        data.urgent.data.forEach(ad => container.innerHTML += createAdCard(ad));
-
-        container.innerHTML += `<nav class="mt-2 d-flex justify-content-center">
-            ${renderPagination(data.urgent, 'urgent')}
-        </nav>`;
-    }
-
-    // ESTRENO
-    if (data.premiere?.data?.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Anuncios en Estreno</h5>`;
-        data.premiere.data.forEach(ad => container.innerHTML += createAdCard(ad));
-
-        container.innerHTML += `<nav class="mt-2 d-flex justify-content-center">
-            ${renderPagination(data.premiere, 'premiere')}
-        </nav>`;
-    }
-
-    // SEMI-NUEVO
-    if (data.semi_new?.data?.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Semi-Nuevos</h5>`;
-        data.semi_new.data.forEach(ad => container.innerHTML += createAdCard(ad));
-    }
-
-    // NUEVOS
-    if (data.new?.data?.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Nuevos</h5>`;
-        data.new.data.forEach(ad => container.innerHTML += createAdCard(ad));
-    }
-
-    // DISPONIBLES
-    if (data.available?.data?.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Disponibles</h5>`;
-        data.available.data.forEach(ad => container.innerHTML += createAdCard(ad));
-    }
-
-    // TOP
-    if (data.top?.data?.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Top</h5>`;
-        data.top.data.forEach(ad => container.innerHTML += createAdCard(ad));
-    }
-
-    // NORMALES
-    if (data.normal.data.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Otros Anuncios</h5>`;
-        data.normal.data.forEach(ad => container.innerHTML += createAdCard(ad));
-
-        container.innerHTML += `<nav class="mt-2 d-flex justify-content-center">
-            ${renderPagination(data.normal, 'normal')}
-        </nav>`;
-    }
-}
-
-function renderPagination(paginatedData, type) {
-    let html = `<ul class="pagination pagination-sm">`;
-
-    // Página anterior
-    if (paginatedData.prev_page_url) {
-        html += `<li class="page-item">
-            <a class="page-link" href="#" onclick="goToPage('${type}', ${paginatedData.current_page - 1}); return false;">&laquo;</a>
-        </li>`;
-    } else {
-        html += `<li class="page-item disabled"><span class="page-link">&laquo;</span></li>`;
-    }
-
-    // Páginas numeradas
-    for (let i = 1; i <= paginatedData.last_page; i++) {
-        html += `<li class="page-item ${i === paginatedData.current_page ? 'active' : ''}">
-            <a class="page-link" href="#" onclick="goToPage('${type}', ${i}); return false;">${i}</a>
-        </li>`;
-    }
-
-    // Página siguiente
-    if (paginatedData.next_page_url) {
-        html += `<li class="page-item">
-            <a class="page-link" href="#" onclick="goToPage('${type}', ${paginatedData.current_page + 1}); return false;">&raquo;</a>
-        </li>`;
-    } else {
-        html += `<li class="page-item disabled"><span class="page-link">&raquo;</span></li>`;
-    }
-
-    html += `</ul>`;
-    return html;
-}
-
-function goToPage(type, page) {
-    const params = new URLSearchParams();
-    if (type === 'urgent') params.set('page_urgent', page);
-    if (type === 'normal') params.set('page_normal', page);
-
-    fetch('/api/ads?' + params.toString())
-        .then(res => res.json())
-        .then(data => {
-            allAds = data;
-            renderAds(data);
-        });
-}
-
-
-function createAdCard(ad){
-    const img = ad.images.length
-        ? '/' + ad.images[0].image
-        : '/images/no-image.png';
-
-    const subcategory = ad.subcategory?.name ?? "Sin subcategoría";
-
-    return `
-    <div class="col-12 col-md-6 col-lg-4">
-        <div class="ad-card-horizontal">
-
-            <div class="position-relative">
-
-                <img src="${img}" class="w-100 home-card-img">
-
-                ${ad.urgent_publication == 1 ? `<div class="badge-urgente">URGENTE</div>` : ''}
-                ${ad.premiere_publication == 1 ? `<div class="badge-estreno">ESTRENO</div>` : ''}
-                ${ad.semi_new_publication ? `<div class="badge-seminew">SEMI-NUEVO</div>` : ''}
-                ${ad.new_publication ? `<div class="badge-new">NUEVO</div>` : ''}
-                ${ad.top_publication ? `<div class="badge-top">TOP</div>` : ''}
-
-        </div>
-
-
-            <div class="ad-content">
-
-               ${ad.available_publication ? `
-                    <div class="d-flex justify-content-center mb-1">
-                        <div class="badge-available-center">DISPONIBLE</div>
-                    </div>
-                ` : ''}
-
-                <h3 class="ad-title">
-                    ${ad.featured_publication == 1 ? `<span class="star-destacado">⭐</span>` : ''}
-                    <span class="ad-title-text">${ad.title}</span>
-
-                    <!-- Compartir -->
-                    <button class="btn btn-sm btn-secondary ms-auto"
-                        onclick='shareAd(${JSON.stringify(ad).replace(/"/g,"&quot;")})'>
-                        <i class="fa-solid fa-share-nodes"></i>
-                    </button>
-                </h3>
-
-                <p class="ad-desc">${ad.description}</p>
-
-                ${ad.dynamic_fields?.length ? `
-                    <ul class="ad-dynamic-fields mt-2">
-                        ${ad.dynamic_fields.map(f => `
-                            <li>
-                                <strong>${f.label}:</strong> ${f.value}
-                            </li>
-                        `).join("")}
-                    </ul>
-                ` : ''}
-
-                <div class="ad-tags">
-                    <span class="ad-badge"><i class="fa-solid fa-tag"></i> ${subcategory}</span>
-                    <span class="ad-location"><i class="fa-solid fa-location-dot"></i>${ad.department && ad.province ? `${ad.department} - ${ad.province}` : 'Sin ubicación'}</span>
-                </div>
-
-                <div class="ad-price-box">
-                    <p class="fw-bold ${ad.amount_visible == 0 ? 'text-secondary' : 'text-success'}">
-                        ${ ad.amount_visible == 1 ? `S/ ${ad.amount}` : "S/ No especificado" }
-                    </p>
-                </div>
-
-                <div class="ad-buttons"> 
-
-                    <!-- Ver -->
-                    <button class="btn btn-sm btn-primary"
-                        onclick="handleVer('${ad.full_url}')">
-                        <i class="fa-solid fa-eye"></i> Ver
-                    </button>
-
-                    <!-- WhatsApp -->
-                    <button class="btn btn-sm btn-success"
-                        onclick="handleWhatsapp('${ad.whatsapp}', '${ad.title}')">
-                        <i class="fa-brands fa-whatsapp"></i> WhatsApp
-                    </button>
-
-                    <!-- Llamar -->
-                    <button class="btn btn-sm btn-info"
-                        onclick="handleLlamada('${ad.call_phone}')">
-                        <i class="fa-solid fa-phone"></i> Llamar
-                    </button>
-
-                </div>
-                
-                <p class="ad-time">
-                    <i class="fa-regular fa-clock"></i> ${ad.time_ago}
-                </p>
-
-            </div>
-
-        </div>
-    </div>`;
-}
-
-// -Acción VER
-function handleVer(url) {
-    if (!isAuthenticated) {
-        requireLogin("ver", { url });
-        return;
-    }
-    window.location.href = url;
-}
-
-// Acción WHATSAPP 
-function handleWhatsapp(numero, titulo) {
-    if (!isAuthenticated) {
-        requireLogin("whatsapp", { numero, titulo });
-        return;
-    }
-    abrirWhatsapp(numero, titulo);
-}
-
-// Acción LLAMAR
-function handleLlamada(numero) {
-    if (!isAuthenticated) {
-        requireLogin("llamar", { numero });
-        return;
-    }
-    realizarLlamada(numero);
-}
-
-
-// Detecta si es dispositivo móvil
-function isMobileDevice() {
-    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-}
-
-// WhatsApp (Web en PC / App en móvil)
-function abrirWhatsapp(numero, titulo) {
-    if (!numero) {
-        alert("El anunciante no tiene número registrado.");
-        return;
-    }
-
-    const mensaje = encodeURIComponent(`Hola, vi tu anuncio: ${titulo}`);
-
-    if (isMobileDevice()) {
-        // Móvil → abre en la app
-        window.location.href = `https://wa.me/51${numero}?text=${mensaje}`;
-    } else {
-        // PC → abre WhatsApp Web
-        window.open(`https://web.whatsapp.com/send?phone=51${numero}&text=${mensaje}`, "_blank");
-    }
-}
-
-// Llamar (solo móvil, en PC abre WhatsApp Web)
-function realizarLlamada(numero) {
-    if (!numero) {
-        alert("El anunciante no tiene número registrado.");
-        return;
-    }
-
-    if (isMobileDevice()) {
-        // Llamada directa en celular
-        window.location.href = `tel:+51${numero}`;
-    } else {
-        // En PC → abrir WhatsApp Web
-        window.open(`https://web.whatsapp.com/send?phone=51${numero}`, "_blank");
-    }
-}
-
-// Función principal para abrir el modal y mostrar datos del anuncio
-function shareAd(ad) {
-    const modal = new bootstrap.Modal(document.getElementById('modalCompartir'));
-
-    const link = ad.full_url;
-    document.getElementById("linkCompartir").value = link;
-
-    // Generar enlaces dinámicos de compartir
-    document.getElementById("shareWhatsapp").href   = `https://wa.me/?text=${encodeURIComponent(link)}`;
-    document.getElementById("shareMessenger").href  = `https://www.facebook.com/dialog/send?link=${encodeURIComponent(link)}&app_id=YOUR_APP_ID`;
-    document.getElementById("shareFacebook").href   = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`;
-    document.getElementById("shareTelegram").href   = `https://t.me/share/url?url=${encodeURIComponent(link)}`;
-    document.getElementById("shareTwitter").href    = `https://twitter.com/intent/tweet?url=${encodeURIComponent(link)}`;
-
-    modal.show();
-}
-
-
-// Copiar el link al portapapeles
-function copiarLink() {
-    const input = document.getElementById("linkCompartir");
-    input.select();
-    input.setSelectionRange(0, 99999);
-
-    navigator.clipboard.writeText(input.value)
-        .then(() => {
-            Swal.fire({
-                icon: "success",
-                title: "Enlace copiado",
-                text: "Ahora puedes compartirlo donde quieras",
-                timer: 1500,
-                showConfirmButton: false
-            });
-        });
-}
-
-//  AUTO-EJECUTAR ACCIÓN PENDIENTE AL VOLVER DEL LOGIN
-document.addEventListener("DOMContentLoaded", () => {
-    const pendingAction = localStorage.getItem("pending_action");
-    const pendingPayload = localStorage.getItem("pending_payload");
-
-    // Si NO hay acción → no hacemos nada
-    if (!pendingAction) return;
-
-    const data = pendingPayload ? JSON.parse(pendingPayload) : null;
-
-    // Se ejecuta solo si ahora SÍ está autenticado
-    if (isAuthenticated) {
-
-        if (pendingAction === "ver") {
-            handleVer(data.url);
-        }
-
-        if (pendingAction === "whatsapp") {
-            handleWhatsapp(data.numero, data.titulo);
-        }
-
-        if (pendingAction === "llamar") {
-            handleLlamada(data.numero);
-        }
-
-        // Limpiar para que no se repita
-        localStorage.removeItem("pending_action");
-        localStorage.removeItem("pending_payload");
-    }
-});
-
-
 </script>
 
 <form id="acceptForm" method="POST" action="{{ route('privacy-policy.accept') }}">
@@ -647,11 +182,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <style>
 
+    .badge-top,
     .badge-urgente {
         position: absolute;
         top: 8px;
         right: 8px;
-        background: red;
         color: white;
         padding: 3px 8px;
         font-size: 11px;
@@ -660,6 +195,14 @@ document.addEventListener("DOMContentLoaded", () => {
         border-radius: 3px;
         z-index: 20;
         box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    }
+
+    .badge-top {
+        background: #8e24aa;
+    }
+
+    .badge-urgente {
+        background: red;
     }
 
     .ad-banner {
@@ -683,7 +226,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* CINTA ESTRENO (izquierda, MISMA POSICIÓN Y TAMAÑO QUE URGENTE) */
-    .badge-estreno {
+    .badge-estreno,
+    .badge-available {
         position: absolute;
         top: 8px;
         left: 8px;
@@ -696,6 +240,10 @@ document.addEventListener("DOMContentLoaded", () => {
         border-radius: 3px;
         z-index: 20;
         box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    }
+
+    .badge-available {
+        background: #0288d1;
     }
 
     /**/
@@ -721,31 +269,6 @@ document.addEventListener("DOMContentLoaded", () => {
         font-size: 11px;
         font-weight: 600;
         border-radius: 4px;
-    }
-
-    .badge-available-center {
-        display: inline-block;
-        margin: 0 auto 6px auto;
-        background: #0288d1;
-        color: #fff;
-        padding: 4px 10px;
-        font-size: 11px;
-        font-weight: 600;
-        border-radius: 4px;
-        text-align: center;
-    }
-
-    .badge-top {
-        position: absolute;
-        top: 8px;
-        right: 50%;
-        transform: translateX(50%);
-        background: #8e24aa;
-        color: #fff;
-        padding: 3px 10px;
-        font-size: 11px;
-        font-weight: 700;
-        border-radius: 20px;
     }
 
     /*Solo una linea en la card de descripcion*/
@@ -893,6 +416,89 @@ document.addEventListener("DOMContentLoaded", () => {
 
         .ad-price {
             font-size: 20px;
+        }
+    }
+
+    /* Contenedor buscador */
+    .search-bar {
+        transition: 0.3s;
+    }
+
+    .search-bar:hover {
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    }
+
+    /* Inputs con íconos */
+    .search-input {
+        position: relative;
+    }
+
+    .search-input .search-icon {
+        position: absolute;
+        top: 50%;
+        left: 12px;
+        transform: translateY(-50%);
+        color: #888;
+        font-size: 16px;
+    }
+
+    .search-input input {
+        padding-left: 38px;
+        height: 42px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        transition: border 0.3s, box-shadow 0.3s;
+    }
+
+    .search-input input:focus {
+        border-color: #3a68d6;
+        box-shadow: 0 0 0 3px rgba(58, 104, 214, 0.15);
+        outline: none;
+    }
+
+    /* Selects */
+    .search-bar .form-select {
+        height: 42px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        transition: border 0.3s, box-shadow 0.3s;
+    }
+
+    .search-bar .form-select:focus {
+        border-color: #3a68d6;
+        box-shadow: 0 0 0 3px rgba(58, 104, 214, 0.15);
+        outline: none;
+    }
+
+    /* Botones */
+    .search-bar .btn-primary {
+        height: 42px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: 0.3s;
+    }
+
+    .search-bar .btn-primary:hover {
+        background-color: #2f55b0;
+    }
+
+    .search-bar .btn-outline-secondary {
+        height: 42px;
+        border-radius: 8px;
+    }
+
+    /* Responsive: móviles */
+    @media (max-width: 992px) {
+        .search-bar {
+            flex-direction: column;
+            gap: 12px;
+        }
+        .search-bar .flex-grow-1 {
+            width: 100%;
+        }
+        .search-bar .d-flex.gap-2 {
+            justify-content: flex-start;
+            width: 100%;
         }
     }
 

@@ -14,7 +14,7 @@ class AdSubcategorySeeder extends Seeder
             [
                 'category_name' => 'Empleos',
                 'items' => [
-                    ["Empleo", 1.00],
+                    ["Mina", 1.00],
                 ]
             ],
 

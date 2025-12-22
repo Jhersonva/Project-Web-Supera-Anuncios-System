@@ -93,7 +93,7 @@ class MyAdRequestController extends Controller
         $request->validate([
             'category_id' => 'required|exists:ad_categories,id',
             'subcategory_id' => 'required|exists:ad_subcategories,id',
-            'title' => 'required|string|max:255',
+            'title' => 'required|string|max:55',
             'description' => 'required|string',
             'department' => 'nullable|string|max:255',
             'province'   => 'nullable|string|max:255',
