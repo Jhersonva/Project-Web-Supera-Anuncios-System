@@ -1,3 +1,4 @@
+<!--views/public/advertisement-detail.blade-->
 @extends('layouts.app')
 
 @section('title', 'Detalle del anuncio')
@@ -96,12 +97,6 @@
         @endforeach
 
     </div>
-
-    {{-- CALIFICACIÓN VISUAL
-    <div class="my-3">
-        <small class="fw-bold">CALIFICACIÓN DE LA PUBLICACIÓN</small><br>
-        <span class="text-warning fs-5">★★★★★</span>
-    </div> --}}
 
     <hr>
 

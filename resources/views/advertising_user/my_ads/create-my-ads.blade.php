@@ -63,11 +63,11 @@
                         id="titleInput"
                         placeholder="Se busca Perforista / Ayudante de Cocina / Pintor"
                         minlength="3"
-                        maxlength="55"
+                        maxlength="70"
                         required>
 
                     <small class="text-muted">
-                        <span id="charCount">0</span>/55 caracteres
+                        <span id="charCount">0</span>/70 caracteres
                     </small>
                 </div>
 
@@ -345,9 +345,30 @@
 
 
                 <div class="field-card d-none" id="imagesContainer">
-                    <label class="fw-semibold">Imágenes (máx 5)</label>
-                    <input type="file" name="images[]" class="form-control" multiple accept="image/*">
-                    <small class="text-muted">Puedes subir hasta 5 imágenes.</small>
+                    <label class="fw-semibold mb-2">Imagen de referencia</label>
+                    <!-- BOTÓN -->
+                    <button type="button"
+                            class="btn btn-sm btn-outline-info mb-3"
+                            id="openImagesModal">
+                        <i class="fa-solid fa-images"></i> Elegir imagen
+                    </button>
+                    <!-- PREVIEW SELECCIONADA -->
+                    <div id="selectedPreview" class="d-none mb-3">
+                        <div id="selectedPreviewList" class="d-flex flex-wrap gap-2"></div>
+                        <small class="text-muted d-block mt-1">
+                            Imágenes seleccionadas
+                        </small>
+                    </div>
+                    <input type="hidden" name="selected_subcategory_image" id="selectedImage">
+                    <hr>
+                    <label class="fw-semibold mt-3">O subir imágenes propias</label>
+                    <input type="file"
+                        name="images[]"
+                        class="form-control"
+                        id="ownImagesInput"
+                        accept="image/*">
+                    <small class="text-muted" id="ownImagesHelp">Máx. 5 imágenes</small>
+
                 </div>
 
                 <!-- COMPROBANTE -->
@@ -418,9 +439,47 @@
 
     </div>
 
+
+<div class="modal fade" id="modalSubcategoryImages" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Elegir imagen de referencia
+                </h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div id="modalImagesGrid" class="image-grid">
+                    <small class="text-muted">Cargando imágenes...</small>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-light" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button class="btn btn-dark" id="confirmImage">
+                    Usar imagen
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
+
+let MAX_IMAGES = 5;
+let isEmpleosCategory = false;
+let previewCarouselIndex = 0;
+let previewCarouselTimer = null;
+const PREVIEW_INTERVAL = 2500; // 2.5 segundos
 
 // CONTADOR DE CARACTERES EN TÍTULO
 const titleInput = document.getElementById('titleInput');
@@ -486,8 +545,8 @@ function getPreviewDynamicFields(limit = 4) {
 //<!--<span class="ad-location"><i class="fa-solid fa-location-dot"></i> ${ad.contact_location ?? "Sin ubicación"}</span>-->
 function createAdCard(ad) {
 
-    const img = ad.images.length > 0 
-        ? ad.images[0].image 
+    const img = ad.images.length > 0
+        ? ad.images[previewCarouselIndex]?.image || ad.images[0].image
         : "/assets/img/not-found-image/failed-image.jpg";
 
     return `
@@ -618,9 +677,10 @@ function updatePreview() {
             name: document.querySelector("#subcategorySelect option:checked")?.textContent || "Subcategoría"
         },
 
-        images: previewImages.length > 0 
-            ? previewImages.map(img => ({ image: img }))
-            : [],
+        images: [
+            ...referenceImages.map(img => ({ image: img })),
+            ...previewImages.map(img => ({ image: img }))
+        ],
 
         whatsapp: "{{ auth()->user()->whatsapp ?? '' }}",
         call_phone: "{{ auth()->user()->phone ?? '' }}",
@@ -630,6 +690,7 @@ function updatePreview() {
     };
 
     document.querySelector("#previewCard").innerHTML = createAdCard(ad);
+    //startPreviewCarousel(ad.images);
 }
 
 document.getElementById("premiere_publication_switch")
@@ -643,8 +704,33 @@ document.querySelectorAll("#adForm input, #adForm textarea, #adForm select")
         el.addEventListener("change", updatePreview);
     });
 
+function startPreviewCarousel(images) {
+
+    // Limpiar carrusel previo
+    if (previewCarouselTimer) {
+        clearInterval(previewCarouselTimer);
+        previewCarouselTimer = null;
+    }
+
+    // No rotar si hay 0 o 1 imagen
+    if (!images || images.length <= 1) return;
+
+    previewCarouselIndex = 0;
+
+    previewCarouselTimer = setInterval(() => {
+        previewCarouselIndex++;
+
+        if (previewCarouselIndex >= images.length) {
+            previewCarouselIndex = 0;
+        }
+
+        updatePreview();
+    }, PREVIEW_INTERVAL);
+}
+
 
 let previewImages = [];
+let referenceImages = [];
 
 document.querySelector("input[name='images[]']").addEventListener("change", function(e){
     previewImages = [];
@@ -678,9 +764,28 @@ document.getElementById("fieldsContainer")
 // Seleccionar Categoria y Sub
 document.addEventListener("DOMContentLoaded", () => {
 
-    const categorySelect = document.getElementById('categorySelect');
-    const subcatSelect = document.getElementById('subcategorySelect');
-    const subcatContainer = document.getElementById('subcatContainer');
+    const categorySelect   = document.getElementById('categorySelect');
+    const subcatSelect     = document.getElementById('subcategorySelect');
+    const subcatContainer  = document.getElementById('subcatContainer');
+
+    const imagesContainer  = document.getElementById('imagesContainer');
+    const imagesGrid       = document.getElementById('modalImagesGrid');
+    const selectedInput    = document.getElementById('selectedImage');
+
+    const openImagesBtn    = document.getElementById('openImagesModal');
+    const previewBox       = document.getElementById('selectedPreview');
+    const previewImg       = document.getElementById('selectedPreviewImg');
+    const confirmBtn       = document.getElementById('confirmImage');
+    const previewList = document.getElementById('selectedPreviewList');
+
+
+    let currentSubcategory = null;
+    let tempSelectedImages = [];
+    //const MAX_IMAGES = 5;
+
+    const modal = new bootstrap.Modal(
+        document.getElementById('modalSubcategoryImages')
+    );
 
     const containers = {
         urgent: document.getElementById('urgentContainer'),
@@ -693,45 +798,64 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const tagMap = {
-        is_urgent: {
-            container: 'urgentContainer',
-            input: 'urgent_publication'
-        },
-        is_featured: {
-            container: 'featuredContainer',
-            input: 'featured_publication'
-        },
-        is_premiere: {
-            container: 'premiereContainer',
-            input: 'premiere_publication_switch'
-        },
-        is_semi_new: {
-            container: 'semiNewContainer',
-            input: 'semi_new_publication'
-        },
-        is_new: {
-            container: 'newContainer',
-            input: 'new_publication'
-        },
-        is_available: {
-            container: 'availableContainer',
-            input: 'available_publication'
-        },
-        is_top: {
-            container: 'topContainer',
-            input: 'top_publication'
-        }
+        is_urgent:     { container: 'urgentContainer',     input: 'urgent_publication' },
+        is_featured:   { container: 'featuredContainer',   input: 'featured_publication' },
+        is_premiere:   { container: 'premiereContainer',   input: 'premiere_publication' },
+        is_semi_new:   { container: 'semiNewContainer',    input: 'semi_new_publication' },
+        is_new:        { container: 'newContainer',        input: 'new_publication' },
+        is_available:  { container: 'availableContainer',  input: 'available_publication' },
+        is_top:        { container: 'topContainer',        input: 'top_publication' }
     };
 
+    // RESET IMÁGENES
+    function resetImages() {
+        imagesGrid.innerHTML = '';
+        selectedInput.value = '';
+        previewBox?.classList.add('d-none');
+        imagesContainer.classList.add('d-none');
+        tempSelectedImages = [];
+        previewList.innerHTML = '';
+        referenceImages = [];
+        updatePreview();
+
+    }
+
+    // RESET TAGS
+    function resetTags() {
+        Object.values(tagMap).forEach(tag => {
+            const c = document.getElementById(tag.container);
+            const i = document.getElementById(tag.input);
+            if (c) c.classList.add('d-none');
+            if (i) i.checked = false;
+        });
+    }
+
+    // CATEGORÍA
     categorySelect.addEventListener('change', function () {
 
         const categoryId = this.value;
+        const selectedText = this.options[this.selectedIndex]?.textContent;
 
-        subcatSelect.innerHTML = "";
+        isEmpleosCategory = selectedText === 'Empleos';
+        MAX_IMAGES = isEmpleosCategory ? 1 : 5;
+
+        // Ajustar input de imágenes propias
+        const ownImagesInput = document.getElementById('ownImagesInput');
+        const ownImagesHelp  = document.getElementById('ownImagesHelp');
+
+        if (isEmpleosCategory) {
+            ownImagesInput.removeAttribute('multiple');
+            ownImagesHelp.textContent = 'Solo 1 imagen permitida';
+        } else {
+            ownImagesInput.setAttribute('multiple', 'multiple');
+            ownImagesHelp.textContent = 'Máx. 5 imágenes';
+        }
+
+        subcatSelect.innerHTML = '';
         subcatContainer.classList.add('d-none');
 
-        // Ocultar todo
-        Object.values(containers).forEach(c => c?.classList.add('d-none'));
+        resetTags();
+        resetImages();
 
         if (!categoryId) return;
 
@@ -739,7 +863,6 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(res => res.json())
             .then(data => {
 
-                // Subcategorías
                 let html = `<option value="">-- Selecciona --</option>`;
                 data.subcategories.forEach(sub => {
                     html += `<option value="${sub.id}">${sub.name}</option>`;
@@ -748,33 +871,128 @@ document.addEventListener("DOMContentLoaded", () => {
                 subcatSelect.innerHTML = html;
                 subcatContainer.classList.remove('d-none');
 
+                // SUBCATEGORÍA
                 subcatSelect.onchange = function () {
 
-                    // Ocultar todo + resetear switches
-                    Object.values(tagMap).forEach(tag => {
-                        const c = document.getElementById(tag.container);
-                        const i = document.getElementById(tag.input);
-                        if (c) c.classList.add('d-none');
-                        if (i) i.checked = false;
-                    });
+                    resetTags();
+                    resetImages();
 
-                    if (!this.value) return;
+                    const subId = this.value;
+                    if (!subId) return;
 
-                    // Mostrar SOLO las etiquetas permitidas por la categoría
+                    currentSubcategory = subId;
+
+                    // Mostrar tags permitidos
                     Object.entries(tagMap).forEach(([flag, tag]) => {
                         if (data.category[flag]) {
                             const container = document.getElementById(tag.container);
-                            if (container) {
-                                container.classList.remove('d-none');
-                            }
+                            if (container) container.classList.remove('d-none');
                         }
                     });
+
+                    // Mostrar sección de imágenes (solo botón)
+                    imagesContainer.classList.remove('d-none');
                 };
             });
     });
+
+    // ABRIR MODAL DE IMÁGENES
+    openImagesBtn?.addEventListener('click', () => {
+
+        imagesGrid.innerHTML = `<small class="text-muted">Cargando imágenes...</small>`;
+        tempSelectedImages = [];
+
+        fetch(`/advertising/subcategories/${currentSubcategory}/images`)
+            .then(r => r.json())
+            .then(images => {
+
+                imagesGrid.innerHTML = '';
+
+                if (!images.length) {
+                    imagesGrid.innerHTML = `
+                        <small class="text-muted">
+                            Esta subcategoría no tiene imágenes
+                        </small>`;
+                    return;
+                }
+
+                images.forEach(img => {
+
+                    const card = document.createElement('div');
+                    card.className = 'image-card';
+                    card.innerHTML = `<img src="/${img.image}">`;
+
+                    card.addEventListener('click', () => {
+
+                    const index = tempSelectedImages.findIndex(i => i.id === img.id);
+
+                    // Deseleccionar
+                    if (index !== -1) {
+                        tempSelectedImages.splice(index, 1);
+                        card.classList.remove('border', 'border-dark');
+                        return;
+                    }
+
+                    // Límite dinámico
+                    if (tempSelectedImages.length >= MAX_IMAGES) {
+
+                        if (MAX_IMAGES === 1) {
+                            // Empleos → reemplazar
+                            tempSelectedImages = [img];
+
+                            document.querySelectorAll('.image-card')
+                                .forEach(c => c.classList.remove('border', 'border-dark'));
+
+                            card.classList.add('border', 'border-dark');
+                        } else {
+                            alert(`Solo puedes seleccionar máximo ${MAX_IMAGES} imágenes`);
+                        }
+
+                        return;
+                    }
+
+                    // Seleccionar
+                    tempSelectedImages.push(img);
+                    card.classList.add('border', 'border-dark');
+                });
+
+
+                    imagesGrid.appendChild(card);
+                });
+            });
+
+        modal.show();
+    });
+
+    // CONFIRMAR IMÁGENES
+    confirmBtn?.addEventListener('click', () => {
+
+        if (!tempSelectedImages.length) return;
+
+        // Guardar IDs
+        selectedInput.value = tempSelectedImages.map(i => i.id).join(',');
+
+        // Guardar imágenes de referencia (URLs)
+        referenceImages = tempSelectedImages.map(img => `/${img.image}`);
+
+        // Render previews visuales
+        previewList.innerHTML = '';
+
+        referenceImages.forEach(src => {
+            const item = document.createElement('div');
+            item.className = 'image-card border border-dark';
+            item.style.maxWidth = '120px';
+            item.innerHTML = `<img src="${src}">`;
+            previewList.appendChild(item);
+        });
+
+        previewBox.classList.remove('d-none');
+        modal.hide();
+
+        updatePreview();
+    });
+
 });
-
-
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -1361,6 +1579,119 @@ function updateReceiptPreview() {
         align-items: center;
         gap: 4px;
     }
+
+
+/* GRID */
+.image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 16px;
+}
+
+/* SCROLL CONTAINER */
+.image-scroll {
+    max-height: 360px; 
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+/* SCROLL BAR (sutil) */
+.image-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.image-scroll::-webkit-scrollbar-thumb {
+    background: #ced4da;
+    border-radius: 4px;
+}
+
+/* CARD */
+.image-card {
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* IMAGE */
+.image-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* DROPZONE */
+.upload-zone {
+    border: 2px dashed #ced4da;
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.upload-zone:hover {
+    background: #eef2f7;
+    border-color: #0d6efd;
+}
+
+.upload-zone i {
+    font-size: 32px;
+    color: #6c757d;
+}
+
+/* TITLES */
+.section-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #6c757d;
+    margin-bottom: 6px;
+}
+
+/* COUNTER */
+.image-counter {
+    font-size: 12px;
+    color: #6c757d;
+    margin-bottom: 8px;
+}
+
+/* DELETE BUTTON */
+.image-delete {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(220, 53, 69, 0.95);
+    color: #fff;
+    border: none;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: .2s ease;
+}
+
+.image-card {
+    position: relative;
+}
+
+.image-card:hover .image-delete {
+    opacity: 1;
+}
+
+.image-delete:hover {
+    background: #bb2d3b;
+}
+
 </style>
 
 @endsection

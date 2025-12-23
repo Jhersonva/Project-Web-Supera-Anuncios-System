@@ -30,4 +30,10 @@ class AdSubcategory extends Model
     {
         return $this->hasMany(Advertisement::class, 'ad_subcategories_id');
     }
+
+    public function images()
+    {
+        return $this->hasMany(AdSubcategoryImage::class);
+    }
+
 }

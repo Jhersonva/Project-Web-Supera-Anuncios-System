@@ -299,9 +299,39 @@
 
                 <h5 class="fw-bold text-center">Anunciante</h5>
 
-                <p class="text-center">
-                    <i class="fa-solid fa-user-circle fs-1"></i><br>
-                    <strong>{{ $ad->user->full_name }}</strong>
+                <div class="d-flex justify-content-center">
+                    <div class="position-relative d-inline-block">
+
+
+                    <img
+                        src="{{ $ad->user->profile_image
+                            ? asset($ad->user->profile_image)
+                            : asset('assets/img/profile-image/default-user.png') }}"
+                        class="rounded-circle border border-2 border-danger"
+                        style="width:110px; height:110px; object-fit:cover;"
+                    >
+
+                    {{-- INSIGNIA VERIFICADO --}}
+                    @if($ad->user->is_verified)
+                        <img
+                            src="{{ asset('assets/img/verified-icon/verified.png') }}"
+                            alt="Usuario verificado"
+                            title="Usuario verificado"
+                            class="position-absolute"
+                            style="
+                                width:52px;
+                                height:52px;
+                                top:0;
+                                right:0;
+                                transform: translate(25%, -25%);
+                            "
+                        >
+                    @endif
+                    </div>
+                </div>
+
+                <p class="mt-2 fw-bold text-center">
+                    {{ $ad->user->full_name }}
                 </p>
 
                 <hr>

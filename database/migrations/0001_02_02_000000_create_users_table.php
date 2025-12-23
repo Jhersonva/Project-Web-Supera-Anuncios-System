@@ -26,6 +26,8 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->boolean('privacy_policy_accepted')->default(false);
             $table->timestamp('privacy_policy_accepted_at')->nullable();
+            $table->boolean('is_verified')->default(false);
+            $table->timestamp('verified_at')->nullable();
             $table->timestamps();
         });
     }

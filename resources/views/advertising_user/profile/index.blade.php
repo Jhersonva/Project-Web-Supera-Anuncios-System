@@ -29,30 +29,54 @@
         <form action="{{ route('profile.update') }}"method="POST"enctype="multipart/form-data">
             @csrf
 
-            <!-- Ícono centrado -->
+            <!-- IMAGEN PERFIL -->
+            <!-- IMAGEN PERFIL -->
             <div class="text-center mb-4">
 
                 <label for="profile_image" class="position-relative d-inline-block" style="cursor:pointer;">
-                    <img
-                        id="profilePreview"
-                        src="{{ $user->profile_image 
-                            ? asset($user->profile_image) 
-                            : asset('assets/img/profile-image/default-user.png') }}"
-                        class="rounded-circle border border-2 border-danger"
-                        style="width:120px; height:120px; object-fit:cover;"
-                    >
+                    <div class="position-relative d-inline-block">
 
-                    <!-- Icono editar -->
-                    <span class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle p-2">
-                        <i class="fa-solid fa-camera"></i>
-                    </span>
+                        <img
+                            id="profilePreview"
+                            src="{{ $user->profile_image 
+                                ? asset($user->profile_image) 
+                                : asset('assets/img/profile-image/default-user.png') }}"
+                            class="rounded-circle border border-2 border-danger"
+                            style="width:120px; height:120px; object-fit:cover;"
+                        >
+
+                        {{-- INSIGNIA VERIFICADO --}}
+                        @if($user->is_verified)
+                            <img
+                                src="{{ asset('assets/img/verified-icon/verified.png') }}"
+                                alt="Usuario verificado"
+                                title="Usuario verificado"
+                                class="position-absolute"
+                                style="
+                                    width:52px;
+                                    height:52px;
+                                    top:0;
+                                    right:0;
+                                    transform: translate(20%, -20%);
+                                "
+                            >
+                        @endif
+
+                        {{-- ICONO EDITAR --}}
+                        <span
+                            class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle p-2"
+                            style="transform: translate(20%, 20%);">
+                            <i class="fa-solid fa-camera"></i>
+                        </span>
+
+                    </div>
+
+                    <input type="file"
+                        name="profile_image"
+                        id="profile_image"
+                        class="d-none"
+                        accept="image/*">
                 </label>
-
-                <input type="file"
-                    name="profile_image"
-                    id="profile_image"
-                    class="d-none"
-                    accept="image/*">
             </div>
 
             <!-- GRID RESPONSVIO 2 COLUMNAS -->

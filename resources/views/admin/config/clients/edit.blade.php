@@ -4,44 +4,201 @@
 
 @section('content')
 
-<div class="container mt-5">
+<style>
+    .profile-card {
+        border-radius: 20px;
+        padding: 30px;
+    }
+    .profile-label {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+</style>
+
+<div class="container mt-4">
 
     <a href="{{ route('admin.config.clients') }}" class="text-dark">
         <i class="fa-solid fa-arrow-left fs-5"></i>
     </a>
 
-    <h4 class="fw-bold mb-4 text-center">Editar Cliente</h4>
+    <h4 class="fw-bold text-center mb-3">Editar Cliente</h4>
 
-    <div class="card p-4 shadow-sm">
+    <div class="card shadow-sm profile-card">
 
         <form action="{{ route('admin.config.clients.update', $client) }}" method="POST">
             @csrf
             @method('PUT')
 
-            <div class="mb-3">
-                <label class="form-label">Nombre completo</label>a
-                <input type="text" class="form-control" name="full_name" value="{{ $client->full_name }}" required>
+            <!-- IMAGEN DE PERFIL -->
+            <div class="text-center mb-4">
+
+                <label for="profile_image" class="position-relative d-inline-block" style="cursor:pointer;">
+
+                    <div class="position-relative d-inline-block">
+
+                        <img
+                            src="{{ $client->profile_image
+                                ? asset($client->profile_image)
+                                : asset('assets/img/profile-image/default-user.png') }}"
+                            class="rounded-circle border border-2 border-danger"
+                            style="width:120px; height:120px; object-fit:cover;"
+                        >
+
+                        {{-- INSIGNIA VERIFICADO --}}
+                        @if($client->is_verified)
+                            <img
+                                src="{{ asset('assets/img/verified-icon/verified.png') }}"
+                                alt="Usuario verificado"
+                                title="Usuario verificado"
+                                class="position-absolute top-0 end-0"
+                                style="
+                                    width:52px;
+                                    height:52px;
+                                    transform: translate(20%, -20%);
+                                ">
+                        @endif
+
+                        {{-- ICONO EDITAR --}}
+                        <span
+                            class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle p-2"
+                            style="transform: translate(20%, 20%);">
+                            <i class="fa-solid fa-camera"></i>
+                        </span>
+
+                    </div>
+
+                    <input type="file"
+                        name="profile_image"
+                        id="profile_image"
+                        class="d-none"
+                        accept="image/*">
+                </label>
             </div>
 
-            <div class="mb-3">
-                <label class="form-label">Email</label>
-                <input type="email" class="form-control" name="email" value="{{ $client->email }}" required>
+
+
+            <!-- GRID 2 COLUMNAS -->
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <label class="profile-label">Nombre completo</label>
+                    <input type="text" class="form-control" name="full_name"
+                        value="{{ old('full_name', $client->full_name) }}" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="profile-label">Correo</label>
+                    <input type="email" class="form-control" name="email"
+                        value="{{ old('email', $client->email) }}" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="profile-label">DNI</label>
+                    <input type="text" class="form-control" name="dni"
+                        value="{{ old('dni', $client->dni) }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="profile-label">Teléfono</label>
+                    <input type="text" class="form-control" name="phone"
+                        value="{{ old('phone', $client->phone) }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="profile-label">Localidad</label>
+                    <input type="text" class="form-control" name="locality"
+                        value="{{ old('locality', $client->locality) }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="profile-label">WhatsApp</label>
+                    <input type="text" class="form-control" name="whatsapp"
+                        value="{{ old('whatsapp', $client->whatsapp) }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="profile-label">Teléfono para llamadas</label>
+                    <input type="text" class="form-control" name="call_phone"
+                        value="{{ old('call_phone', $client->call_phone) }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="profile-label">Correo de contacto</label>
+                    <input type="email" class="form-control" name="contact_email"
+                        value="{{ old('contact_email', $client->contact_email) }}">
+                </div>
+
+                <div class="col-md-12">
+                    <label class="profile-label">Dirección</label>
+                    <input type="text" class="form-control" name="address"
+                        value="{{ old('address', $client->address) }}">
+                </div>
+
             </div>
 
-            <div class="mb-3">
-                <label class="form-label">Teléfono</label>
-                <input type="text" class="form-control" name="phone" value="{{ $client->phone }}">
+            <hr class="my-4">
+
+            <!-- SOLO LECTURA -->
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <label class="profile-label fw-bold">Billetera virtual</label>
+                    <input type="text" class="form-control"
+                        value="S/. {{ number_format($client->virtual_wallet, 2) }}" disabled>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="profile-label fw-bold">Estado</label>
+                    <input type="text" class="form-control"
+                        value="{{ $client->is_active ? 'Activo' : 'Inactivo' }}" disabled>
+                </div>
+
             </div>
 
-            <div class="mb-3">
-                <label class="form-label">Localidad</label>
-                <input type="text" class="form-control" name="locality" value="{{ $client->locality }}">
-            </div>
+            <button class="btn btn-primary w-100 rounded-pill mt-4 py-2">
+                Guardar cambios
+            </button>
 
-            <button class="btn btn-primary w-100">Guardar cambios</button>
         </form>
 
     </div>
 </div>
 
+<script>
+document.getElementById('profile_image').addEventListener('change', function (e) {
+
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        alert('Selecciona una imagen válida');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = e => {
+        document.getElementById('profilePreview').src = e.target.result;
+    };
+
+    reader.readAsDataURL(file);
+});
+</script>
+
+<style>
+.verified-badge {
+    width: 32px;
+    height: 32px;
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: translate(20%, -20%);
+}
+
+.edit-avatar {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    transform: translate(20%, 20%);
+}
+</style>
 @endsection

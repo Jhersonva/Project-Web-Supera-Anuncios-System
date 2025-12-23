@@ -75,6 +75,14 @@
                                         </td>
 
                                         <td>
+                                            {{ $client->full_name }}
+                                            @if($client->is_verified)
+                                                <i class="fa-solid fa-shield-check text-primary"
+                                                title="Usuario verificado"></i>
+                                            @endif
+                                        </td>
+
+                                        <td>
                                             <a href="{{ route('admin.config.clients.edit', $client) }}" class="btn btn-sm btn-primary mb-1">
                                                 Editar
                                             </a>
@@ -89,6 +97,17 @@
                                                     <button class="btn btn-sm btn-success">Activar</button>
                                                 @endif
                                             </form>
+                                            @if(!$client->is_verified)
+                                            <button
+                                                class="btn btn-sm btn-success"
+                                                onclick="verifyUser({{ $client->id }})">
+                                                <i class="fa-solid fa-circle-check"></i> Verificar
+                                            </button>
+                                            @else
+                                            <span class="badge bg-primary">
+                                                <i class="fa-solid fa-shield-check"></i> Verificado
+                                            </span>
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach
@@ -98,9 +117,7 @@
                     </div>
 
 
-                    {{-- ======================= --}}
                     {{-- VISTA MÓVIL (CARDS) --}}
-                    {{-- ======================= --}}
                     <div class="mobile-card">
                         @foreach ($clients as $client)
                             <div class="card mb-3 shadow-sm border-0" style="border-radius: 14px;">
@@ -141,6 +158,18 @@
                                                 <button class="btn btn-success btn-sm w-100">Activar</button>
                                             @endif
                                         </form>
+
+                                        @if(!$client->is_verified)
+                                            <button
+                                                class="btn btn-sm btn-success"
+                                                onclick="verifyUser({{ $client->id }})">
+                                                <i class="fa-solid fa-circle-check"></i> Verificar
+                                            </button>
+                                            @else
+                                            <span class="badge bg-primary">
+                                                <i class="fa-solid fa-shield-check"></i> Verificado
+                                            </span>
+                                        @endif
                                     </div>
 
                                 </div>
@@ -153,6 +182,44 @@
         @endif
     </div>
 </div>
+
+<script>
+function verifyUser(userId) {
+    Swal.fire({
+        title: '¿Verificar usuario?',
+        text: 'Al activar esta acción, este usuario será marcado como verificado, confiable y visible con insignia.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#198754',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, verificar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+
+            fetch(`/admin/config/clients/${userId}/verify`, {
+                method: 'PUT',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Verificado',
+                        text: data.message,
+                        timer: 1800,
+                        showConfirmButton: false
+                    }).then(() => location.reload());
+                }
+            });
+        }
+    });
+}
+</script>
 
 <style>
 @media (max-width: 768px) {

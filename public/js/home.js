@@ -161,9 +161,6 @@ function showResultsOrMessage(filtered, hasResults, query) {
     renderAds(filtered);
 }
 
-
-
-
 document.addEventListener("DOMContentLoaded", function () {
     loadAds();
 });
@@ -299,6 +296,11 @@ function createAdCard(ad){
 
     const subcategory = ad.subcategory?.name ?? "Sin subcategoría";
 
+    // Usuario
+    const userImg = ad.user_info.profile_image;
+    const userName = ad.user_info.full_name;
+    const userVerified = ad.user_info.is_verified;
+
     return `
     <div class="col-12 col-md-6 col-lg-4">
         <div class="ad-card-horizontal">
@@ -367,6 +369,16 @@ function createAdCard(ad){
                 </p>
                 </div>
 
+                <!-- Usuario -->
+                <div class="d-flex align-items-center mb-2 user-info">
+                    <div class="position-relative me-2">
+                        <img src="${userImg}" class="rounded-circle user-avatar">
+                        ${userVerified ? `<img src="/assets/img/verified-icon/verified.png" class="verified-badge" title="Usuario verificado">` : ''}
+                    </div>
+                    <span class="fw-bold user-name">${userName}</span>
+                </div>
+
+
                 <div class="ad-buttons"> 
 
                     <!-- Ver -->
@@ -374,6 +386,7 @@ function createAdCard(ad){
                         onclick="handleVer('${ad.full_url}')">
                         <i class="fa-solid fa-eye"></i> Ver
                     </button>
+
 
                     <!-- WhatsApp -->
                     <button class="btn btn-sm btn-success"
@@ -407,10 +420,6 @@ function createAdCard(ad){
 
 // -Acción VER
 function handleVer(url) {
-    if (!isAuthenticated) {
-        requireLogin("ver", { url });
-        return;
-    }
     window.location.href = url;
 }
 

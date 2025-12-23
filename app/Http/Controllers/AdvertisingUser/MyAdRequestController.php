@@ -10,6 +10,7 @@ use App\Models\ValueFieldAd;
 use App\Models\Advertisement;
 use App\Models\AdvertisementImage;
 use App\Models\Setting;
+use App\Models\AdSubcategoryImage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use App\Support\AdPrices;
@@ -242,7 +243,36 @@ class MyAdRequestController extends Controller
             'call_phone' => $request->call_phone,
         ]);
 
-        //  GENERAR COMPROBANTE Y GUARDARLO EN public/proof_payment/
+        // IMAGEN DE SUBCATEGORÍA SELECCIONADA
+        if ($request->filled('selected_subcategory_image')) {
+
+            $ids = explode(',', $request->selected_subcategory_image);
+
+            $destPath = public_path('images/advertisementss');
+            if (!file_exists($destPath)) {
+                mkdir($destPath, 0777, true);
+            }
+
+            foreach ($ids as $index => $id) {
+
+                $img = AdSubcategoryImage::find($id);
+                if (!$img) continue;
+
+                $source = public_path($img->image);
+                if (!file_exists($source)) continue;
+
+                $filename = time().'_'.$index.'_subcat.'.pathinfo($source, PATHINFO_EXTENSION);
+                copy($source, $destPath.'/'.$filename);
+
+                AdvertisementImage::create([
+                    'advertisementss_id' => $ad->id,
+                    'image' => 'images/advertisementss/'.$filename,
+                    'is_main' => $index === 0 
+                ]);
+            }
+        }
+
+
         $folder = public_path('proof_payment');
 
         if (!file_exists($folder)) {

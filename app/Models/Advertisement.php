@@ -97,7 +97,7 @@ class Advertisement extends Model
 
     public function dynamicFields()
     {
-        return $this->hasMany(ValueFieldAd::class,'advertisementss_id')->with('field'); // relación al campo
+        return $this->hasMany(ValueFieldAd::class,'advertisementss_id')->with('field'); 
     }
 
     public function user()

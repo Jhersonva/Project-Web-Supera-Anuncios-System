@@ -3,7 +3,8 @@
     $complaintBook = \App\Models\ComplaintBookSetting::first();
 @endphp
 
-<footer class="footer-dark mt-5 pt-5 pb-4">
+<footer class="footer-dark mt-3 pt-6 pb-6">
+
     <div class="container">
 
         <div class="row align-items-center footer-row">
@@ -51,10 +52,12 @@
 
 
 <style>
-/* ===== FOOTER BASE ===== */
+/* FOOTER BASE */
 .footer-dark {
     background-color: #121212;
     color: #e0e0e0;
+    padding-top: 4rem;
+    padding-bottom: 4rem;
 }
 
 .footer-dark h6 {

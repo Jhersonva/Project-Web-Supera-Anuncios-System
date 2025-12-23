@@ -35,6 +35,7 @@ use App\Http\Controllers\Admin\LabelPriceController;
 use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\SystemSettingController;
 use App\Http\Controllers\Admin\PrivacyPolicySettingController;
+use App\Http\Controllers\Admin\SubcategoryImageController;
 
 
 /*
@@ -128,12 +129,23 @@ Route::get('/api/ads', function (Request $request) {
     $transform = function ($ad) {
 
         // URL segura
-        $ad->full_url = url('/ads/' . $ad->id);
+        $ad->full_url = route('public.ad.detail', [
+            'slug' => $ad->slug,
+            'id'   => $ad->id
+        ]);
 
         // Tiempo (NO approved_at)
         $ad->time_ago = $ad->created_at
             ->locale('es')
             ->diffForHumans();
+
+        $ad->user_info = [
+            'full_name'      => optional($ad->user)->full_name ?? 'Usuario',
+            'profile_image'  => optional($ad->user)->profile_image
+                ? asset(optional($ad->user)->profile_image)
+                : asset('assets/img/profile-image/default-user.png'),
+            'is_verified'    => optional($ad->user)->is_verified ? true : false,
+        ];
 
         // Usuario (user_id puede ser null)
         $ad->whatsapp = optional($ad->user)->whatsapp
@@ -333,6 +345,8 @@ Route::middleware(['auth'])->group(function () {
         */
         Route::get('/privacy-policy', [PrivacyPolicySettingController::class, 'show'])->name('privacy-policy.show');
 
+        Route::get('/subcategories/{id}/images',[SubcategoryImageController::class, 'bySubcategory'])->name('subcategories.images');
+
     });
 
     /*
@@ -369,7 +383,6 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/config/field/update/{id}', [FieldController::class, 'update'])->name('admin.config.fields.update');
             Route::delete('/config/field/delete/{id}', [FieldController::class, 'destroy'])->name('admin.config.fields.destroy');
 
-
             // Gestión de empleados
             Route::get('/config/employees', [EmployeeController::class, 'index'])->name('admin.config.employees');
             Route::get('/config/employees/create', [EmployeeController::class, 'create'])->name('admin.config.employees.create');
@@ -383,6 +396,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/config/clients/{client}/edit', [ClientController::class, 'edit'])->name('admin.config.clients.edit');
             Route::put('/config/clients/{client}', [ClientController::class, 'update'])->name('admin.config.clients.update');
             Route::put('/config/clients/{client}/toggle', [ClientController::class, 'toggleStatus'])->name('admin.config.clients.toggle');
+            Route::put('/config/clients/{client}/verify',[ClientController::class, 'verify'])->name('admin.config.clients.verify');
 
             // Caja
             Route::get('/config/cash', [CashBoxController::class, 'index'])->name('admin.config.cash.index');
@@ -408,6 +422,11 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/config/complaint-book',[ComplaintBookSettingController::class, 'updateView'])->name('admin.config.complaint_book_settings.update');
             Route::get('/complaint-book', [ComplaintBookSettingController::class, 'show']);
             Route::put('/complaint-book', [ComplaintBookSettingController::class, 'update']);
+
+            // Subcategory Images
+            Route::get('/config/subcategory/{id}/images',[SubcategoryImageController::class, 'index'])->name('admin.config.subcategory.images.index');
+            Route::post('/config/subcategory-images',[SubcategoryImageController::class, 'store'])->name('admin.config.subcategory.images.store');
+            Route::delete('/config/subcategory-images/{id}',[SubcategoryImageController::class, 'destroy'])->name('admin.config.subcategory.images.delete');
 
         //Historial de Anuncios
         Route::get('/anuncios/historial', [AdsHistoryController::class, 'index'])->name('admin.ads-history.index');

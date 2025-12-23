@@ -182,6 +182,38 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <style>
 
+    /* Contenedor del usuario */
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 6px; 
+    }
+
+    /* Avatar del usuario */
+    .user-avatar {
+        width: 28px;
+        height: 28px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 1px solid #ddd;
+    }
+
+    /* Insignia de verificado */
+    .verified-badge {
+        width: 16px;
+        height: 16px;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        transform: translate(25%, 25%);
+    }
+
+    /* Nombre de usuario */
+    .user-name {
+        font-size: 0.85rem;
+        line-height: 1;
+    }
+
     .badge-top,
     .badge-urgente {
         position: absolute;
