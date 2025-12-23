@@ -58,6 +58,23 @@ class MyAdRequestController extends Controller
         return view('advertising_user.my_ads.stats-my-ad', compact('ad', 'stats'));
     }
 
+    public function deactivate($id)
+    {
+        $ad = Advertisement::where('id', $id)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        if (!$ad->published) {
+            return back()->with('error', 'El anuncio ya está desactivado.');
+        }
+
+        $ad->update([
+            'published' => false,
+            'status' => 'pendiente', // o "desactivado" si prefieres
+        ]);
+
+        return back()->with('success', 'El anuncio fue dado de baja correctamente.');
+    }
 
     /**
      * Cargar subcategorías por AJAX
@@ -183,6 +200,7 @@ class MyAdRequestController extends Controller
             'contact_location'      => $request->contact_location,
             'amount'                => $amount,
             'amount_visible'        => $request->amount_visible,
+            'amount_text'        => $request->amount_text,
             'days_active'           => $days,
             'expires_at'            => $expiresAt,
             'published'             => false,

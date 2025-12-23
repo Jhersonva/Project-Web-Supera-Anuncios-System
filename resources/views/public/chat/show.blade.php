@@ -57,6 +57,11 @@
         align-items: center;
         gap: 10px;
     }
+
+    .chat-header img {
+        border: 2px solid #0d6efd;
+    }
+
 </style>
 
 <div class="container mt-3 mb-5">
@@ -65,21 +70,30 @@
 
         <!-- HEADER -->
         <div class="chat-header">
+
+            @php
+                $other = auth()->id() === $conversation->sender_id
+                    ? $conversation->receiver
+                    : $conversation->sender;
+            @endphp
+
             <a href="{{ route('chat.index') }}" class="me-2">
                 <i class="fa-solid fa-arrow-left fs-4"></i>
             </a>
 
-            <i class="fa-solid fa-user-circle fa-2x text-secondary"></i>
+            <img
+                src="{{ $other->profile_image
+                    ? asset($other->profile_image)
+                    : asset('assets/img/profile-image/default-user.png') }}"
+                class="rounded-circle border border-2 border-danger"
+                style="width:42px; height:42px; object-fit:cover;"
+                alt="Perfil">
 
             <div>
-                @php
-                    $other = auth()->id() === $conversation->sender_id
-                        ? $conversation->receiver
-                        : $conversation->sender;
-                @endphp
-
                 <div class="fw-bold">{{ $other->full_name }}</div>
-                <small class="text-muted">{{ $conversation->advertisement->title }}</small>
+                <small class="text-muted">
+                    {{ $conversation->advertisement->title }}
+                </small>
             </div>
         </div>
 

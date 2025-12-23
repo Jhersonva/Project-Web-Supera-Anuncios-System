@@ -2,7 +2,6 @@
 
     {{-- IZQUIERDA --}}
     <div class="d-flex align-items-center gap-2">
-        {{--<img src="{{ asset('assets/icons/logo.jpg') }}" width="26">--}}
         <strong>{{ system_company_name() }}</strong>
     </div>
 
@@ -10,16 +9,27 @@
     <div class="d-flex align-items-center gap-3">
 
         @auth
-            <div class="d-flex align-items-center gap-3">
-                <i class="fa-solid fa-circle-user"></i> {{ auth()->user()->full_name }}
+        <div class="d-flex align-items-center gap-2">
 
-                <form action="{{ route('auth.logout') }}" method="POST">
-                    @csrf
-                    <button class="btn btn-danger btn-sm">
-                        <i class="fa-solid fa-right-to-bracket me-2"></i>Salir
-                    </button>
-                </form>
-            </div>
+            <img
+                src="{{ auth()->user()->profile_image
+                    ? asset(auth()->user()->profile_image)
+                    : asset('assets/img/profile-image/default-user.png') }}"
+                class="rounded-circle border border-2 border-danger"
+                style="width:32px; height:32px; object-fit:cover;"
+                alt="Perfil">
+
+            <span class="fw-semibold">
+                {{ auth()->user()->full_name }}
+            </span>
+
+            <form action="{{ route('auth.logout') }}" method="POST" class="ms-2">
+                @csrf
+                <button class="btn btn-danger btn-sm">
+                    <i class="fa-solid fa-right-to-bracket me-1"></i>Salir
+                </button>
+            </form>
+        </div>
 
         @else
             <a href="{{ route('login') }}" class="btn btn-primary btn-sm">

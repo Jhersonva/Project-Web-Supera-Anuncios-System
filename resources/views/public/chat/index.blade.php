@@ -24,7 +24,14 @@
                     class="list-group-item list-group-item-action d-flex align-items-center">
 
                     <div class="me-3">
-                        <i class="fa-solid fa-user-circle fa-2x text-secondary"></i>
+                        <img
+                        src="{{ $otherUser->profile_image
+                            ? asset($otherUser->profile_image)
+                            : asset('assets/img/profile-image/default-user.png') }}"
+                        class="rounded-circle border border-2 border-danger"
+                        style="width:42px; height:42px; object-fit:cover;"
+                        alt="Perfil">
+
                     </div>
 
                     <div class="flex-grow-1">

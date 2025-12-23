@@ -248,11 +248,14 @@
             {{-- PRECIO --}}
             <div class="price-box mb-4">
                 @if($ad->amount_visible == 1)
-                S/. {{ number_format($ad->amount, 2) }}
+                    S/. {{ number_format($ad->amount, 2) }}
+                @elseif(!empty($ad->amount_text))
+                    S/. {{ $ad->amount_text }}
                 @else
-                  S/. No especificado
+                    S/. No especificado
                 @endif
             </div>
+
             {{-- DESCRIPCIÓN --}}
             <h5 class="fw-bold">Descripción</h5>
             <p class="text-secondary">{{ $ad->description }}</p>

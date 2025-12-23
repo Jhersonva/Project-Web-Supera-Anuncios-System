@@ -169,6 +169,7 @@
 
                     <!-- hidden field para enviar al backend -->
                     <input type="hidden" name="amount_visible" id="amountVisibleInput" value="1">
+                    <input type="hidden" name="amount_text" id="amountTextInput">
                 </div>
 
                 <div class="field-card d-none" id="costContainer">
@@ -546,11 +547,14 @@ function createAdCard(ad) {
 
                 <div class="ad-price-box">
                     <p class="fw-bold ${ad.amount_visible == 0 ? 'text-secondary' : 'text-success'}">
-                        ${ad.amount_visible == 1 
-                            ? `S/. ${ad.amount}` 
-                            : `S/. ${ad.amount && ad.amount !== "" ? ad.amount : "No especificado"}`
+                        ${
+                            ad.amount_visible == 1
+                                ? `S/ ${ad.amount}`
+                                : ad.amount_text
+                                    ? `S/ ${ad.amount_text}`
+                                    : "S/ No especificado"
                         }
-                    </p>   
+                    </p>
                 </div>
 
                 <!-- CONTACTO -->
@@ -597,8 +601,10 @@ function updatePreview() {
         department: document.querySelector("input[name='department']")?.value || "",
         province: document.querySelector("input[name='province']")?.value || "",
 
-        amount: document.querySelector("#amountInput")?.value || "",
-        amount_visible: document.querySelector("#amountVisibleInput")?.value || "1",
+        amount: amountInput.value || null,
+        amount_text: amountTextInput.value || null,
+        amount_visible: parseInt(amountVisibleInput.value),
+
 
         featured_publication: document.querySelector("#featured_publication")?.checked ? 1 : 0,
         urgent_publication: document.querySelector("#urgent_publication")?.checked ? 1 : 0,
@@ -840,62 +846,52 @@ document.addEventListener("DOMContentLoaded", () => {
     const amountVisibleCheckbox = document.getElementById('amountVisibleCheckbox');
     const amountVisibleInput = document.getElementById('amountVisibleInput');
     const amountTextSelect = document.getElementById('amountTextSelect');
+    const amountTextInput = document.getElementById('amountTextInput');
 
-    // Función para actualizar el input
-    function updateAmountInputVisibility(visible) {
+    // Estado inicial
+    toggleAmount(amountVisibleCheckbox.checked);
+
+    function toggleAmount(visible) {
         if (visible) {
-            amountInput.type = "number";
             amountInput.disabled = false;
             amountInput.required = true;
             amountTextSelect.classList.add('d-none');
-            // Restaurar valor temporal si existe
-            if (amountInput.dataset.tmpVal) {
-                amountInput.value = amountInput.dataset.tmpVal;
-                delete amountInput.dataset.tmpVal;
-            }
+
+            amountVisibleInput.value = 1;
+            amountTextInput.value = "";
         } else {
-            amountInput.dataset.tmpVal = amountInput.value;
-            amountInput.value = "";
-            amountInput.type = "text";
             amountInput.disabled = true;
             amountInput.required = false;
+            amountInput.value = "";
+
             amountTextSelect.classList.remove('d-none');
 
-            // Usar valor seleccionado del select por defecto
-            if (amountTextSelect.value) {
-                amountInput.value = amountTextSelect.value;
-            } else {
-                amountInput.value = "(No especificado)";
-            }
+            amountVisibleInput.value = 0;
+            amountTextInput.value = amountTextSelect.value || "No especificado";
         }
     }
 
-    // Inicializar estado
-    updateAmountInputVisibility(amountVisibleCheckbox.checked);
-
-    // Cambios del checkbox
+    // Checkbox mostrar / ocultar
     amountVisibleCheckbox.addEventListener('change', function () {
         const visible = this.checked;
-        amountVisibleInput.value = visible ? 1 : 0;
-        adPreview.amount_visible = visible ? 1 : 0;
 
-        // Guardar el texto por defecto si el monto está oculto
+        amountVisibleInput.value = visible ? 1 : 0;
+
         if (!visible) {
-            adPreview.amount = amountTextSelect.value || "(No especificado)";
+            amountTextInput.value = amountTextSelect.value || "No especificado";
         } else {
-            // Restaurar valor numérico
-            adPreview.amount = amountInput.value;
+            amountTextInput.value = null;
         }
 
-        updateAmountInputVisibility(visible);
+        toggleAmount(visible);
         updatePreview();
     });
 
-    // Cambios del select de texto por defecto
-    amountTextSelect.addEventListener('change', function() {
+    // Select texto por defecto
+    amountTextSelect.addEventListener('change', function () {
         if (!amountVisibleCheckbox.checked) {
-            amountInput.value = this.value || "(No especificado)";
-            adPreview.amount = this.value || "(No especificado)";
+            amountInput.value = this.value;
+            amountTextInput.value = this.value;
             updatePreview();
         }
     });

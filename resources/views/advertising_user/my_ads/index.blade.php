@@ -115,11 +115,27 @@
                             <td>
                                 <div class="d-flex gap-2">
 
+                                    @if($ad->published)
+                                        <button type="button"
+                                            class="btn btn-sm btn-outline-warning"
+                                            onclick="confirmDeactivate({{ $ad->id }})"
+                                            title="Dar de baja">
+                                            <i class="fa-solid fa-ban"></i>
+                                        </button>
+
+                                        <form id="deactivateForm-{{ $ad->id }}"
+                                            action="{{ route('my-ads.deactivate', $ad->id) }}"
+                                            method="POST" style="display:none;">
+                                            @csrf
+                                        </form>
+                                    @endif
+
+                                    {{-- 
                                     @if($ad->receipt_file)
                                         <a href="{{ asset($ad->receipt_file) }}" target="_blank" class="btn btn-outline-primary">
-                                            Ver Comprobante
+                                            Com. Pago
                                         </a>
-                                    @endif
+                                    @endif --}}
 
 
                                     <a href="{{ route('my-ads.show', $ad->id) }}"
@@ -198,6 +214,19 @@
                         {{-- Acciones --}}
                         <div class="d-flex gap-2 justify-content-center flex-wrap">
                             
+                            @if($ad->published)
+                                <button class="btn btn-sm btn-outline-warning"
+                                    onclick="confirmDeactivate({{ $ad->id }})">
+                                    <i class="fa-solid fa-ban"></i> Dar de baja
+                                </button>
+
+                                <form id="deactivateForm-{{ $ad->id }}"
+                                    action="{{ route('my-ads.deactivate', $ad->id) }}"
+                                    method="POST" style="display:none;">
+                                    @csrf
+                                </form>
+                            @endif
+
                             <a href="{{ route('my-ads.show', $ad->id) }}" class="btn btn-sm btn-outline-secondary">
                                 <i class="fa-solid fa-eye"></i>
                             </a>
@@ -255,6 +284,23 @@ function confirmDelete(id) {
     }).then((result) => {
         if (result.isConfirmed) {
             document.getElementById(`deleteForm-${id}`).submit();
+        }
+    });
+}
+
+function confirmDeactivate(id) {
+    Swal.fire({
+        title: "¿Dar de baja el anuncio?",
+        text: "El anuncio dejará de publicarse inmediatamente.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#f0ad4e",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Sí, dar de baja",
+        cancelButtonText: "Cancelar"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById(`deactivateForm-${id}`).submit();
         }
     });
 }

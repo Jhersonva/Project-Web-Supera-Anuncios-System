@@ -19,6 +19,7 @@ return new class extends Migration {
             $table->string('contact_location')->nullable();
             $table->decimal('amount', 10, 2)->nullable(0);
             $table->boolean('amount_visible')->default(1);
+            $table->string('amount_text')->nullable();
             $table->unsignedInteger('days_active')->default(1);
             $table->dateTime('expires_at')->nullable();
             $table->boolean('published')->default(false);

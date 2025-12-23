@@ -356,9 +356,15 @@ function createAdCard(ad){
                 </div>
 
                 <div class="ad-price-box">
-                    <p class="fw-bold ${ad.amount_visible == 0 ? 'text-secondary' : 'text-success'}">
-                        ${ ad.amount_visible == 1 ? `S/ ${ad.amount}` : "S/ No especificado" }
-                    </p>
+                <p class="fw-bold ${ad.amount_visible === 0 ? 'text-secondary' : 'text-success'}">
+                    ${
+                        ad.amount_visible === 1
+                            ? `S/ ${ad.amount}`
+                            : ad.amount_text
+                                ? `S/ ${ad.amount_text}`
+                                : "S/ No especificado"
+                    }
+                </p>
                 </div>
 
                 <div class="ad-buttons"> 

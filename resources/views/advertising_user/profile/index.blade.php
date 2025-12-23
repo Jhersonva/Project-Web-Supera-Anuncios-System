@@ -25,14 +25,35 @@
 
     <div class="card shadow-sm profile-card">
 
-        <!-- Ícono centrado -->
-        <div class="text-center mb-4">
-            <i class="fa-solid fa-circle-user fa-8x"></i>
-        </div>
 
-
-        <form action="{{ route('profile.update') }}" method="POST">
+        <form action="{{ route('profile.update') }}"method="POST"enctype="multipart/form-data">
             @csrf
+
+            <!-- Ícono centrado -->
+            <div class="text-center mb-4">
+
+                <label for="profile_image" class="position-relative d-inline-block" style="cursor:pointer;">
+                    <img
+                        id="profilePreview"
+                        src="{{ $user->profile_image 
+                            ? asset($user->profile_image) 
+                            : asset('assets/img/profile-image/default-user.png') }}"
+                        class="rounded-circle border border-2 border-danger"
+                        style="width:120px; height:120px; object-fit:cover;"
+                    >
+
+                    <!-- Icono editar -->
+                    <span class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle p-2">
+                        <i class="fa-solid fa-camera"></i>
+                    </span>
+                </label>
+
+                <input type="file"
+                    name="profile_image"
+                    id="profile_image"
+                    class="d-none"
+                    accept="image/*">
+            </div>
 
             <!-- GRID RESPONSVIO 2 COLUMNAS -->
             <div class="row g-3">
@@ -125,4 +146,25 @@
     </div>
 </div>
 
+<script>
+document.getElementById('profile_image').addEventListener('change', function (e) {
+
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validar que sea imagen
+    if (!file.type.startsWith('image/')) {
+        alert('Selecciona una imagen válida');
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function (event) {
+        document.getElementById('profilePreview').src = event.target.result;
+    };
+
+    reader.readAsDataURL(file);
+});
+</script>
 @endsection

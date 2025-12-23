@@ -21,6 +21,7 @@ class Advertisement extends Model
         'district',
         'amount',
         'amount_visible',
+        'amount_text',
         'days_active',
         'expires_at',
         'published',

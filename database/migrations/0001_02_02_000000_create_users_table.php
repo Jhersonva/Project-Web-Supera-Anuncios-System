@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->foreignId('role_id')->constrained('roles')->restrictOnDelete();
+            $table->string('profile_image')->nullable();
             $table->string('full_name');
             $table->string('email', 120)->unique();
             $table->string('password', 255);

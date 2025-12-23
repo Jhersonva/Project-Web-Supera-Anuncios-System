@@ -10,7 +10,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ComplaintBookSettingController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\PrivacyPolicyAcceptanceController;
-use App\Http\Controllers\PublicAdController;
+use App\Http\Controllers\HomeController;
 
 
 use App\Http\Controllers\AdvertisingUser\AdvertisementController;
@@ -271,7 +271,9 @@ Route::post('/privacy-policy/accept', [PrivacyPolicyAcceptanceController::class,
 Route::post('/privacy-policy/reject', [PrivacyPolicyAcceptanceController::class, 'reject'])
     ->name('privacy-policy.reject');
 
-Route::get('/', [PublicAdController::class, 'index'])->name('home');
+//Route::get('/', [PublicAdController::class, 'index'])->name('home');
+
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 /*
 |--------------------------------------------------------------------------
@@ -296,6 +298,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/my-ads/{id}', [MyAdRequestController::class, 'show'])->name('my-ads.show');
         Route::get('/my-ads/{id}/edit', [MyAdRequestController::class, 'edit'])->name('my-ads.editAd');
         Route::post('/my-ads/{id}/update', [MyAdRequestController::class, 'update'])->name('my-ads.updateAd');
+        Route::post('/my-ads/{id}/deactivate', [MyAdRequestController::class, 'deactivate'])->name('my-ads.deactivate');
         Route::delete('/my-ads/{id}/delete', [MyAdRequestController::class, 'destroy'])->name('my-ads.deleteAd');
         Route::get('/my-ads/{id}/stats', [MyAdRequestController::class, 'stats'])->name('my-ads.stats');
 
