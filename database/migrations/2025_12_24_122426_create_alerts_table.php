@@ -5,21 +5,21 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
+
     public function up(): void
     {
-        Schema::create('system_settings', function (Blueprint $table) {
+        Schema::create('alerts', function (Blueprint $table) {
             $table->id();
-            $table->string('company_name')->nullable();
-            $table->text('company_description')->nullable();
             $table->string('logo')->nullable(); 
-            $table->string('whatsapp_number', 9)->nullable();
+            $table->string('title');
+            $table->text('description');
+            $table->boolean('is_active')->default(true); 
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('system_settings');
+        Schema::dropIfExists('alerts');
     }
 };
-

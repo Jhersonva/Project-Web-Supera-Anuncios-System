@@ -41,6 +41,28 @@
                                 rows="4">{{ old('company_description', $settings->company_description) }}</textarea>
                     </div>
 
+                    {{-- WhatsApp --}}
+                    <div class="mb-3">
+                        <label class="form-label">Número de WhatsApp</label>
+
+                        <div class="input-group">
+                            <span class="input-group-text">+51</span>
+                            <input type="text"
+                                name="whatsapp_number"
+                                class="form-control"
+                                placeholder="987654321"
+                                maxlength="9"
+                                inputmode="numeric"
+                                pattern="[0-9]*"
+                                value="{{ old('whatsapp_number', $settings->whatsapp_number) }}">
+                        </div>
+
+                        <small class="text-muted">
+                            Ingresa solo números, sin espacios ni símbolos.
+                        </small>
+                    </div>
+
+
                     {{-- Logo --}}
                     <div class="mb-3">
                         <label class="form-label">Logo</label>

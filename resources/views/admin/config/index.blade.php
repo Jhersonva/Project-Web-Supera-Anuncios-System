@@ -268,7 +268,7 @@
         </div>
         @endif
 
-        {{-- ADMIN (1) Y EMPLOYEE (3): Políticas de Privacidad --}}
+        {{-- ADMIN (1) Y EMPLOYEE (3): Términos y Condiciones --}}
         @if(in_array($role, [1, 3]))
         <div class="col-md-6">
             <div class="card shadow-sm border-0 p-3 mb-4" style="border-radius: 16px;">
@@ -280,7 +280,7 @@
                     </div>
 
                     <div>
-                        <h5 class="fw-bold m-0">Políticas de Privacidad</h5>
+                        <h5 class="fw-bold m-0">Gestión de Términos y Condiciones</h5>
                         <small class="text-muted">Contenido legal y restricciones</small>
                     </div>
                 </div>
@@ -289,9 +289,9 @@
                     Administra el texto de privacidad, contenido explícito y validación de edad.
                 </p>
 
-                <a href="{{ route('admin.config.privacy-policy.index') }}"
+                <a href="{{ route('admin.config.privacy-policy.indexGestion') }}"
                 class="btn btn-primary w-100 fw-semibold py-2 text-white">
-                    Gestionar políticas
+                    Gestionar Términos y Condiciones
                     <i class="fa-solid fa-chevron-right ms-2"></i>
                 </a>
 

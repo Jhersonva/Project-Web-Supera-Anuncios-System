@@ -77,6 +77,9 @@
                     <textarea name="description" class="form-control" rows="4" placeholder="Describe tu anuncio"></textarea>
                 </div>
 
+                {{-- LISTA DE CAMPOS DINÁMICOS --}}
+                <div id="fieldsContainer"></div>
+
                 {{-- UBICACIÓN DEL ANUNCIO --}}
                 <div class="field-card d-none" id="locationAdContainer">
 
@@ -110,9 +113,6 @@
                     <label class="fw-semibold">Dirección</label>
                     <input type="text" name="contact_location" class="form-control" placeholder="Ej: Av. Mantaro 123">
                 </div>
-
-                {{-- LISTA DE CAMPOS DINÁMICOS --}}
-                <div id="fieldsContainer"></div>
 
                 {{-- DATOS DE CONTACTO DEL USUARIO --}}
                 <div class="field-card d-none" id="contactDataContainer">
@@ -149,7 +149,7 @@
                             <!-- Opciones de texto por defecto -->
                             <select id="amountTextSelect" class="form-select mt-2 d-none">
                                 <option value="">Selecciona texto por defecto...</option>
-                                <option value="Sueldo a tratar">(Sueldo a tratar)</option>
+                                <option value="Sueldo a tratar">(Monto a tratar)</option>
                                 <option value="Sueldo por comisiones">(Sueldo por comisiones)</option>
                                 <option value="No especificado">(No especificado)</option>
                             </select>

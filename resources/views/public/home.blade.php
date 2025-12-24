@@ -101,11 +101,23 @@
 
 {{-- BOTÓN FLOTANTE --}}
 @auth
-<button class="btn btn-danger shadow btn-float d-flex align-items-center gap-2 px-3 py-2 rounded-pill"
-        onclick="location.href='{{ route('my-ads.createAd') }}'">
-    <i class="fa-solid fa-plus"></i>
-    <span>Crear Anuncio</span>
-</button>
+<div class="floating-actions">
+
+    <!-- WhatsApp -->
+    <a href="https://wa.me/51{{ $systemSettings->whatsapp_number }}?text={{ urlencode('Hola quiero más información') }}"
+       target="_blank"
+       class="btn btn-success shadow d-flex align-items-center gap-2 px-3 py-2 rounded-pill mb-2">
+        <i class="fa-brands fa-whatsapp"></i>
+    </a>
+
+    <!-- Crear anuncio -->
+    <button class="btn btn-danger shadow d-flex align-items-center gap-2 px-3 py-2 rounded-pill"
+            onclick="location.href='{{ route('my-ads.createAd') }}'">
+        <i class="fa-solid fa-plus"></i>
+        <span>Crear Anuncio</span>
+    </button>
+
+</div>
 @endauth
 
 <div id="installBanner"
@@ -128,9 +140,22 @@
 </div>
 
 <script>
+    window.ALERTS = [];
+
+    @auth
+        fetch("{{ route('api.alerts') }}")
+            .then(response => response.json())
+            .then(data => {
+                window.ALERTS = data;
+            })
+            .catch(err => console.error("Error cargando alertas:", err));
+    @endauth
+    
+    window.ADULT_TERMS_URL = "{{ route('adult.terms') }}";
+
     window.IS_AUTH = @json(auth()->check());
-    window.PRIVADOS_SUBCATEGORY_ID = 4; // ID real de subcategoría PRIVADOS
-    window.SERVICIOS_CATEGORY_ID = 21;  // ID real de categoría SERVICIOS
+    window.SERVICIOS_CATEGORY_ID = 4;
+    window.PRIVADOS_SUBCATEGORY_ID = 21;
     const allSubcategories = @json($subcategories);
 </script>
 
@@ -144,7 +169,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     Swal.fire({
-        title: '<span style="font-size:22px;font-weight:600;">Políticas de Privacidad</span>',
+        title: '<span style="font-size:22px;font-weight:600;">Términos y Condiciones</span>',
         width: 700,
         padding: '1.5rem',
         backdrop: 'rgba(0,0,0,0.65)',
@@ -165,39 +190,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 <hr style="margin:16px 0">
 
-                <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                    @if($policy->contains_explicit_content)
-                        <span style="
-                            background:#fff3cd;
-                            color:#856404;
-                            padding:6px 10px;
-                            border-radius:6px;
-                            font-size:13px;
-                            font-weight:500;
-                        ">
-                            ⚠ Contenido explícito
-                        </span>
-                    @endif
-
-                    @if($policy->requires_adult)
-                        <span style="
-                            background:#f8d7da;
-                            color:#721c24;
-                            padding:6px 10px;
-                            border-radius:6px;
-                            font-size:13px;
-                            font-weight:500;
-                        ">
-                            🔞 Solo mayores de edad
-                        </span>
-                    @endif
-                </div>
-
             </div>
         `,
         showCancelButton: true,
-        confirmButtonText: 'Acepto las políticas',
-        cancelButtonText: 'Rechazo',
+        confirmButtonText: 'Aceptar',
+        cancelButtonText: 'Rechazar',
         confirmButtonColor: '#0d6efd',
         cancelButtonColor: '#dc3545',
         reverseButtons: true,
@@ -231,6 +228,43 @@ document.addEventListener('DOMContentLoaded', function () {
 @endauth
 
 <style>
+
+    .floating-actions {
+        position: fixed;
+        bottom: 85px; 
+        right: 20px;
+        z-index: 1050;
+        display: flex;
+        flex-direction: column;
+        align-items: center; 
+    }
+
+
+    .floating-actions .btn {
+        padding: 12px 20px;   
+        font-size: 15px;      
+        border-radius: 1000px; 
+    }
+
+    .floating-actions .fa-whatsapp {
+        font-size: 20px;
+    }
+
+    .share-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+
+    .verified-icon-below {
+        position: absolute;
+        top: 100%;       
+        left: 50%;
+        transform: translateX(-50%);
+        width: 50px;      
+        height: 50px;
+        margin-top: 4px;
+        pointer-events: none;
+    }
 
     /* Contenedor del usuario */
     .user-info {

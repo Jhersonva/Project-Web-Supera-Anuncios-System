@@ -12,6 +12,7 @@ class SystemSetting extends Model
         'company_name',
         'company_description',
         'logo',
+        'whatsapp_number',
     ];
 
     public function socialLinks()

@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             SystemSettingsSeeder::class,
             PrivacyPolicySettingSeeder::class,
             ComplaintBookSettingSeeder::class,
+            ContentSeeder::class,
         ]);
     }
 }

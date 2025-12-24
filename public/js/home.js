@@ -93,34 +93,58 @@ document.addEventListener("DOMContentLoaded", function () {
     // Botón Buscar
     btnSearch.addEventListener('click', function () {
 
-        if (
-            !window.IS_AUTH &&
-            selectCategory.value == window.SERVICIOS_CATEGORY_ID &&
-            selectSubcategory.value == window.PRIVADOS_SUBCATEGORY_ID
-        ) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Inicia sesión',
-                text: 'Debes iniciar sesión para buscar anuncios privados',
-                confirmButtonText: 'Iniciar sesión'
-            }).then(() => {
-                window.location.href = '/login';
-            });
-            return;
+    const titleQuery = inputSearch.value.trim().toLowerCase();
+    const locationQuery = inputLocation.value.trim().toLowerCase();
+    const categoryId = selectCategory.value;
+    const subcategoryId = selectSubcategory.value;
+
+    if (!titleQuery && !locationQuery && !categoryId && !subcategoryId) {
+        alert("Ingresa algún término de búsqueda");
+        return;
+    }
+
+    // Si es Servicios -> Privados
+    if (categoryId == window.SERVICIOS_CATEGORY_ID &&
+    subcategoryId == window.PRIVADOS_SUBCATEGORY_ID) {
+
+    if (!window.ALERTS || window.ALERTS.length === 0) {
+        return;
+    }
+
+    const alertData = window.ALERTS[0]; 
+
+    Swal.fire({
+        title: alertData.title,
+        html: `
+            ${alertData.logo ? `
+                <img src="/${alertData.logo}" style="max-width:120px" class="mb-3 rounded">
+            ` : ''}
+            <p>${alertData.description}</p>
+            <a href="${window.ADULT_TERMS_URL}" target="_blank" class="fw-bold text-primary">
+                Términos y Condiciones
+            </a>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Aceptar y continuar',
+        cancelButtonText: 'Rechazar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            filterAdsFull(titleQuery, locationQuery, categoryId, subcategoryId);
+        } else {
+            document.getElementById('listaAnuncios').innerHTML = '';
         }
-
-        const titleQuery = inputSearch.value.trim().toLowerCase();
-        const locationQuery = inputLocation.value.trim().toLowerCase();
-        const categoryId = selectCategory.value;
-        const subcategoryId = selectSubcategory.value;
-
-        if (!titleQuery && !locationQuery && !categoryId && !subcategoryId) {
-            alert("Ingresa algún término de búsqueda");
-            return;
-        }
-
-        filterAdsFull(titleQuery, locationQuery, categoryId, subcategoryId);
     });
+
+    return;
+}
+
+
+
+    // Para búsquedas normales, sin alert adulto
+    filterAdsFull(titleQuery, locationQuery, categoryId, subcategoryId);
+});
+
 
 
     // Botón Limpiar
@@ -179,21 +203,29 @@ function showResultsOrMessage(filtered, hasResults, query) {
     renderAds(filtered);
 }
 
-selectSubcategory.addEventListener('change', function () {
+function showAdultAlert() {
 
-    if (!window.IS_AUTH && this.value == window.PRIVADOS_SUBCATEGORY_ID) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Acceso restringido',
-            text: 'Debes iniciar sesión para ver anuncios privados',
-            confirmButtonText: 'Iniciar sesión'
-        }).then(() => {
-            window.location.href = '/login';
-        });
-
-        this.value = '';
+    if (!window.ALERTS || window.ALERTS.length === 0) {
+        return;
     }
-});
+
+    const alert = window.ALERTS[0]; 
+
+    Swal.fire({
+        title: alert.title,
+        html: `
+            ${alert.logo ? `
+                <img src="/${alert.logo}" style="max-width:120px" class="mb-3 rounded">
+            ` : ''}
+            <p>${alert.description}</p>
+            <a href="${window.ADULT_TERMS_URL}" target="_blank" class="fw-bold text-primary">
+                Términos y Condiciones
+            </a>
+        `,
+        icon: 'warning',
+        confirmButtonText: 'Entendido'
+    });
+}
 
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -364,15 +396,26 @@ function createAdCard(ad){
 
             <div class="ad-content">
 
-                <h3 class="ad-title">
+                <h3 class="ad-title d-flex align-items-start">
                     ${ad.featured_publication == 1 ? `<span class="star-destacado">⭐</span>` : ''}
-                    <span class="ad-title-text">${ad.title}</span>
+                    <span class="ad-title-text flex-grow-1">${ad.title}</span>
 
-                    <!-- Compartir -->
-                    <button class="btn btn-sm btn-secondary ms-auto"
-                        onclick='shareAd(${JSON.stringify(ad).replace(/"/g,"&quot;")})'>
-                        <i class="fa-solid fa-share-nodes"></i>
-                    </button>
+                    <!-- Acciones derecha -->
+                    <div class="share-wrapper ms-2">
+
+                        <!-- Compartir -->
+                        <button class="btn btn-sm btn-secondary mb-1"
+                            onclick='shareAd(${JSON.stringify(ad).replace(/"/g,"&quot;")})'>
+                            <i class="fa-solid fa-share-nodes"></i>
+                        </button>
+
+                        <!-- Verificado -->
+                        ${userVerified ? `
+                            <img src="/assets/img/verified-icon/verified.png"
+                                class="verified-icon-below"
+                                title="Usuario verificado">
+                        ` : ''}
+                    </div>
                 </h3>
 
                 <p class="ad-desc">${ad.description}</p>
@@ -408,7 +451,6 @@ function createAdCard(ad){
                 <div class="d-flex align-items-center mb-2 user-info">
                     <div class="position-relative me-2">
                         <img src="${userImg}" class="rounded-circle user-avatar">
-                        ${userVerified ? `<img src="/assets/img/verified-icon/verified.png" class="verified-badge" title="Usuario verificado">` : ''}
                     </div>
                     <span class="fw-bold user-name">${userName}</span>
                 </div>

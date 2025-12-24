@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Models\Advertisement;
 use App\Models\PrivacyPolicySetting;
+use App\Models\Alert;
 
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\ChatController;
@@ -37,6 +38,7 @@ use App\Http\Controllers\Admin\SystemSettingController;
 use App\Http\Controllers\Admin\PrivacyPolicySettingController;
 use App\Http\Controllers\Admin\SubcategoryImageController;
 use App\Http\Controllers\Admin\SystemSocialLinkController;
+use App\Http\Controllers\Admin\AdultContentViewTermController;
 
 /*
 |--------------------------------------------------------------------------
@@ -50,9 +52,6 @@ Route::get('/', function () {
     $policy = PrivacyPolicySetting::first();
     return view('public.home', compact('policy'));
 })->name('home');
-/*Route::get('/', function () {
-    return view('public.home');
-    })->name('home');*/
 
 Route::get('/api/ads', function (Request $request) {
 
@@ -74,12 +73,12 @@ Route::get('/api/ads', function (Request $request) {
         ->where('status', 'publicado')
         ->where('expires_at', '>=', now())
         ->with(['user', 'category', 'subcategory', 'images', 'dynamicFields.field'])
-        ->orderByDesc('created_at');
+        ->inRandomOrder();
     
     if (!auth()->check()) {
         $baseQuery->whereNot(function ($q) {
-            $q->where('ad_categories_id', 4) // ID categoría SERVICIOS
-            ->where('ad_subcategories_id', 21); // ID subcategoría PRIVADOS
+            $q->where('ad_categories_id', 4) 
+            ->where('ad_subcategories_id', 21);
         });
     }
 
@@ -227,7 +226,6 @@ Route::get('/contact/{id}', [PublicController::class, 'contact'])->name('public.
 Route::get('/ad/{id}', [AdvertisementController::class, 'show'])->name('public.ad.show');
 Route::get('/detalle-anuncio/{slug}/{id}', [AdvertisementController::class, 'show'])->name('public.ad.detail');
 
-
 // Crear conversación desde anuncio
 Route::post('/chat/start/{ad}', [ChatController::class, 'startConversation'])
     ->name('chat.start')
@@ -281,6 +279,12 @@ Route::prefix('auth')->group(function () {
 
     Route::get('/libro-de-reclamaciones', [ComplaintBookSettingController::class, 'publicView'])->name('public.complaint-book');
 
+    Route::get('/api/alerts', function () {
+        return \App\Models\Alert::where('is_active', true)
+            ->orderByDesc('created_at')
+            ->get();
+    })->name('api.alerts');
+
 });
 
 /* Politicas de Privacidad */
@@ -294,6 +298,12 @@ Route::post('/privacy-policy/reject', [PrivacyPolicyAcceptanceController::class,
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
+Route::get(
+    '/terminos/contenido-adulto',
+    [AdultContentViewTermController::class, 'publicTerms']
+)->name('adult.terms');
+
+
 /*
 |--------------------------------------------------------------------------
 | RUTAS PRIVADAS — SOLO advertising_user
@@ -301,6 +311,8 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 */
 Route::middleware(['auth'])->group(function () {
     Route::middleware(['auth'])->prefix('advertising')->group(function () {
+
+        Route::get('/adult/view-terms',[AdultContentViewTermController::class, 'index']);
 
         /*
         |--------------------------------------------------------------------------
@@ -363,6 +375,25 @@ Route::middleware(['auth'])->group(function () {
     */
 
     Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
+
+        // PANEL GENERAL
+        Route::get('/config/privacy-policy',[PrivacyPolicySettingController::class, 'indexGestion'])->name('admin.config.privacy-policy.indexGestion');
+
+        //Ver Contenido con auth
+        Route::get('/config/privacy-policy/authentication',[PrivacyPolicySettingController::class, 'index'])->name('admin.adult.authentication_terms.index');
+        Route::put('/config/privacy-policy/authentication',[PrivacyPolicySettingController::class, 'update'])->name('admin.adult.authentication_terms.update');
+
+        // Ver contenido adulto
+        Route::get('adult-content/view-terms', [\App\Http\Controllers\Admin\AdultContentViewTermController::class, 'index'])->name('adult.view_terms.index');
+        Route::put('adult-content/view-terms/{adultContentViewTerm}',[\App\Http\Controllers\Admin\AdultContentViewTermController::class, 'update'])->name('adult.view_terms.update');
+
+        // Publicar contenido adulto
+        Route::get('adult-content/publish-terms',[\App\Http\Controllers\Admin\AdultContentPublishTermController::class, 'index'])->name('adult.publish_terms.index');
+        Route::put('adult-content/publish-terms/{adultContentPublishTerm}',[\App\Http\Controllers\Admin\AdultContentPublishTermController::class, 'update'])->name('adult.publish_terms.update');
+
+        // Alertas
+        Route::get('alerts',[\App\Http\Controllers\Admin\AlertController::class, 'index'])->name('alerts.index');
+        Route::put('alerts/{alert}',[\App\Http\Controllers\Admin\AlertController::class, 'update'])->name('alerts.update');
 
         // Solicitud de Recargas de saldo
         Route::get('/reload-request', [ReloadRequestController::class, 'index'])->name('admin.reload-request.index');
@@ -451,8 +482,8 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/complaints/{complaint}', [ComplaintController::class, 'update'])->name('admin.config.complaints.update');
         Route::delete('/complaints/{complaint}', [ComplaintController::class, 'destroy'])->name('admin.config.complaints.destroy');
 
-        // Politicas de privacidad 
-        Route::get('/config/privacy-policy', [PrivacyPolicySettingController::class, 'index'])->name('admin.config.privacy-policy.index');
-        Route::put('/config/privacy-policy', [PrivacyPolicySettingController::class, 'update'])->name('admin.config.privacy-policy.update');
+        // Termunos y condiciones login/register
+        //Route::get('/config/privacy-policy', [PrivacyPolicySettingController::class, 'index'])->name('admin.adult.authentication_terms.index');
+        //Route::put('/config/privacy-policy', [PrivacyPolicySettingController::class, 'update'])->name('admin.adult.authentication_terms.update');
     });
 });

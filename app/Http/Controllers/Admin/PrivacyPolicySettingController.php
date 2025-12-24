@@ -21,11 +21,18 @@ class PrivacyPolicySettingController extends Controller
     /**
      * ver configuracion (solo admin / employee)
      */
-    public function index()
+    public function indexGestion()
     {
         $policy = PrivacyPolicySetting::first();
 
         return view('admin.config.privacy-policy.index', compact('policy'));
+    }
+
+    public function index()
+    {
+        $policy = PrivacyPolicySetting::first();
+
+        return view('admin.adult.authentication_terms.index', compact('policy'));
     }
 
     /**

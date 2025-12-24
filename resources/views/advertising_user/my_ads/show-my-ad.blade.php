@@ -14,8 +14,8 @@
     .main-img{
         width: 100%;
         height: 320px;
-        object-fit: contain;       /* ⬅ Cambiado */
-        background: #f5f5f5;       /* Fondo neutro para imágenes pequeñas */
+        object-fit: contain;      
+        background: #f5f5f5;     
         border-radius: 12px;
     }
 
@@ -283,7 +283,7 @@
             {{-- DETALLES --}}
             <h5 class="fw-bold mt-4">Detalles del anuncio</h5>
             <ul class="text-secondary">
-                <li>Publicado: {{ $ad->created_at->diffForHumans() }}</li>
+                <li>Publicado: {{ $ad->created_at->locale('es')->diffForHumans() }}</li>
                 <li>Expira: {{ $ad->expires_at }}</li>
                 @if ($ad->urgent_publication)
                     <li class="text-danger fw-bold">Publicación urgente</li>

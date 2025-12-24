@@ -31,11 +31,13 @@ class SystemSettingController extends Controller
             'company_name' => 'nullable|string|max:255',
             'company_description' => 'nullable|string',
             'logo' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:2048',
+            'whatsapp_number' => 'nullable|string|max:9',
         ]);
 
         $data = $request->only([
             'company_name',
             'company_description',
+            'whatsapp_number',
         ]);
 
         // LOGO (misma lógica que anuncios)
