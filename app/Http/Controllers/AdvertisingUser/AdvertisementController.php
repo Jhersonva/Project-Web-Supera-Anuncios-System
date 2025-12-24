@@ -13,13 +13,37 @@ use Illuminate\Http\Request;
 class AdvertisementController extends Controller
 {
 
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
 
-        $ads = $user->advertisements()
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+        $ads = Advertisement::with(['category', 'subcategory', 'mainImage'])
+            ->where('user_id', $user->id)
+
+            // Buscar por título
+            ->when($request->search, function ($q) use ($request) {
+                $q->where('title', 'LIKE', '%' . $request->search . '%');
+            })
+
+            // Filtrar por estado
+            ->when($request->status, function ($q) use ($request) {
+
+                if ($request->status === 'expirado') {
+                    $q->where('expires_at', '<', now());
+                } else {
+                    $q->where('status', $request->status)
+                    ->where('expires_at', '>=', now());
+                }
+
+            })
+
+            ->orderByDesc('created_at')
+
+            // PAGINACIÓN (10)
+            ->paginate(10)
+
+            // Mantener filtros
+            ->appends($request->query());
 
         return view('advertising_user.my_ads.index', compact('ads'));
     }

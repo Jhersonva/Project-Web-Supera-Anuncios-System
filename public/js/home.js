@@ -92,18 +92,36 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Botón Buscar
     btnSearch.addEventListener('click', function () {
+
+        if (
+            !window.IS_AUTH &&
+            selectCategory.value == window.SERVICIOS_CATEGORY_ID &&
+            selectSubcategory.value == window.PRIVADOS_SUBCATEGORY_ID
+        ) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Inicia sesión',
+                text: 'Debes iniciar sesión para buscar anuncios privados',
+                confirmButtonText: 'Iniciar sesión'
+            }).then(() => {
+                window.location.href = '/login';
+            });
+            return;
+        }
+
         const titleQuery = inputSearch.value.trim().toLowerCase();
         const locationQuery = inputLocation.value.trim().toLowerCase();
         const categoryId = selectCategory.value;
         const subcategoryId = selectSubcategory.value;
 
         if (!titleQuery && !locationQuery && !categoryId && !subcategoryId) {
-            alert("Ingresa algún término de búsqueda o selecciona categoría/subcategoría");
+            alert("Ingresa algún término de búsqueda");
             return;
         }
 
         filterAdsFull(titleQuery, locationQuery, categoryId, subcategoryId);
     });
+
 
     // Botón Limpiar
     btnClear.addEventListener('click', function () {
@@ -160,6 +178,23 @@ function showResultsOrMessage(filtered, hasResults, query) {
 
     renderAds(filtered);
 }
+
+selectSubcategory.addEventListener('change', function () {
+
+    if (!window.IS_AUTH && this.value == window.PRIVADOS_SUBCATEGORY_ID) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Acceso restringido',
+            text: 'Debes iniciar sesión para ver anuncios privados',
+            confirmButtonText: 'Iniciar sesión'
+        }).then(() => {
+            window.location.href = '/login';
+        });
+
+        this.value = '';
+    }
+});
+
 
 document.addEventListener("DOMContentLoaded", function () {
     loadAds();

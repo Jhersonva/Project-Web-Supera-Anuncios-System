@@ -117,7 +117,7 @@
 
                                     @if($ad->published)
                                         <button type="button"
-                                            class="btn btn-sm btn-outline-warning"
+                                            class="btn btn-sm btn-outline-info"
                                             onclick="confirmDeactivate({{ $ad->id }})"
                                             title="Dar de baja">
                                             <i class="fa-solid fa-ban"></i>
@@ -215,7 +215,7 @@
                         <div class="d-flex gap-2 justify-content-center flex-wrap">
                             
                             @if($ad->published)
-                                <button class="btn btn-sm btn-outline-warning"
+                                <button class="btn btn-sm btn-outline-info"
                                     onclick="confirmDeactivate({{ $ad->id }})">
                                     <i class="fa-solid fa-ban"></i> Dar de baja
                                 </button>

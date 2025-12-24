@@ -71,7 +71,7 @@ class MyAdRequestController extends Controller
 
         $ad->update([
             'published' => false,
-            'status' => 'pendiente', // o "desactivado" si prefieres
+            'status' => 'pendiente', 
         ]);
 
         return back()->with('success', 'El anuncio fue dado de baja correctamente.');
@@ -334,7 +334,7 @@ class MyAdRequestController extends Controller
 
     public function edit($id)
     {
-        $ad = Advertisement::with(['mainImage', 'images', 'fields_values'])->findOrFail($id);
+        $ad = Advertisement::with(['mainImage', 'images', 'fields_values', 'user'])->findOrFail($id);
 
         $categories = AdCategory::all();
         $subcategories = AdSubcategory::where('ad_categories_id', $ad->ad_categories_id)->get();
@@ -368,112 +368,24 @@ class MyAdRequestController extends Controller
         $ad = Advertisement::findOrFail($id);
 
         $request->validate([
-            'category_id' => 'required|exists:ad_categories,id',
-            'subcategory_id' => 'required|exists:ad_subcategories,id',
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'amount_visible' => 'required|in:0,1',
-            'amount' => 'required_if:amount_visible,1|nullable|numeric|min:0',
-            'contact_location' => 'nullable|string',
+            'contact_location' => 'nullable|string|max:255',
+            'whatsapp'         => 'nullable|string|max:30',
+            'call_phone'       => 'nullable|string|max:30',
         ]);
 
-        $amount = $request->amount_visible == 1 ? $request->amount : 0;
-
-        $days = (int) $request->days_active;
-        $expiresAt = now()->addDays($days);
+        //Log::info('contact_location:', [$request->contact_location]);
 
         $ad->update([
-            'ad_categories_id' => $request->category_id,
-            'ad_subcategories_id' => $request->subcategory_id,
-            'title' => $request->title,
-            'description' => $request->description,
             'contact_location' => $request->contact_location,
-            'amount_visible' => $request->amount_visible,
-            'amount' => $amount,
-            'days_active' => $days,
-            'expires_at' => $expiresAt,
-
-            'urgent_publication'    => $request->boolean('urgent_publication'),
-            'featured_publication'  => $request->boolean('featured_publication'),
-            'premiere_publication'  => $request->boolean('premiere_publication'),
-            'semi_new_publication'  => $request->boolean('semi_new_publication'),
-            'new_publication'       => $request->boolean('new_publication'),
-            'available_publication' => $request->boolean('available_publication'),
-            'top_publication'       => $request->boolean('top_publication'),
         ]);
 
-        // ACTUALIZAR CAMPOS DINÁMICOS
-        if ($request->has('dynamic')) {
-            foreach ($request->dynamic as $fieldId => $value) {
+        $ad->user->update([
+            'whatsapp'   => $request->whatsapp,
+            'call_phone' => $request->call_phone,
+        ]);
 
-                ValueFieldAd::updateOrCreate(
-                    [
-                        'advertisementss_id' => $ad->id,
-                        'fields_subcategory_ads_id' => $fieldId
-                    ],
-                    [
-                        'value' => $value
-                    ]
-                );
-            }
-        }
-
-        // IMÁGENES NUEVAS
-        if ($request->hasFile('images')) {
-
-            $path = public_path('images/advertisementss');
-            if (!file_exists($path)) mkdir($path, 0777, true);
-
-            foreach ($request->file('images') as $file) {
-                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $file->move($path, $filename);
-
-                AdvertisementImage::create([
-                    'advertisementss_id' => $ad->id,
-                    'image' => 'images/advertisementss/' . $filename,
-                    'is_main' => 0
-                ]);
-            }
-        }
-
-        // ELIMINAR IMÁGENES
-        if ($request->remove_images) {
-            $ids = json_decode($request->remove_images, true);
-
-            foreach ($ids as $imgId) {
-                $img = AdvertisementImage::where('advertisementss_id', $ad->id)
-                                        ->where('id', $imgId)
-                                        ->first();
-
-                if ($img) {
-                    // borrar archivo físico
-                    $path = public_path($img->image);
-                    if (file_exists($path)) {
-                        unlink($path);
-                    }
-
-                    // borrar de BD
-                    $img->delete();
-                }
-            }
-        }
-
-        // ACTUALIZAR IMAGEN PRINCIPAL SELECCIONADA POR EL USUARIO
-        if ($request->main_image) {
-
-            // Quitar la principal actual
-            AdvertisementImage::where('advertisementss_id', $ad->id)
-                ->update(['is_main' => 0]);
-
-            // Asignar la nueva
-            AdvertisementImage::where('advertisementss_id', $ad->id)
-                ->where('id', $request->main_image)
-                ->update(['is_main' => 1]);
-        }
-
-
-
-        return redirect($request->return_to)->with('success', 'Anuncio actualizado correctamente');
+        return redirect($request->return_to ?? route('my-ads.index'))
+            ->with('success', 'Datos de contacto actualizados correctamente');
     }
 
     public function destroy(Request $request, $id)

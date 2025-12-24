@@ -75,6 +75,13 @@ Route::get('/api/ads', function (Request $request) {
         ->where('expires_at', '>=', now())
         ->with(['user', 'category', 'subcategory', 'images', 'dynamicFields.field'])
         ->orderByDesc('created_at');
+    
+    if (!auth()->check()) {
+        $baseQuery->whereNot(function ($q) {
+            $q->where('ad_categories_id', 4) // ID categoría SERVICIOS
+            ->where('ad_subcategories_id', 21); // ID subcategoría PRIVADOS
+        });
+    }
 
     /*
     CONSULTAS POR TIPO
