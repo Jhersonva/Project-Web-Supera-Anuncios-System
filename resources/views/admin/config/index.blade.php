@@ -243,7 +243,7 @@
             <div class="card shadow-sm border-0 p-3 mb-4" style="border-radius: 16px;">
 
                 <div class="d-flex align-items-center mb-3">
-                    <div class="bg-warning text-white p-3 rounded-circle me-3"
+                    <div class="bg-secondary text-white p-3 rounded-circle me-3"
                         style="width: 55px; height: 55px; display:flex; justify-content:center; align-items:center;">
                         <i class="fa-solid fa-book-open"></i>
                     </div>
@@ -259,7 +259,7 @@
                 </p>
 
                 <a href="{{ route('admin.config.complaints.index') }}"
-                class="btn btn-warning w-100 fw-semibold py-2 text-white">
+                class="btn btn-secondary w-100 fw-semibold py-2 text-white">
                     Ver reclamos
                     <i class="fa-solid fa-chevron-right ms-2"></i>
                 </a>
@@ -276,7 +276,7 @@
                 <div class="d-flex align-items-center mb-3">
                     <div class="bg-primary text-white p-3 rounded-circle me-3"
                         style="width: 55px; height: 55px; display:flex; justify-content:center; align-items:center;">
-                        <i class="fa-solid fa-shield-halved fa-lg"></i>
+                        <i class="fa-solid fa-user-lock"></i>
                     </div>
 
                     <div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SystemSetting;
+use App\Models\SystemSocialLink;
 use Illuminate\Http\Request;
 
 class SystemSettingController extends Controller
@@ -13,13 +14,10 @@ class SystemSettingController extends Controller
      */
     public function edit()
     {
-        $settings = SystemSetting::first();
+        $settings = SystemSetting::firstOrCreate([]);
+        $socials  = SystemSocialLink::orderBy('order')->get();
 
-        if (!$settings) {
-            $settings = SystemSetting::create([]);
-        }
-
-        return view('admin.config.system.index', compact('settings'));
+        return view('admin.config.system.index', compact('settings', 'socials'));
     }
 
     /**

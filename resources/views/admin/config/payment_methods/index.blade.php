@@ -18,11 +18,12 @@
     <div class="card shadow-sm border-0 p-4" style="border-radius: 16px;">
 
         <div class="d-flex align-items-center mb-4">
-            <div class="bg-primary text-white p-3 rounded-circle me-3"
+            <div class="bg-info text-white p-3 rounded-circle me-3"
                 style="width: 60px; height: 60px; display:flex; align-items:center; justify-content:center;">
                 <i class="fa-solid fa-credit-card fa-lg"></i>
             </div>
 
+       
             <div>
                 <h5 class="fw-bold m-0">Gestión de Métodos de Pago</h5>
                 <small class="text-muted">Configura los métodos disponibles para recargas</small>

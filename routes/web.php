@@ -36,7 +36,7 @@ use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\SystemSettingController;
 use App\Http\Controllers\Admin\PrivacyPolicySettingController;
 use App\Http\Controllers\Admin\SubcategoryImageController;
-
+use App\Http\Controllers\Admin\SystemSocialLinkController;
 
 /*
 |--------------------------------------------------------------------------
@@ -416,6 +416,10 @@ Route::middleware(['auth'])->group(function () {
             // Configuración del sistema 
             Route::get('/config/system', [SystemSettingController::class, 'edit'])->name('admin.config.system');
             Route::put('/config/system', [SystemSettingController::class, 'update'])->name('admin.config.system.update');
+
+            // Configuración del sistema las redes sociales de contacto 
+            Route::post('/config/system/social', [SystemSocialLinkController::class, 'store'])->name('admin.config.system.social.store');
+            Route::delete('/config/system/social/{social}', [SystemSocialLinkController::class, 'destroy'])->name('admin.config.system.social.destroy');
         
             // Libro de reclamaciones (configuración)
             Route::get('/config/complaint-book',[ComplaintBookSettingController::class, 'index'])->name('admin.config.complaint_book_settings.index');

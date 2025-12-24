@@ -6,6 +6,10 @@
 
 <div class="container mt-5 mb-5">
 
+    <a href="{{ route('admin.config') }}" class="text-dark">
+        <i class="fa-solid fa-arrow-left fs-5"></i>
+    </a>
+
     <h4 class="fw-bold mb-3 text-center">Libro de Reclamaciones</h4>
     <p class="text-secondary text-center mb-4">
         Configura el texto legal y los datos que se mostrarán a los usuarios.

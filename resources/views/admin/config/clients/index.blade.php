@@ -75,14 +75,6 @@
                                         </td>
 
                                         <td>
-                                            {{ $client->full_name }}
-                                            @if($client->is_verified)
-                                                <i class="fa-solid fa-shield-check text-primary"
-                                                title="Usuario verificado"></i>
-                                            @endif
-                                        </td>
-
-                                        <td>
                                             <a href="{{ route('admin.config.clients.edit', $client) }}" class="btn btn-sm btn-primary mb-1">
                                                 Editar
                                             </a>
@@ -143,7 +135,7 @@
 
                                     <div class="d-flex gap-2">
                                         <a href="{{ route('admin.config.clients.edit', $client) }}"
-                                        class="btn btn-primary btn-sm w-100">
+                                        class="btn btn-sm btn-primary mb-1">
                                             Editar
                                         </a>
 

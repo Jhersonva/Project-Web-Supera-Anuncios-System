@@ -13,4 +13,10 @@ class SystemSetting extends Model
         'company_description',
         'logo',
     ];
+
+    public function socialLinks()
+    {
+        return $this->hasMany(SystemSocialLink::class);
+    }
+
 }

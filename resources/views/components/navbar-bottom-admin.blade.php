@@ -1,7 +1,7 @@
 <!-- views/components/navbar-bottom-admin.blade.php -->
 <div class="bottom-nav bg-white shadow-lg p-2 d-flex justify-content-around
             position-fixed w-100"
-     style="bottom:0; left:0; height:var(--bottom-nav-height); z-index:1050;">
+     style="bottom:0; left:0;">
 
 
     <!-- INICIO -->

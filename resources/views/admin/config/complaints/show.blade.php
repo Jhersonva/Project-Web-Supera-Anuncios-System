@@ -6,8 +6,9 @@
 
 <div class="container mt-5 mb-5">
 
+    
     <a href="{{ route('admin.config.complaints.index') }}" class="text-dark">
-        <i class="fa-solid fa-arrow-left"></i> Volver
+        <i class="fa-solid fa-arrow-left fs-5"></i>
     </a>
 
     <div class="card shadow-sm border-0 mt-3 p-4" style="border-radius:16px;">

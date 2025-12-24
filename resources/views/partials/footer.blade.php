@@ -1,6 +1,7 @@
 @php
     $system = \App\Models\SystemSetting::first();
     $complaintBook = \App\Models\ComplaintBookSetting::first();
+    $socials = \App\Models\SystemSocialLink::orderBy('order')->get();
 @endphp
 
 <footer class="footer-dark mt-3 pt-6 pb-6">
@@ -44,6 +45,28 @@
 
         <hr class="my-3">
 
+        {{-- REDES SOCIALES FOOTER --}}
+        @if($socials->count())
+            <div class="footer-socials d-flex justify-content-center gap-3 mb-3">
+                @foreach($socials as $social)
+                    <a href="{{ $social->url }}"
+                    target="_blank"
+                    title="{{ $social->name }}"
+                    class="footer-social-link">
+
+                        @if($social->icon)
+                            <img src="{{ asset($social->icon) }}"
+                                alt="{{ $social->name }}">
+                        @else
+                            <span class="text-white small">
+                                {{ strtoupper(substr($social->name, 0, 1)) }}
+                            </span>
+                        @endif
+                    </a>
+                @endforeach
+            </div>
+        @endif
+
         <div class="text-center small text-muted">
             © {{ now()->year }} {{ $system->company_name }} — Todos los derechos reservados
         </div>
@@ -52,6 +75,46 @@
 
 
 <style>
+.footer-socials {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: nowrap; /* SIEMPRE EN FILA */
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.footer-social-link {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background-color: #1e1e1e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all .25s ease;
+    flex-shrink: 0; /* NO SE DEFORMAN */
+}
+
+.footer-social-link img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain; 
+    display: block;
+}
+
+.footer-social-link span {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.footer-social-link:hover {
+    background-color: #0d6efd;
+    transform: translateY(-3px);
+}
+
 /* FOOTER BASE */
 .footer-dark {
     background-color: #121212;
@@ -130,6 +193,5 @@
         height: 80px;
     }
 }
-
 
 </style>
