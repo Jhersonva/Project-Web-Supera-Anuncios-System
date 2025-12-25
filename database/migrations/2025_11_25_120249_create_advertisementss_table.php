@@ -38,6 +38,9 @@ return new class extends Migration {
             $table->decimal('available_price', 10, 2)->nullable();
             $table->boolean('top_publication')->default(false);
             $table->decimal('top_price', 10, 2)->nullable();
+            $table->boolean('verification_requested')->default(false);
+            $table->boolean('is_verified')->default(false);
+            $table->timestamp('verified_at')->nullable();
             $table->enum('status', ['pendiente', 'publicado', 'rechazado', 'expirado'])->default('pendiente');
             $table->enum('receipt_type', ['boleta', 'factura', 'nota_venta'])->nullable();
             $table->string('dni')->nullable();

@@ -324,6 +324,43 @@
                     </small>
                 </div>
 
+                <!-- ANUNCIO VERIFICADO -->
+                <div class="field-card d-none" id="verifiedContainer">
+
+                    <label class="fw-semibold">¿Deseas verificar tu anuncio?</label>
+
+                    {{-- SWITCH --}}
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input"
+                            type="checkbox"
+                            id="is_verified"
+                            name="is_verified"
+                            value="1">
+
+                        <label class="form-check-label" for="is_verified">
+                            Marcar anuncio como verificado
+                        </label>
+                    </div>
+
+                    {{-- TEXTO DE AUTORIZACIÓN --}}
+                    <p class="text-muted small mb-2">
+                        Al activar esta opción, autorizas que este anuncio sea revisado y pueda
+                        mostrarse como <strong>ANUNCIO VERIFICADO</strong>.
+                    </p>
+
+                    {{-- BOTÓN DE CONFIRMACIÓN (UX, NO backend) --}}
+                    <button type="button"
+                            id="confirmVerifiedBtn"
+                            class="btn btn-outline-danger btn-sm w-100">
+                        <i class="fa-solid fa-shield-check"></i>
+                        Confirmar verificación del anuncio
+                    </button>
+
+                    <small class="text-muted d-block mt-2">
+                        Disponible solo para Inmuebles y Vehículos / Maquinarias
+                    </small>
+                </div>
+
                 {{-- RESUMEN DE COSTO Y SALDO --}}
                 <div class="field-card d-none" id="summaryContainer">
                     <h5 class="fw-bold mb-3">Resumen de Pago</h5>
@@ -761,6 +798,26 @@ document.getElementById("fieldsContainer")
     });
 
 
+document.addEventListener('DOMContentLoaded', () => {
+
+    const verifiedInput = document.getElementById('is_verified');
+    const confirmBtn = document.getElementById('confirmVerifiedBtn');
+
+    if (confirmBtn && verifiedInput) {
+        confirmBtn.addEventListener('click', () => {
+            verifiedInput.checked = true;
+
+            confirmBtn.classList.remove('btn-outline-danger');
+            confirmBtn.classList.add('btn-success');
+            confirmBtn.innerHTML = `
+                <i class="fa-solid fa-check"></i>
+                Verificación solicitada
+            `;
+        });
+    }
+});
+
+
 // Seleccionar Categoria y Sub
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -830,8 +887,25 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    const verifiedContainer = document.getElementById('verifiedContainer');
+        const verifiedInput = document.getElementById('is_verified');
+
+        function updateVerifiedVisibility(categoryId, subcategoryId) {
+            const allowedCategory = categoryId === '2' || categoryId === '3';
+            const hasSubcategory = subcategoryId && subcategoryId !== '';
+
+            if (allowedCategory && hasSubcategory) {
+                verifiedContainer.classList.remove('d-none');
+            } else {
+                verifiedContainer.classList.add('d-none');
+                verifiedInput.checked = false;
+            }
+        }
+
     // CATEGORÍA
     categorySelect.addEventListener('change', function () {
+
+        updateVerifiedVisibility(this.value, null);
 
         const categoryId = this.value;
         const selectedText = this.options[this.selectedIndex]?.textContent;
@@ -874,11 +948,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 // SUBCATEGORÍA
                 subcatSelect.onchange = function () {
 
+                    // Seguridad extra: si cambia subcategoría, no forzar verificación
+                    if (verifiedContainer.classList.contains('d-none')) {
+                        verifiedInput.checked = false;
+                    }
+
                     resetTags();
                     resetImages();
 
                     const subId = this.value;
                     if (!subId) return;
+
+                    updateVerifiedVisibility(categorySelect.value, subId);
 
                     currentSubcategory = subId;
 

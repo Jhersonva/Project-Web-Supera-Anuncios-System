@@ -89,6 +89,17 @@
 
         <h4 class="fw-bold text-center mb-4">Panel de Control</h4>
 
+        {{-- VERIFICACIÓN --}}
+        @if($ad->verification_requested && !$ad->is_verified)
+            <form action="{{ route('admin.ads.verify', $ad->id) }}" method="POST" class="mb-2">
+                @csrf
+                <button class="btn btn-success action-btn w-100">
+                    <i class="fa-solid fa-certificate"></i>
+                    Marcar anuncio como verificado
+                </button>
+            </form>
+        @endif
+
         <style>
             .admin-box{
                 background: #f9fafb;
@@ -338,6 +349,10 @@
             </div>
 
         </div>
+
+       
+
+
     </div>
 </div>
 

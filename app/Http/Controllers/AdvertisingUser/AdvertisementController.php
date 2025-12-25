@@ -48,6 +48,19 @@ class AdvertisementController extends Controller
         return view('advertising_user.my_ads.index', compact('ads'));
     }
 
+    public function requestVerification(Advertisement $ad)
+    {
+        if ($ad->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $ad->update([
+            'verification_requested' => true
+        ]);
+
+        return back()->with('success', 'Solicitud de verificación enviada.');
+    }
+
     public function show($slug, $id)
     {
         $ad = Advertisement::with([

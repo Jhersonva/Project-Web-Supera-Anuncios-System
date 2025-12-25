@@ -119,6 +119,7 @@ class MyAdRequestController extends Controller
             'amount_visible' => 'required|in:0,1',
             'amount' => 'required_if:amount_visible,1|nullable|numeric|min:0',
             'days_active' => 'required|integer|min:1',
+            'is_verified' => 'nullable|boolean',
         ]);
 
         $user = auth()->user();
@@ -188,6 +189,13 @@ class MyAdRequestController extends Controller
                 : $user->full_name;
         }
 
+        $verificationRequested = false;
+
+        if (in_array($request->category_id, [2, 3])) {
+            $verificationRequested = $request->boolean('verification_requested');
+        }
+
+
         // Crear ANUNCIO *PUBLICADO AUTOMÁTICAMENTE*
         $ad = Advertisement::create([
             'ad_categories_id'      => $request->category_id,
@@ -228,6 +236,10 @@ class MyAdRequestController extends Controller
 
             'top_publication'       => $request->boolean('top_publication'),
             'top_price'             => $topPrice,
+
+            'is_verified' => false,
+            'verification_requested' => $verificationRequested,
+            'verified_at' => null,
 
             // ===== COMPROBANTE =====
             'receipt_type' => $receiptData['receipt_type'],

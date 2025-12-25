@@ -332,6 +332,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/my-ads/{id}/deactivate', [MyAdRequestController::class, 'deactivate'])->name('my-ads.deactivate');
         Route::delete('/my-ads/{id}/delete', [MyAdRequestController::class, 'destroy'])->name('my-ads.deleteAd');
         Route::get('/my-ads/{id}/stats', [MyAdRequestController::class, 'stats'])->name('my-ads.stats');
+        Route::post('/ads/{ad}/request-verification', [AdvertisementController::class, 'requestVerification'])->name('ads.request-verification');
 
         /*
         |--------------------------------------------------------------------------
@@ -363,7 +364,6 @@ Route::middleware(['auth'])->group(function () {
         |--------------------------------------------------------------------------
         */
         Route::get('/privacy-policy', [PrivacyPolicySettingController::class, 'show'])->name('privacy-policy.show');
-
         Route::get('/subcategories/{id}/images',[SubcategoryImageController::class, 'bySubcategory'])->name('subcategories.images');
 
     });
@@ -475,12 +475,14 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/ad/{id}/notify/{status}', [AdsHistoryController::class, 'notifyUser'])->name('admin.ads.notify');
         Route::post('/ad/{id}/approve', [AdsHistoryController::class, 'approve'])->name('admin.ads.approve');
         Route::post('/ad/{id}/reject', [AdsHistoryController::class, 'reject'])->name('admin.ads.reject');
+        Route::post('/ad/{ad}/verify',[AdsHistoryController::class, 'verify'])->name('admin.ads.verify');
 
         // Gestión de reclamos (admin)
         Route::get('/complaints-management', [ComplaintController::class, 'indexView'])->name('admin.config.complaints.index');
         Route::get('/complaints/{complaint}', [ComplaintController::class, 'show'])->name('admin.config.complaints.show');
         Route::put('/complaints/{complaint}', [ComplaintController::class, 'update'])->name('admin.config.complaints.update');
         Route::delete('/complaints/{complaint}', [ComplaintController::class, 'destroy'])->name('admin.config.complaints.destroy');
+
 
         // Termunos y condiciones login/register
         //Route::get('/config/privacy-policy', [PrivacyPolicySettingController::class, 'index'])->name('admin.adult.authentication_terms.index');

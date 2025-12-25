@@ -41,6 +41,16 @@ class AdsHistoryController extends Controller
         return view('admin.ads-history.index', compact('ads'));
     }
 
+    public function verify(Advertisement $ad)
+    {
+        $ad->update([
+            'is_verified' => true,
+            'verified_at' => now()
+        ]);
+
+        return back()->with('success', 'Anuncio marcado como verificado.');
+    }
+
     public function notifyUser($id, $status)
     {
         $ad = Advertisement::with('user')->findOrFail($id);
