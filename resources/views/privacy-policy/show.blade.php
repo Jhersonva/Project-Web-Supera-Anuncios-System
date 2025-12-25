@@ -7,24 +7,43 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     Swal.fire({
-        title: 'Políticas de Privacidad',
+        title: '<span style="font-size:22px;font-weight:600;">Términos y Condiciones</span>',
+        width: 700,
+        padding: '1.5rem',
+        backdrop: 'rgba(0,0,0,0.65)',
         html: `
-            <div style="text-align:left; max-height:300px; overflow:auto;">
-                {!! nl2br(e($policy->privacy_text)) !!}
-                <hr>
-                @if($policy->contains_explicit_content)
-                    <p><strong>⚠ Contenido explícito</strong></p>
-                @endif
-                @if($policy->requires_adult)
-                    <p><strong>🔞 Solo mayores de edad</strong></p>
-                @endif
+            <div style="
+                text-align:left;
+                max-height:420px;
+                overflow-y:auto;
+                padding-right:10px;
+                line-height:1.6;
+                font-size:14px;
+                color:#333;
+            ">
+
+                <div style="margin-bottom:16px;">
+                    {!! nl2br(e($policy->privacy_text)) !!}
+                </div>
+
+                <hr style="margin:16px 0">
+
             </div>
         `,
         showCancelButton: true,
-        confirmButtonText: 'Acepto',
-        cancelButtonText: 'Rechazo',
+        confirmButtonText: 'Aceptar',
+        cancelButtonText: 'Rechazar',
+        confirmButtonColor: '#0d6efd',
+        cancelButtonColor: '#dc3545',
+        reverseButtons: true,
+        focusConfirm: false,
         allowOutsideClick: false,
-        allowEscapeKey: false
+        allowEscapeKey: false,
+        customClass: {
+            popup: 'privacy-modal',
+            confirmButton: 'privacy-btn-confirm',
+            cancelButton: 'privacy-btn-cancel'
+        }
     }).then((result) => {
         if (result.isConfirmed) {
             document.getElementById('acceptForm').submit();

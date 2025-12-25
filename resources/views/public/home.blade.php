@@ -101,23 +101,25 @@
 
 {{-- BOTÓN FLOTANTE --}}
 @auth
-<div class="floating-actions">
+    @if(auth()->user()->role_id !== 1)
+        <div class="floating-actions">
 
-    <!-- WhatsApp -->
-    <a href="https://wa.me/51{{ $systemSettings->whatsapp_number }}?text={{ urlencode('Hola quiero más información') }}"
-       target="_blank"
-       class="btn btn-success shadow d-flex align-items-center gap-2 px-3 py-2 rounded-pill mb-2">
-        <i class="fa-brands fa-whatsapp"></i>
-    </a>
+            <!-- WhatsApp -->
+            <a href="https://wa.me/51{{ $systemSettings->whatsapp_number }}?text={{ urlencode('Hola quiero más información') }}"
+               target="_blank"
+               class="btn btn-success shadow d-flex align-items-center gap-2 px-3 py-2 rounded-pill mb-2">
+                <i class="fa-brands fa-whatsapp"></i>
+            </a>
 
-    <!-- Crear anuncio -->
-    <button class="btn btn-danger shadow d-flex align-items-center gap-2 px-3 py-2 rounded-pill"
-            onclick="location.href='{{ route('my-ads.createAd') }}'">
-        <i class="fa-solid fa-plus"></i>
-        <span>Crear Anuncio</span>
-    </button>
+            <!-- Crear anuncio -->
+            <button class="btn btn-danger shadow d-flex align-items-center gap-2 px-3 py-2 rounded-pill"
+                    onclick="location.href='{{ route('my-ads.createAd') }}'">
+                <i class="fa-solid fa-plus"></i>
+                <span>Crear Anuncio</span>
+            </button>
 
-</div>
+        </div>
+    @endif
 @endauth
 
 <div id="installBanner"

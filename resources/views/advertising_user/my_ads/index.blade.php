@@ -258,12 +258,28 @@
         </div>--}}
 
         <!-- BOTÓN FLOTANTE CREAR ANUNCIO -->
-        <button onclick="location.href='{{ route('my-ads.createAd') }}'"
-            class="btn btn-danger shadow btn-float d-flex align-items-center gap-2 px-3 py-2 rounded-pill">
-            <i class="fa-solid fa-plus"></i>
-            <span>Crear Anuncio</span>
-        </button>
+        {{-- BOTONES FLOTANTES --}}
+        @auth
+            @if(auth()->user()->role_id !== 1)
+                <div class="floating-actions">
 
+                    <!-- WhatsApp -->
+                    <a href="https://wa.me/51{{ $systemSettings->whatsapp_number }}?text={{ urlencode('Hola quiero más información') }}"
+                    target="_blank"
+                    class="btn btn-success shadow d-flex align-items-center gap-2 px-3 py-2 rounded-pill mb-2">
+                        <i class="fa-brands fa-whatsapp"></i>
+                    </a>
+
+                    <!-- Crear anuncio -->
+                    <button onclick="location.href='{{ route('my-ads.createAd') }}'"
+                        class="btn btn-danger shadow d-flex align-items-center gap-2 px-3 py-2 rounded-pill">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Crear Anuncio</span>
+                    </button>
+
+                </div>
+            @endif
+        @endauth
 
     </div>
 </div>
@@ -342,6 +358,27 @@ Swal.fire({
 </script>
 
 <style>
+.floating-actions {
+        position: fixed;
+        bottom: 85px; 
+        right: 20px;
+        z-index: 1050;
+        display: flex;
+        flex-direction: column;
+        align-items: center; 
+    }
+
+
+    .floating-actions .btn {
+        padding: 12px 20px;   
+        font-size: 15px;      
+        border-radius: 1000px; 
+    }
+
+    .floating-actions .fa-whatsapp {
+        font-size: 20px;
+    }
+
 @media (max-width: 768px) {
     .desktop-table { display: none !important; }
     .mobile-card { display: block !important; }

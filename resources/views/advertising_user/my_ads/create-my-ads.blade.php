@@ -333,11 +333,12 @@
                     <div class="form-check form-switch mb-2">
                         <input class="form-check-input"
                             type="checkbox"
-                            id="is_verified"
-                            name="is_verified"
+                            id="verification_requested"
+                            name="verification_requested"
                             value="1">
 
-                        <label class="form-check-label" for="is_verified">
+
+                        <label class="form-check-label" for="verification_requested">
                             Marcar anuncio como verificado
                         </label>
                     </div>
@@ -797,15 +798,14 @@ document.getElementById("fieldsContainer")
         }
     });
 
-
 document.addEventListener('DOMContentLoaded', () => {
 
-    const verifiedInput = document.getElementById('is_verified');
+    const requestInput = document.getElementById('verification_requested');
     const confirmBtn = document.getElementById('confirmVerifiedBtn');
 
-    if (confirmBtn && verifiedInput) {
+    if (confirmBtn && requestInput) {
         confirmBtn.addEventListener('click', () => {
-            verifiedInput.checked = true;
+            requestInput.checked = true;
 
             confirmBtn.classList.remove('btn-outline-danger');
             confirmBtn.classList.add('btn-success');
@@ -888,19 +888,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const verifiedContainer = document.getElementById('verifiedContainer');
-        const verifiedInput = document.getElementById('is_verified');
+    const verifiedInput     = document.getElementById('verification_requested');
 
-        function updateVerifiedVisibility(categoryId, subcategoryId) {
-            const allowedCategory = categoryId === '2' || categoryId === '3';
-            const hasSubcategory = subcategoryId && subcategoryId !== '';
+    function updateVerifiedVisibility(categoryId, subcategoryId) {
 
-            if (allowedCategory && hasSubcategory) {
-                verifiedContainer.classList.remove('d-none');
-            } else {
-                verifiedContainer.classList.add('d-none');
-                verifiedInput.checked = false;
-            }
+        if (!verifiedContainer || !verifiedInput) return;
+
+        const allowedCategory = categoryId === '2' || categoryId === '3';
+        const hasSubcategory  = subcategoryId && subcategoryId !== '';
+
+        if (allowedCategory && hasSubcategory) {
+            verifiedContainer.classList.remove('d-none');
+        } else {
+            verifiedContainer.classList.add('d-none');
+            verifiedInput.checked = false;
         }
+    }
 
     // CATEGORÍA
     categorySelect.addEventListener('change', function () {

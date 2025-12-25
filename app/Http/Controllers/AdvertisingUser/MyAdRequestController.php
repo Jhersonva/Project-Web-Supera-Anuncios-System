@@ -118,6 +118,7 @@ class MyAdRequestController extends Controller
             'district'   => 'nullable|string|max:255',
             'amount_visible' => 'required|in:0,1',
             'amount' => 'required_if:amount_visible,1|nullable|numeric|min:0',
+            'verification_requested' => 'nullable|boolean',
             'days_active' => 'required|integer|min:1',
             'is_verified' => 'nullable|boolean',
         ]);

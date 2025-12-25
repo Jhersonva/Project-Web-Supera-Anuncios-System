@@ -45,7 +45,8 @@ class AdsHistoryController extends Controller
     {
         $ad->update([
             'is_verified' => true,
-            'verified_at' => now()
+            'verified_at' => now(),
+            'verification_requested' => false, 
         ]);
 
         return back()->with('success', 'Anuncio marcado como verificado.');

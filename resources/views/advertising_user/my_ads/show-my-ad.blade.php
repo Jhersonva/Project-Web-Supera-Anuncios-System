@@ -89,44 +89,43 @@
 
         <h4 class="fw-bold text-center mb-4">Panel de Control</h4>
 
-        {{-- VERIFICACIÓN --}}
+        {{-- VERIFICACIÓN DEL ANUNCIO --}}
         @if($ad->verification_requested && !$ad->is_verified)
-            <form action="{{ route('admin.ads.verify', $ad->id) }}" method="POST" class="mb-2">
-                @csrf
-                <button class="btn btn-success action-btn w-100">
-                    <i class="fa-solid fa-certificate"></i>
-                    Marcar anuncio como verificado
-                </button>
-            </form>
+
+            <div class="verification-card mb-4">
+                <div class="d-flex align-items-start gap-3">
+
+                    <div class="verification-icon">
+                        <img
+                            src="{{ asset('assets/img/verified-icon/verified.png') }}"
+                            alt="Anuncio verificado"
+                            title="Anuncio verificado"
+                            class="verification-img"
+                        >
+                    </div>
+
+                    <div class="flex-grow-1">
+                        <h6 class="fw-bold mb-1">Solicitud de verificación</h6>
+                        <p class="text-muted mb-3 small">
+                            El anunciante ha solicitado que este anuncio sea revisado y marcado como
+                            <strong>ANUNCIO VERIFICADO</strong>.
+                        </p>
+
+                        <form action="{{ route('admin.ads.verify', $ad->id) }}" method="POST">
+                            @csrf
+                            <div class="text-end">
+                                <button class="btn btn-success btn-sm verification-btn">
+                                    <i class="fa-solid fa-certificate me-1"></i>
+                                    Aprobar y verificar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
         @endif
 
-        <style>
-            .admin-box{
-                background: #f9fafb;
-                padding: 20px;
-                border-radius: 14px;
-                border: 1px solid #ececec;
-            }
-            .status-badge{
-                font-size: .95rem;
-                padding: 8px 14px;
-                border-radius: 8px;
-                font-weight: 600;
-            }
-            .wa-btn{
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                font-weight: 600;
-                padding: 10px;
-                border-radius: 10px;
-            }
-            .action-btn{
-                padding: 11px;
-                border-radius: 10px;
-                font-weight: 600;
-            }
-        </style>
 
         <div class="admin-box mb-4">
 
@@ -376,5 +375,70 @@ function sendWA() {
 }
 </script>
 
+<style>
+
+.verification-card{
+    background: linear-gradient(135deg, #f0fff4, #ffffff);
+    border: 1px solid #d1fae5;
+    border-radius: 14px;
+    padding: 18px;
+}
+
+.verification-icon{
+    width: 76px;
+    height: 76px;
+    background: #e6f9ef; 
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.verification-img{
+    width: 70px;      
+    height: 70px;
+    object-fit: contain;
+}
+
+.verification-card:hover .verification-icon{
+    box-shadow: 0 0 0 4px rgba(34,197,94,.15);
+    transition: .2s ease;
+}
+
+.verification-btn{
+    padding: 6px 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    font-size: .9rem;
+    width: fit-content;
+}
+
+.admin-box{
+    background: #f9fafb;
+    padding: 20px;
+    border-radius: 14px;
+    border: 1px solid #ececec;
+}
+.status-badge{
+    font-size: .95rem;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+.wa-btn{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    padding: 10px;
+    border-radius: 10px;
+}
+.action-btn{
+    padding: 11px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+</style>
 
 @endsection

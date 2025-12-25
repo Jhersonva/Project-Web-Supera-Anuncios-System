@@ -367,6 +367,10 @@ function createAdCard(ad){
     const userImg = ad.user_info.profile_image;
     const userName = ad.user_info.full_name;
     const userVerified = ad.user_info.is_verified;
+    const adVerified   = ad.is_verified;
+
+    // verificado si el anuncio O el usuario lo está
+    const showVerified = userVerified || adVerified;
 
     return `
     <div class="col-12 col-md-6 col-lg-4">
@@ -410,10 +414,10 @@ function createAdCard(ad){
                         </button>
 
                         <!-- Verificado -->
-                        ${userVerified ? `
+                        ${showVerified ? `
                             <img src="/assets/img/verified-icon/verified.png"
                                 class="verified-icon-below"
-                                title="Usuario verificado">
+                                title="${adVerified ? 'Anuncio verificado' : 'Usuario verificado'}">
                         ` : ''}
                     </div>
                 </h3>
