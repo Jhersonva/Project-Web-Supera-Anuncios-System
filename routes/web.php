@@ -39,6 +39,7 @@ use App\Http\Controllers\Admin\PrivacyPolicySettingController;
 use App\Http\Controllers\Admin\SubcategoryImageController;
 use App\Http\Controllers\Admin\SystemSocialLinkController;
 use App\Http\Controllers\Admin\AdultContentViewTermController;
+use App\Http\Controllers\Admin\AdultContentPublishTermController;
 
 /*
 |--------------------------------------------------------------------------
@@ -302,6 +303,11 @@ Route::get(
     '/terminos/contenido-adulto',
     [AdultContentViewTermController::class, 'publicTerms']
 )->name('adult.terms');
+
+Route::get(
+    '/terminos/contenido-publicacion-adulto',
+    [AdultContentPublishTermController::class, 'publicTermsAdult']
+)->name('adult.terms.adult');
 
 
 /*

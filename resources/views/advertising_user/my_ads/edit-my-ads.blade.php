@@ -449,10 +449,35 @@
         </div>
 
         {{-- AGREGAR NUEVAS IMÁGENES --}}
+        @if(auth()->user()->role_id === 1)
         <div class="field-card" id="imagesContainer">
-            <label class="fw-semibold">Agregar nuevas imágenes (opcional)</label>
-            <input type="file" name="images[]" class="form-control" multiple accept="image/*" disabled>
+            <label class="fw-semibold mb-2">Imagen de referencia</label>
+
+            <button type="button"
+                    class="btn btn-sm btn-outline-info mb-3"
+                    id="openImagesModal">
+                <i class="fa-solid fa-images"></i> Elegir imagen
+            </button>
+
+            <div id="selectedPreview" class="mb-3">
+                <div id="selectedPreviewList" class="d-flex flex-wrap gap-2"></div>
+                <small class="text-muted d-block mt-1">
+                    Imagen seleccionada
+                </small>
+            </div>
+
+            <button type="button"
+                    class="btn btn-sm btn-outline-danger mt-2"
+                    id="removeSelectedImage">
+                Quitar imagen
+            </button>
+
+            <input type="hidden"
+                name="selected_subcategory_image"
+                id="selectedImage"
+                value="{{ $ad->selected_subcategory_image }}">
         </div>
+        @endif
 
         <!-- BOTÓN -->
         <button class="btn btn-danger w-100 py-2 fw-semibold mt-3" id="submitBtn">
@@ -463,10 +488,77 @@
 
     </form>
 
+<div class="modal fade" id="modalSubcategoryImages" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Elegir imagen de referencia
+                </h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div id="modalImagesGrid" class="image-grid">
+                    <small class="text-muted">Cargando imágenes...</small>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-light" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button class="btn btn-dark" id="confirmImage">
+                    Usar imagen
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 </div>
 
 <script>
+const currentSubcategory = "{{ $ad->ad_subcategories_id }}";
+const selectedImageIds  = "{{ $ad->selected_subcategory_image }}";
+let referenceImages = [];
+let MAX_IMAGES = 5;
 let imagesToDelete = [];
+const currentSubcategoryId = "{{ $ad->ad_subcategories_id }}";
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    if (!currentSubcategoryId) return;
+
+    fetch(`/admin/subcategories/${currentSubcategoryId}/images`)
+        .then(res => res.json())
+        .then(images => {
+
+            const preview = document.getElementById('selectedPreviewList');
+            preview.innerHTML = '';
+
+            images.forEach(img => {
+                const div = document.createElement('div');
+                div.classList.add('image-card');
+                div.innerHTML = `
+                    <img src="/${img.image}">
+                `;
+                preview.appendChild(div);
+            });
+
+        });
+});
+
+const removeBtn = document.getElementById('removeSelectedImage');
+
+removeBtn?.addEventListener('click', () => {
+    selectedInput.value = '';
+    previewList.innerHTML = '';
+    previewBox.classList.add('d-none');
+});
+
 
 function markImageForRemoval(id, btn) {
     // Ocultar visualmente la imagen
@@ -668,6 +760,105 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
     recalculateEditTotal();
+});
+
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const imagesContainer  = document.getElementById('imagesContainer');
+    const imagesGrid       = document.getElementById('modalImagesGrid');
+    const selectedInput    = document.getElementById('selectedImage');
+    const previewBox       = document.getElementById('selectedPreview');
+    const previewList      = document.getElementById('selectedPreviewList');
+    const openImagesBtn    = document.getElementById('openImagesModal');
+    const confirmBtn       = document.getElementById('confirmImage');
+
+    let tempSelectedImages = [];
+
+    if (!currentSubcategory || !imagesContainer) return;
+
+    imagesContainer.classList.remove('d-none');
+
+    const modal = new bootstrap.Modal(
+        document.getElementById('modalSubcategoryImages')
+    );
+
+    // 🟢 PRE-CARGAR imagen seleccionada
+    if (selectedImageIds) {
+        fetch(`/advertising/subcategories/${currentSubcategory}/images`)
+            .then(r => r.json())
+            .then(images => {
+
+                const selected = images.filter(img =>
+                    selectedImageIds.split(',').includes(String(img.id))
+                );
+
+                previewList.innerHTML = '';
+
+                selected.forEach(img => {
+                    const item = document.createElement('div');
+                    item.className = 'image-card border border-dark';
+                    item.style.maxWidth = '120px';
+                    item.innerHTML = `<img src="/${img.image}">`;
+                    previewList.appendChild(item);
+                });
+
+                previewBox.classList.remove('d-none');
+            });
+    }
+
+    // 🟢 ABRIR MODAL (MISMO COMPORTAMIENTO QUE CREATE)
+    openImagesBtn?.addEventListener('click', () => {
+
+        imagesGrid.innerHTML = `<small class="text-muted">Cargando imágenes...</small>`;
+        tempSelectedImages = [];
+
+        fetch(`/advertising/subcategories/${currentSubcategory}/images`)
+            .then(r => r.json())
+            .then(images => {
+
+                imagesGrid.innerHTML = '';
+
+                images.forEach(img => {
+
+                    const card = document.createElement('div');
+                    card.className = 'image-card';
+                    card.innerHTML = `<img src="/${img.image}">`;
+
+                    card.addEventListener('click', () => {
+
+                        tempSelectedImages = [img];
+
+                        document.querySelectorAll('.image-card')
+                            .forEach(c => c.classList.remove('border', 'border-dark'));
+
+                        card.classList.add('border', 'border-dark');
+                    });
+
+                    imagesGrid.appendChild(card);
+                });
+            });
+
+        modal.show();
+    });
+
+    // 🟢 CONFIRMAR
+    confirmBtn?.addEventListener('click', () => {
+
+        if (!tempSelectedImages.length) return;
+
+        selectedInput.value = tempSelectedImages[0].id;
+
+        previewList.innerHTML = `
+            <div class="image-card border border-dark" style="max-width:120px">
+                <img src="/${tempSelectedImages[0].image}">
+            </div>
+        `;
+
+        previewBox.classList.remove('d-none');
+        modal.hide();
+    });
+
 });
 
 function deleteImage(id){

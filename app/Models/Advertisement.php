@@ -51,6 +51,7 @@ class Advertisement extends Model
         'company_name',
         'address',
         'receipt_file',
+        'receipt_code',
     ];
 
     protected $casts = [

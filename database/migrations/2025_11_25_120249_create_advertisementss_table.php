@@ -10,6 +10,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('ad_categories_id')->constrained('ad_categories');
             $table->foreignId('ad_subcategories_id')->constrained('ad_subcategories');
+            $table->foreignId('selected_subcategory_image')->nullable()->constrained('ad_subcategory_images');
             $table->unsignedBigInteger('user_id')->nullable();
             $table->string('title');
             $table->text('description')->nullable();
@@ -49,6 +50,7 @@ return new class extends Migration {
             $table->string('company_name')->nullable();
             $table->string('address')->nullable();
             $table->string('receipt_file')->nullable();
+            $table->string('receipt_code')->nullable();
             $table->timestamps();
         });
     }

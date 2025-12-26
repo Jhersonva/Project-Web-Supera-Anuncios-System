@@ -10,11 +10,13 @@ use App\Models\ValueFieldAd;
 use App\Models\Advertisement;
 use App\Models\AdvertisementImage;
 use App\Models\Setting;
+use App\Models\Alert;
 use App\Models\AdSubcategoryImage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use App\Support\AdPrices;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Str;
 
 class MyAdRequestController extends Controller
 {
@@ -26,6 +28,10 @@ class MyAdRequestController extends Controller
         $categories = AdCategory::all();
         $user = auth()->user();
 
+        $alerts = Alert::where('is_active', true)
+        ->orderByDesc('created_at')
+        ->get();
+
         $urgentPrice = Setting::get('urgent_publication_price', 7.00);
         $featuredPrice  = Setting::get('featured_publication_price', 6.00);
         $premierePrice  = Setting::get('premiere_publication_price', 5.00);
@@ -34,7 +40,7 @@ class MyAdRequestController extends Controller
         $availablePrice  = Setting::get('available_publication_price', 2.00);
         $topPrice  = Setting::get('top_publication_price', 1.00);
 
-        return view('advertising_user.my_ads.create-my-ads', compact('categories', 'urgentPrice', 'featuredPrice', 'premierePrice', 'semiNewPrice', 'newPrice', 'availablePrice', 'topPrice', 'user'));
+        return view('advertising_user.my_ads.create-my-ads', compact('categories', 'urgentPrice', 'featuredPrice', 'premierePrice', 'semiNewPrice', 'newPrice', 'availablePrice', 'topPrice', 'user', 'alerts'));
     }
 
     public function show($id)
@@ -100,6 +106,11 @@ class MyAdRequestController extends Controller
     public function categoryInfo($id)
     {
         return AdCategory::findOrFail($id);
+    }
+
+    private function generateNotaVentaCode()
+    {
+        return 'NV-' . now()->format('Y') . '-' . strtoupper(Str::random(6));
     }
 
     /**
@@ -196,6 +207,11 @@ class MyAdRequestController extends Controller
             $verificationRequested = $request->boolean('verification_requested');
         }
 
+        $receiptCode = null;
+
+        if ($receiptType === 'nota_venta') {
+            $receiptCode = $this->generateNotaVentaCode();
+        }
 
         // Crear ANUNCIO *PUBLICADO AUTOMÁTICAMENTE*
         $ad = Advertisement::create([
@@ -244,6 +260,7 @@ class MyAdRequestController extends Controller
 
             // ===== COMPROBANTE =====
             'receipt_type' => $receiptData['receipt_type'],
+            'receipt_code' => $receiptCode,
             'dni'          => $receiptData['dni'],
             'full_name'    => $receiptData['full_name'],
             'ruc'          => $receiptData['ruc'],
@@ -384,22 +401,29 @@ class MyAdRequestController extends Controller
             'contact_location' => 'nullable|string|max:255',
             'whatsapp'         => 'nullable|string|max:30',
             'call_phone'       => 'nullable|string|max:30',
+            'selected_subcategory_image' => 'nullable|exists:ad_subcategory_images,id',
         ]);
 
-        //Log::info('contact_location:', [$request->contact_location]);
+        // Datos del anuncio
+        $ad->contact_location = $request->contact_location;
 
-        $ad->update([
-            'contact_location' => $request->contact_location,
-        ]);
+        // REEMPLAZAR o QUITAR imagen de referencia
+        if ($request->has('selected_subcategory_image')) {
+            $ad->selected_subcategory_image = $request->selected_subcategory_image ?: null;
+        }
 
+        $ad->save();
+
+        // Datos del usuario
         $ad->user->update([
             'whatsapp'   => $request->whatsapp,
             'call_phone' => $request->call_phone,
         ]);
 
         return redirect($request->return_to ?? route('my-ads.index'))
-            ->with('success', 'Datos de contacto actualizados correctamente');
+            ->with('success', 'Datos actualizados correctamente');
     }
+
 
     public function destroy(Request $request, $id)
     {

@@ -112,6 +112,15 @@
                             <td>
                                 <div class="d-flex gap-2">
 
+                                    @if($ad->receipt_file)
+                                        <a href="{{ asset($ad->receipt_file) }}"
+                                        target="_blank"
+                                        class="btn btn-sm btn-outline-info"
+                                        title="Ver comprobante">
+                                            <i class="fa-solid fa-file-invoice"></i>
+                                        </a>
+                                    @endif
+
                                     <a href="{{ route('my-ads.show', $ad->id) }}"
                                         class="btn btn-sm btn-outline-secondary">
                                         <i class="fa-solid fa-eye"></i>
@@ -184,6 +193,14 @@
 
                         {{-- Acciones --}}
                         <div class="d-flex gap-2 justify-content-center flex-wrap">
+
+                            @if($ad->receipt_file)
+                                <a href="{{ asset($ad->receipt_file) }}"
+                                target="_blank"
+                                class="btn btn-sm btn-outline-info">
+                                    <i class="fa-solid fa-file-invoice"></i> Comprobante
+                                </a>
+                            @endif
 
                             <a href="{{ route('my-ads.show', $ad->id) }}" 
                             class="btn btn-sm btn-outline-secondary">

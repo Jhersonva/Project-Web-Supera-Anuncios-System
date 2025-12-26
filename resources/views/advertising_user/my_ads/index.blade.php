@@ -359,25 +359,24 @@ Swal.fire({
 
 <style>
 .floating-actions {
-        position: fixed;
-        bottom: 85px; 
-        right: 20px;
-        z-index: 1050;
-        display: flex;
-        flex-direction: column;
-        align-items: center; 
-    }
+    position: fixed;
+    bottom: 85px; 
+    right: 20px;
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+}
 
+.floating-actions .btn {
+    padding: 12px 20px;   
+    font-size: 15px;      
+    border-radius: 1000px; 
+}
 
-    .floating-actions .btn {
-        padding: 12px 20px;   
-        font-size: 15px;      
-        border-radius: 1000px; 
-    }
-
-    .floating-actions .fa-whatsapp {
-        font-size: 20px;
-    }
+.floating-actions .fa-whatsapp {
+    font-size: 20px;
+}
 
 @media (max-width: 768px) {
     .desktop-table { display: none !important; }

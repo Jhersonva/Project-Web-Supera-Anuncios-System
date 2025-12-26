@@ -16,6 +16,14 @@ class AdultContentPublishTermController extends Controller
         return view('admin.adult.publish_terms.index', compact('terms'));
     }
 
+    public function publicTermsAdult()
+    {
+        $terms = AdultContentPublishTerm::orderBy('id')->get();
+
+        return view('advertising_user.terms_and_conditions.publish',compact('terms')
+        );
+    }
+
     public function update(Request $request, AdultContentPublishTerm $adultContentPublishTerm)
     {
         $request->validate([

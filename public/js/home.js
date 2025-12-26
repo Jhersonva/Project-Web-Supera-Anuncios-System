@@ -127,25 +127,22 @@ document.addEventListener("DOMContentLoaded", function () {
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Aceptar y continuar',
-        cancelButtonText: 'Rechazar'
+        cancelButtonText: 'Rechazar',
+        confirmButtonColor: '#0d6efd',
+        cancelButtonColor: '#dc3545',
     }).then((result) => {
         if (result.isConfirmed) {
             filterAdsFull(titleQuery, locationQuery, categoryId, subcategoryId);
         } else {
-            document.getElementById('listaAnuncios').innerHTML = '';
+            location.reload();
         }
     });
 
     return;
 }
-
-
-
     // Para búsquedas normales, sin alert adulto
     filterAdsFull(titleQuery, locationQuery, categoryId, subcategoryId);
 });
-
-
 
     // Botón Limpiar
     btnClear.addEventListener('click', function () {

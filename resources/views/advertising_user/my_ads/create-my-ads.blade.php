@@ -478,6 +478,7 @@
     </div>
 
 
+<!--Modal Elegir de la Galeria de Imagenes-->
 <div class="modal fade" id="modalSubcategoryImages" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
@@ -512,6 +513,61 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
+    window.SERVICIOS_CATEGORY_ID = 4;
+    window.PRIVADOS_SUBCATEGORY_ID = 21;
+    window.ADULT_TERMS_URL = "{{ route('adult.terms.adult') }}";
+
+    window.ALERTS = @json($alerts);
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+<script>
+
+function showAdultServicesAlert() {
+
+    if (!window.ALERTS || window.ALERTS.length === 0) {
+        console.warn('No hay alertas configuradas');
+        return;
+    }
+
+    const alertData = window.ALERTS[0];
+
+    Swal.fire({
+        title: alertData.title ?? 'Contenido sensible',
+        html: `
+            ${alertData.logo ? `
+                <div style="margin-bottom:12px;">
+                    <img src="/${alertData.logo}"
+                         style="max-width:120px"
+                         class="rounded">
+                </div>
+            ` : ''}
+
+            <p style="font-size:14px; line-height:1.6; color:#333;">
+                ${alertData.description ?? ''}
+            </p>
+
+            <a href="${window.ADULT_TERMS_URL}"
+               target="_blank"
+               style="font-weight:600;color:#0d6efd;text-decoration:underline;">
+                Términos y Condiciones
+            </a>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Aceptar y continuar',
+        cancelButtonText: 'Rechazar',
+        confirmButtonColor: '#0d6efd',
+        cancelButtonColor: '#dc3545',
+        reverseButtons: true
+    }).then((result) => {
+        if (!result.isConfirmed) {
+            location.reload(); 
+        }
+    });
+}
 
 let MAX_IMAGES = 5;
 let isEmpleosCategory = false;
@@ -959,12 +1015,21 @@ document.addEventListener("DOMContentLoaded", () => {
                     resetTags();
                     resetImages();
 
+                    const categoryId = categorySelect.value;
                     const subId = this.value;
+
                     if (!subId) return;
 
-                    updateVerifiedVisibility(categorySelect.value, subId);
-
+                    updateVerifiedVisibility(categoryId, subId);
                     currentSubcategory = subId;
+
+                    // 👉 ALERTA SERVICIOS PRIVADOS
+                    if (
+                        parseInt(categoryId) === window.SERVICIOS_CATEGORY_ID &&
+                        parseInt(subId) === window.PRIVADOS_SUBCATEGORY_ID
+                    ) {
+                        showAdultServicesAlert();
+                    }
 
                     // Mostrar tags permitidos
                     Object.entries(tagMap).forEach(([flag, tag]) => {
@@ -974,7 +1039,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                     });
 
-                    // Mostrar sección de imágenes (solo botón)
                     imagesContainer.classList.remove('d-none');
                 };
             });
@@ -1169,7 +1233,7 @@ document.addEventListener("DOMContentLoaded", () => {
             amountTextSelect.classList.remove('d-none');
 
             amountVisibleInput.value = 0;
-            amountTextInput.value = amountTextSelect.value || "No especificado";
+            amountTextInput.value = amountTextSelect.value || "";
         }
     }
 
@@ -1377,6 +1441,103 @@ document.addEventListener("input", function (e) {
     }
 });
 
+/*Función de validación (marca campos y muestra errores)*/
+function validateAdForm() {
+    let isValid = true;
+
+    // Limpia errores
+    document.querySelectorAll(".error-text").forEach(e => e.remove());
+    document.querySelectorAll(".is-invalid").forEach(e => e.classList.remove("is-invalid"));
+
+    // =====================
+    // VALIDACIÓN CAMPOS NORMALES
+    // =====================
+    const requiredFields = [
+        { selector: "#categorySelect", message: "Selecciona una categoría" },
+        { selector: "#subcategorySelect", message: "Selecciona una subcategoría" },
+        { selector: "#titleInput", message: "El título es obligatorio" },
+        { selector: "[name='description']", message: "La descripción es obligatoria" },
+        { selector: "#days_active", message: "Indica los días de publicación" }
+    ];
+
+    requiredFields.forEach(field => {
+        const input = document.querySelector(field.selector);
+        if (input && !input.closest(".d-none")) {
+            if (!input.value || input.value.trim() === "") {
+                isValid = false;
+                showError(input, field.message);
+            }
+        }
+    });
+
+    // =====================
+    // VALIDACIÓN MONTO / TEXTO (OBLIGATORIA)
+    // =====================
+    const amountContainer = document.getElementById("amountContainer");
+
+    if (amountContainer && !amountContainer.classList.contains("d-none")) {
+
+        const amountInput = document.getElementById("amountInput");
+        const amountVisible = document.getElementById("amountVisibleCheckbox").checked;
+        const amountTextSelect = document.getElementById("amountTextSelect");
+
+        const hasAmount = amountVisible && amountInput.value && Number(amountInput.value) > 0;
+        const hasText = !amountVisible && amountTextSelect.value;
+
+        // ❌ Caso inválido: TODO vacío
+        if (!hasAmount && !hasText) {
+            isValid = false;
+
+            showError(
+                amountVisible ? amountInput : amountTextSelect,
+                "Debes ingresar un monto o seleccionar un texto"
+            );
+        }
+    }
+
+    // =====================
+    // VALIDACIÓN COMPROBANTE
+    // =====================
+    const receiptType = document.getElementById("receipt_type").value;
+
+    if (receiptType === "boleta") {
+        if (!checkField("[name='dni']", "El DNI es obligatorio")) isValid = false;
+        if (!checkField("#boleta_full_name", "El nombre es obligatorio")) isValid = false;
+    }
+
+    if (receiptType === "factura") {
+        if (!checkField("[name='ruc']", "El RUC es obligatorio")) isValid = false;
+        if (!checkField("[name='company_name']", "La razón social es obligatoria")) isValid = false;
+        if (!checkField("[name='address']", "La dirección es obligatoria")) isValid = false;
+    }
+
+    return isValid;
+}
+
+
+// Helper para validar campos
+function checkField(selector, message) {
+    const input = document.querySelector(selector);
+    if (!input.value.trim()) {
+        showError(input, message);
+        return false;
+    }
+    return true;
+}
+
+// Mostrar error visual
+function showError(input, message) {
+    input.classList.add("is-invalid");
+
+    const error = document.createElement("small");
+    error.classList.add("text-danger", "error-text");
+    error.textContent = message;
+
+    input.parentNode.appendChild(error);
+
+    input.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
 function updateReceiptPreview() {
 
     const type = receiptType.value;
@@ -1432,6 +1593,8 @@ function updateReceiptPreview() {
 
     // Acción al confirmar comprobante
     confirmReceiptBtn.addEventListener("click", function () {
+        if (!validateAdForm()) return;
+
         confirmReceiptBtn.disabled = true;
         confirmReceiptBtn.textContent = "Enviando solicitud...";
 
@@ -1441,6 +1604,10 @@ function updateReceiptPreview() {
 </script>
 
 <style>
+    .is-invalid {
+        border: 1px solid #dc3545;
+    }
+
     .badge-top,
     .badge-urgente {
         position: absolute;
