@@ -129,4 +129,16 @@ class Advertisement extends Model
     {
         return url("/detalle-anuncio/{$this->slug}/{$this->id}");
     }
+/*
+    public function getMainImageAttribute()
+    {
+        // Si tiene imágenes, devuelve la primera
+        if ($this->images && $this->images->count() > 0) {
+            return asset($this->images->first()->image);
+        }
+
+        // Imagen por defecto
+        return asset('assets/img/not-found-image/failed-image.jpg');
+    }*/
+
 }

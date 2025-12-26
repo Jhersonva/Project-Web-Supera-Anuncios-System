@@ -70,57 +70,38 @@ Route::get('/api/ads', function (Request $request) {
     /*
     BASE QUERY
     */
+    $categoryId = $request->get('category_id');
+    $subcategoryId = $request->get('subcategory_id');
+
     $baseQuery = Advertisement::where('published', 1)
         ->where('status', 'publicado')
         ->where('expires_at', '>=', now())
         ->with(['user', 'category', 'subcategory', 'images', 'dynamicFields.field'])
         ->inRandomOrder();
-    
-    if (!auth()->check()) {
-        $baseQuery->whereNot(function ($q) {
-            $q->where('ad_categories_id', 4) 
-            ->where('ad_subcategories_id', 21);
+
+    // Lógica de filtrado
+    if ($categoryId) {
+        $baseQuery->where('ad_categories_id', $categoryId);
+        if ($subcategoryId) {
+            $baseQuery->where('ad_subcategories_id', $subcategoryId);
+        }
+    } else {
+        // Si no hay categoría, excluir solo Servicios → Privados
+        $baseQuery->where(function ($q) {
+            $q->where('ad_categories_id', '!=', 4)
+            ->orWhere('ad_subcategories_id', '!=', 21);
         });
     }
 
-    /*
-    CONSULTAS POR TIPO
-    */
-    $adsFeatured = (clone $baseQuery)
-        ->where('featured_publication', 1)
-        ->paginate(20, ['*'], 'page_featured', $pages['featured']);
-
-    $adsUrgent = (clone $baseQuery)
-        ->where('urgent_publication', 1)
-        ->where('featured_publication', 0)
-        ->paginate(20, ['*'], 'page_urgent', $pages['urgent']);
-
-    $adsPremiere = (clone $baseQuery)
-        ->where('premiere_publication', 1)
-        ->where('urgent_publication', 0)
-        ->where('featured_publication', 0)
-        ->paginate(20, ['*'], 'page_premiere', $pages['premiere']);
-
-    $adsSemiNew = (clone $baseQuery)
-        ->where('semi_new_publication', 1)
-        ->paginate(20, ['*'], 'page_semi_new', $pages['semi_new']);
-
-    $adsNew = (clone $baseQuery)
-        ->where('new_publication', 1)
-        ->paginate(20, ['*'], 'page_new', $pages['new']);
-
-    $adsAvailable = (clone $baseQuery)
-        ->where('available_publication', 1)
-        ->paginate(20, ['*'], 'page_available', $pages['available']);
-
-    $adsTop = (clone $baseQuery)
-        ->where('top_publication', 1)
-        ->paginate(20, ['*'], 'page_top', $pages['top']);
-
-    /*
-    NORMALES (SIN NINGUNA ETIQUETA)
-    */
-    $adsNormal = (clone $baseQuery)
+    // CONSULTAS POR TIPO
+    $adsFeatured = (clone $baseQuery)->where('featured_publication', 1)->paginate(20, ['*'], 'page_featured', $pages['featured']);
+    $adsUrgent   = (clone $baseQuery)->where('urgent_publication', 1)->where('featured_publication', 0)->paginate(20, ['*'], 'page_urgent', $pages['urgent']);
+    $adsPremiere = (clone $baseQuery)->where('premiere_publication', 1)->where('urgent_publication', 0)->where('featured_publication', 0)->paginate(20, ['*'], 'page_premiere', $pages['premiere']);
+    $adsSemiNew  = (clone $baseQuery)->where('semi_new_publication', 1)->paginate(20, ['*'], 'page_semi_new', $pages['semi_new']);
+    $adsNew      = (clone $baseQuery)->where('new_publication', 1)->paginate(20, ['*'], 'page_new', $pages['new']);
+    $adsAvailable= (clone $baseQuery)->where('available_publication', 1)->paginate(20, ['*'], 'page_available', $pages['available']);
+    $adsTop      = (clone $baseQuery)->where('top_publication', 1)->paginate(20, ['*'], 'page_top', $pages['top']);
+    $adsNormal   = (clone $baseQuery)
         ->where('urgent_publication', 0)
         ->where('featured_publication', 0)
         ->where('premiere_publication', 0)
@@ -134,48 +115,17 @@ Route::get('/api/ads', function (Request $request) {
     TRANSFORMADOR ÚNICO
     */
     $transform = function ($ad) {
-
-        // URL segura
-        $ad->full_url = route('public.ad.detail', [
-            'slug' => $ad->slug,
-            'id'   => $ad->id
-        ]);
-
-        // Tiempo (NO approved_at)
-        $ad->time_ago = $ad->created_at
-            ->locale('es')
-            ->diffForHumans();
-
+        $ad->full_url = route('public.ad.detail', ['slug'=>$ad->slug,'id'=>$ad->id]);
+        $ad->time_ago = $ad->created_at->locale('es')->diffForHumans();
         $ad->user_info = [
-            'full_name'      => optional($ad->user)->full_name ?? 'Usuario',
-            'profile_image'  => optional($ad->user)->profile_image
-                ? asset(optional($ad->user)->profile_image)
-                : asset('assets/img/profile-image/default-user.png'),
-            'is_verified'    => optional($ad->user)->is_verified ? true : false,
+            'full_name' => optional($ad->user)->full_name ?? 'Usuario',
+            'profile_image' => optional($ad->user)->profile_image ? asset($ad->user->profile_image) : asset('assets/img/profile-image/default-user.png'),
+            'is_verified' => optional($ad->user)->is_verified ? true : false,
         ];
-
-        // Usuario (user_id puede ser null)
-        $ad->whatsapp = optional($ad->user)->whatsapp
-            ?? optional($ad->user)->phone
-            ?? null;
-
-        $ad->call_phone = optional($ad->user)->call_phone
-            ?? optional($ad->user)->phone
-            ?? null;
-        
-        $ad->dynamic_fields = $ad->dynamicFields
-            ->take(4)
-            ->map(function ($df) {
-            return [
-                'label' => $df->field->name ?? '',
-                'value' => $df->value
-            ];
-        })
-        ->values();
-
+        $ad->whatsapp = optional($ad->user)->whatsapp ?? optional($ad->user)->phone ?? null;
+        $ad->call_phone = optional($ad->user)->call_phone ?? optional($ad->user)->phone ?? null;
+        $ad->dynamic_fields = $ad->dynamicFields->take(4)->map(fn($df)=>['label'=>$df->field->name??'','value'=>$df->value])->values();
         unset($ad->dynamicFields);
-
-        // Flags (para frontend)
         $ad->urgent_publication    = (int) $ad->urgent_publication;
         $ad->featured_publication  = (int) $ad->featured_publication;
         $ad->premiere_publication  = (int) $ad->premiere_publication;
@@ -183,20 +133,10 @@ Route::get('/api/ads', function (Request $request) {
         $ad->new_publication       = (int) $ad->new_publication;
         $ad->available_publication = (int) $ad->available_publication;
         $ad->top_publication       = (int) $ad->top_publication;
-
         return $ad;
     };
 
-    foreach ([
-        $adsFeatured,
-        $adsUrgent,
-        $adsPremiere,
-        $adsSemiNew,
-        $adsNew,
-        $adsAvailable,
-        $adsTop,
-        $adsNormal
-    ] as $collection) {
+    foreach([$adsFeatured,$adsUrgent,$adsPremiere,$adsSemiNew,$adsNew,$adsAvailable,$adsTop,$adsNormal] as $collection){
         $collection->getCollection()->transform($transform);
     }
 

@@ -155,7 +155,7 @@
     
     window.ADULT_TERMS_URL = "{{ route('adult.terms') }}";
 
-    window.IS_AUTH = @json(auth()->check());
+    window.IS_AUTHENTICATED = @json(auth()->check());
     window.SERVICIOS_CATEGORY_ID = 4;
     window.PRIVADOS_SUBCATEGORY_ID = 21;
     const allSubcategories = @json($subcategories);
@@ -425,45 +425,24 @@ document.addEventListener('DOMContentLoaded', function () {
         color: #333;
     }
 
-   /* CARD HORIZONTAL PREMIUM */
-    .ad-card-horizontal {
-        display: flex;
-        flex-direction: column;
-        background: #ffffff;
-        border-radius: 14px;
-        overflow: hidden;
-        border: 1px solid #e7e7e7;
-        transition: .25s;
-        cursor: pointer;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-
     .ad-card-horizontal:hover {
         transform: translateY(-4px);
         box-shadow: 0 6px 18px rgba(0,0,0,0.10);
     }
 
-    /* Banner panorámico */
+    /* Banner panorámico */ 
     .ad-banner {
         width: 100%;
-        height: 220px; 
+        height: 400px; 
         overflow: hidden;
         background: #f3f3f3;
     }
 
     .ad-banner img {
         width: 100%;
-        height: 100%;
+        height: 400px;
         object-fit: contain; 
         background-color: #f3f3f3; 
-    }
-
-    /* Contenido del anuncio */
-    .ad-content {
-        padding: 12px 14px;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
     }
 
     .ad-title {
@@ -643,11 +622,12 @@ document.addEventListener('DOMContentLoaded', function () {
     /* ESTANDARIZAR LAS IMÁGENES DEL HOME */
     .home-card-img {
         width: 100%;
-        height: 400px;       
-        object-fit: cover;   
+        height: 350px;       
+        object-fit: cover;
         object-position: center;
         border-bottom: 1px solid #eee;
         background-color: #f3f3f3;
+        transition: height 0.3s;
     }
 
     /* RESPONSIVE */
@@ -656,5 +636,82 @@ document.addEventListener('DOMContentLoaded', function () {
             height: 260px;
         }
     }
+
+    /* Wrapper de la card para centrarla */
+    .ad-card-wrapper {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
+/* CARD HORIZONTAL PREMIUM */
+.ad-card-horizontal {
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #e7e7e7;
+    transition: .25s;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+
+    width: 100%;
+    max-width: 420px;  
+    min-height: 630px;  
+}
+
+/* Banner panorámico */
+.ad-card-horizontal .home-card-img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    object-position: center;
+    border-bottom: 1px solid #eee;
+    background-color: #f3f3f3;
+    transition: height 0.3s;
+}
+
+/* Contenido del anuncio */
+.ad-content {
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Responsive: tablets y móviles */
+@media (max-width: 992px) {
+    .ad-card-horizontal {
+        max-width: 320px;
+        min-height: 600px;
+    }
+
+    .ad-card-horizontal .home-card-img {
+        height: 220px;
+    }
+}
+
+@media (max-width: 768px) {
+    .ad-card-horizontal {
+        max-width: 280px;
+        min-height: 550px;
+    }
+
+    .ad-card-horizontal .home-card-img {
+        height: 180px;
+    }
+}
+
+@media (max-width: 576px) {
+    .ad-card-horizontal {
+        max-width: 95%;  
+        min-height: auto;
+    }
+
+    .ad-card-horizontal .home-card-img {
+        height: 160px;
+    }
+}
 
 </style>

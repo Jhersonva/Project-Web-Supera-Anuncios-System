@@ -122,7 +122,7 @@ class MyAdRequestController extends Controller
         $request->validate([
             'category_id' => 'required|exists:ad_categories,id',
             'subcategory_id' => 'required|exists:ad_subcategories,id',
-            'title' => 'required|string|max:55',
+            'title' => 'required|string|max:70',
             'description' => 'required|string',
             'department' => 'nullable|string|max:255',
             'province'   => 'nullable|string|max:255',
@@ -370,6 +370,8 @@ class MyAdRequestController extends Controller
         $subcategories = AdSubcategory::where('ad_categories_id', $ad->ad_categories_id)->get();
         $fields = FieldSubcategoryAd::where('ad_subcategories_id', $ad->ad_subcategories_id)->get();
 
+        $isEmployment = $ad->ad_categories_id == 1;
+
         $urgentPrice     = Setting::get('urgent_publication_price', 7.00);
         $featuredPrice   = Setting::get('featured_publication_price', 6.00);
         $premierePrice   = Setting::get('premiere_publication_price', 5.00);
@@ -389,41 +391,122 @@ class MyAdRequestController extends Controller
             'semiNewPrice',
             'newPrice',
             'availablePrice',
-            'topPrice'
+            'topPrice',
+            'isEmployment'
         ));
     }
 
     public function update(Request $request, $id)
     {
-        $ad = Advertisement::findOrFail($id);
+        $ad = Advertisement::with('images', 'mainImage')->findOrFail($id);
 
-        $request->validate([
-            'contact_location' => 'nullable|string|max:255',
-            'whatsapp'         => 'nullable|string|max:30',
-            'call_phone'       => 'nullable|string|max:30',
-            'selected_subcategory_image' => 'nullable|exists:ad_subcategory_images,id',
-        ]);
-
-        // Datos del anuncio
-        $ad->contact_location = $request->contact_location;
-
-        // REEMPLAZAR o QUITAR imagen de referencia
-        if ($request->has('selected_subcategory_image')) {
-            $ad->selected_subcategory_image = $request->selected_subcategory_image ?: null;
+        // ===============================
+        // 1. ELIMINAR IMÁGENES SI SE PIDE
+        // ===============================
+        if ($request->remove_images === 'all') {
+            foreach ($ad->images as $img) {
+                if (file_exists(public_path($img->image))) {
+                    @unlink(public_path($img->image));
+                }
+                $img->delete();
+            }
         }
 
+        // ===============================
+        // 3. IMÁGENES SUBIDAS DESDE PC
+        // ===============================
+        //EMPLEOS   
+        $isEmployment = $ad->ad_categories_id == 1;
+
+        // EMPLEOS
+        if ($isEmployment && $request->filled('selected_subcategory_image_employment')) {
+
+            foreach ($ad->images as $img) {
+                @unlink(public_path($img->image));
+                $img->delete();
+            }
+
+            $ref = AdSubcategoryImage::find(
+                $request->selected_subcategory_image_employment
+            );
+
+            if ($ref) {
+                $filename = time().'_empleo.'.pathinfo($ref->image, PATHINFO_EXTENSION);
+
+                copy(
+                    public_path($ref->image),
+                    public_path('images/advertisementss/'.$filename)
+                );
+
+                AdvertisementImage::create([
+                    'advertisementss_id' => $ad->id,
+                    'image' => 'images/advertisementss/'.$filename,
+                    'is_main' => 1,
+                ]);
+            }
+        }
+
+        // Bloque delete imagenes de otros
+        if (!$isEmployment && $request->filled('remove_images')) {
+
+            $idsToDelete = json_decode($request->remove_images, true);
+
+            if (is_array($idsToDelete)) {
+                foreach ($idsToDelete as $imgId) {
+
+                    $img = $ad->images->where('id', $imgId)->first();
+
+                    if ($img) {
+                        if (file_exists(public_path($img->image))) {
+                            @unlink(public_path($img->image));
+                        }
+                        $img->delete();
+                    }
+                }
+            }
+        }
+
+        //Otros
+        if (!$isEmployment &&$request->filled('selected_subcategory_image_general')) {
+
+            $ids = explode(',', $request->selected_subcategory_image_general);
+
+            foreach ($ids as $id) {
+
+                $ref = AdSubcategoryImage::find($id);
+                if (!$ref) continue;
+
+                $filename = time().'_'.$id.'.'.pathinfo($ref->image, PATHINFO_EXTENSION);
+
+                copy(
+                    public_path($ref->image),
+                    public_path('images/advertisementss/'.$filename)
+                );
+
+                AdvertisementImage::create([
+                    'advertisementss_id' => $ad->id,
+                    'image' => 'images/advertisementss/'.$filename,
+                    'is_main' => 0,
+                ]);
+            }
+        }
+
+        // ===============================
+        // 4. GUARDAR RESTO DE DATOS
+        // ===============================
+        // Actualizar datos del usuario
+        $user = $ad->user;
+
+        if ($user) {
+            $user->whatsapp   = $request->input('whatsapp');
+            $user->call_phone = $request->input('call_phone');
+            $user->save();
+        }
+        $ad->contact_location = $request->contact_location;
         $ad->save();
 
-        // Datos del usuario
-        $ad->user->update([
-            'whatsapp'   => $request->whatsapp,
-            'call_phone' => $request->call_phone,
-        ]);
-
-        return redirect($request->return_to ?? route('my-ads.index'))
-            ->with('success', 'Datos actualizados correctamente');
+        return back()->with('success', 'Anuncio actualizado correctamente');
     }
-
 
     public function destroy(Request $request, $id)
     {

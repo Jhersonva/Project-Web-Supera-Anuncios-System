@@ -79,11 +79,13 @@
                     @foreach($ads as $ad)
                         <tr>
                             <td width="80">
-                                @if($ad->mainImage)
-                                    <img src="{{ asset($ad->mainImage->image) }}" class="rounded" width="70">
-                                @else
-                                    <span class="text-muted small">Sin imagen</span>
-                                @endif
+                                @php
+                                    $image = $ad->images->first();
+                                @endphp
+
+                                <img src="{{ asset($image->image ?? 'assets/img/not-found-image/failed-image.jpg') }}"
+                                    class="rounded"
+                                    width="70">
                             </td>
 
                             <td class="fw-semibold text-truncate" style="max-width:220px;">
@@ -180,11 +182,13 @@
 
                         {{-- Imagen --}}
                         <div class="mb-3 text-center">
-                            @if($ad->mainImage)
-                                <img src="{{ asset($ad->mainImage->image) }}" class="rounded" width="90">
-                            @else
-                                <span class="text-muted small">Sin imagen</span>
-                            @endif
+                            @php
+                                $image = $ad->images->first();
+                            @endphp
+
+                            <img src="{{ asset($image->image ?? 'assets/img/not-found-image/failed-image.jpg') }}"
+                                class="rounded"
+                                width="90">
                         </div>
 
                         <h6 class="fw-bold text-truncate">{{ $ad->title }}</h6>

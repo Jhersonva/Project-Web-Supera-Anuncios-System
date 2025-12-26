@@ -648,7 +648,7 @@ function createAdCard(ad) {
 
             <div class="position-relative">
                 <!-- Imagen -->
-                <img src="${img}" class="w-100" style="height:180px; object-fit:cover;">
+                <img src="${img}" class="w-150 card-img-top">
 
                 ${ad.top_publication
                     ? `<div class="badge-top">TOP</div>`
@@ -1631,9 +1631,27 @@ function updateReceiptPreview() {
         background: red;
     }
 
+    /* Imagen de la card */
+    .card img {
+        width: 100%;
+        height: 400px; 
+        object-fit: cover; 
+        border-bottom: 1px solid #eee;
+        background-color: #f3f3f3;
+    }
+
     .ad-banner {
-        position: relative;
-    } 
+        width: 100%;
+        height: 400px; 
+        overflow: hidden;
+        background: #f3f3f3;
+    }
+
+    .ad-banner img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; 
+    }
 
     .ad-title {
         display: flex;

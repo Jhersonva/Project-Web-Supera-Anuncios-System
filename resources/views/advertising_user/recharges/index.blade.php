@@ -102,8 +102,19 @@
             <input type="hidden" name="payment_method_id" id="inputMetodo">
 
             <div class="mt-4">
-                <label class="fw-bold">Sube tu comprobante (opcional)</label>
-                <input type="file" name="img_cap_pago" class="form-control mt-2" accept="image/*">
+                <label class="fw-bold">Sube tu comprobante</label>
+                <input 
+                    type="file" 
+                    name="img_cap_pago" 
+                    class="form-control mt-2" 
+                    accept="image/*" 
+                    required
+                    id="imgComprobante"
+                >
+                <!-- Preview de la imagen -->
+                <div class="mt-2">
+                    <img id="previewComprobante" src="#" alt="Preview del comprobante" style="display:none; max-width:200px; border-radius:8px;">
+                </div>
             </div>
 
             <button id="btnRecargar" class="btn btn-danger w-100 mt-4 py-2 fw-bold" type="submit">
@@ -238,6 +249,24 @@ function mostrarDatosPago(m) {
     document.getElementById("infoPago").innerHTML = html;
     document.getElementById("infoPago").style.display = "block";
 }
+
+/*Preview del Comprobante de Pago*/
+document.getElementById('imgComprobante').addEventListener('change', function(event) {
+        const preview = document.getElementById('previewComprobante');
+        const file = event.target.files[0];
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        } else {
+            preview.src = '#';
+            preview.style.display = 'none';
+        }
+    });
 
 document.addEventListener("DOMContentLoaded", function () {
 

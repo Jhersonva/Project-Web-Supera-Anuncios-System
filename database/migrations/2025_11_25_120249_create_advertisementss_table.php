@@ -12,7 +12,7 @@ return new class extends Migration {
             $table->foreignId('ad_subcategories_id')->constrained('ad_subcategories');
             $table->foreignId('selected_subcategory_image')->nullable()->constrained('ad_subcategory_images');
             $table->unsignedBigInteger('user_id')->nullable();
-            $table->string('title');
+            $table->string('title', 70);
             $table->text('description')->nullable();
             $table->string('department')->nullable();
             $table->string('province')->nullable();

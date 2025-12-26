@@ -427,64 +427,86 @@
             </div>
         </div>
 
-        {{-- IMÁGENES ACTUALES --}}
+        {{-- IMÁGENES ACTUALES - EMPLEOS--}}
+        @if($isEmployment)
+
+            <div class="field-card">
+                <label class="fw-semibold">Imagen actual</label>
+
+                @if($ad->images->first())
+                    <img src="{{ asset($ad->images->first()->image) }}" class="img-thumb">
+                @endif
+            </div>
+
+            {{-- AGREGAR NUEVAS IMÁGENES --}}
+            @if(auth()->user()->role_id === 1)
+            <div class="field-card">
+                <label class="fw-semibold">Elegir imagen</label>
+
+                <button type="button"
+                        class="btn btn-outline-info open-images-modal">
+                    Elegir imágenes
+                </button>
+
+                <div id="selectedPreview" class="d-none mt-2">
+                    <div id="selectedPreviewListEmployment"></div>
+                </div>
+
+                <input type="hidden" name="selected_subcategory_image_employment" id="selected_subcategory_image_employment">
+            </div>
+
+            @if($isEmployment)
+                <input type="hidden" name="remove_images" id="remove_images">
+            @endif
+
+            @endif
+        @endif
+
+
+        @if(!$isEmployment)
+
+        {{-- IMÁGENES ACTUALES - OTROS --}}
         <div class="field-card">
             <label class="fw-semibold">Imágenes actuales</label>
-            <div class="d-flex flex-wrap gap-3 mt-2">
+
+            <div class="d-flex flex-wrap gap-3">
                 @foreach ($ad->images as $img)
-                <div class="position-relative">
-                    <img src="{{ asset($img->image) }}" class="img-thumb" disabled>
+                    <div class="position-relative image-wrapper">
+                        <img src="{{ asset($img->image) }}" class="img-thumb">
 
-                    <button type="button" class="delete-img-btn"
-                        onclick="markImageForRemoval({{ $img->id }}, this)">×</button>
-
-                    <div class="form-check mt-1">
-                        <input type="radio" name="main_image" value="{{ $img->id }}"
-                            class="form-check-input" {{ $img->is_main ? 'checked' : '' }}>
-                        <label class="form-check-label">Principal</label>
+                        <button type="button"
+                            class="delete-img-btn"
+                            onclick="markImageForRemoval({{ $img->id }}, this)">
+                            ×
+                        </button>
                     </div>
-                </div>
                 @endforeach
             </div>
         </div>
 
-        {{-- AGREGAR NUEVAS IMÁGENES --}}
-        @if(auth()->user()->role_id === 1)
-        <div class="field-card" id="imagesContainer">
-            <label class="fw-semibold mb-2">Imagen de referencia</label>
+        {{-- NUEVAS DESDE GALERÍA --}}
+        <div class="field-card">
+            <label class="fw-semibold">Agregar imágenes</label>
 
             <button type="button"
-                    class="btn btn-sm btn-outline-info mb-3"
-                    id="openImagesModal">
-                <i class="fa-solid fa-images"></i> Elegir imagen
+                    class="btn btn-outline-info open-images-modal">
+                Elegir imágenes
             </button>
 
-            <div id="selectedPreview" class="mb-3">
-                <div id="selectedPreviewList" class="d-flex flex-wrap gap-2"></div>
-                <small class="text-muted d-block mt-1">
-                    Imagen seleccionada
-                </small>
-            </div>
+            <div id="selectedPreviewListGeneral" class="d-flex flex-wrap gap-2 mt-2"></div>
 
-            <button type="button"
-                    class="btn btn-sm btn-outline-danger mt-2"
-                    id="removeSelectedImage">
-                Quitar imagen
-            </button>
-
-            <input type="hidden"
-                name="selected_subcategory_image"
-                id="selectedImage"
-                value="{{ $ad->selected_subcategory_image }}">
+            <input type="hidden" name="selected_subcategory_image_general" id="selected_subcategory_image_general">
         </div>
+
+        <input type="hidden" name="remove_images" id="remove_images">
+
         @endif
+
 
         <!-- BOTÓN -->
         <button class="btn btn-danger w-100 py-2 fw-semibold mt-3" id="submitBtn">
             Guardar Cambios
         </button>
-
-        <input type="hidden" name="remove_images" id="remove_images">
 
     </form>
 
@@ -528,51 +550,22 @@ let MAX_IMAGES = 5;
 let imagesToDelete = [];
 const currentSubcategoryId = "{{ $ad->ad_subcategories_id }}";
 
-document.addEventListener('DOMContentLoaded', () => {
-
-    if (!currentSubcategoryId) return;
-
-    fetch(`/admin/subcategories/${currentSubcategoryId}/images`)
-        .then(res => res.json())
-        .then(images => {
-
-            const preview = document.getElementById('selectedPreviewList');
-            preview.innerHTML = '';
-
-            images.forEach(img => {
-                const div = document.createElement('div');
-                div.classList.add('image-card');
-                div.innerHTML = `
-                    <img src="/${img.image}">
-                `;
-                preview.appendChild(div);
-            });
-
-        });
-});
-
-const removeBtn = document.getElementById('removeSelectedImage');
-
-removeBtn?.addEventListener('click', () => {
-    selectedInput.value = '';
-    previewList.innerHTML = '';
-    previewBox.classList.add('d-none');
-});
+const removeInput = document.getElementById('remove_images');
+if (removeInput) {
+    removeInput.value = '';
+}
 
 
 function markImageForRemoval(id, btn) {
-    // Ocultar visualmente la imagen
-    const container = btn.parentElement;
-    container.style.opacity = '0.4';
-    container.style.filter = 'grayscale(1)';
 
-    // Marcar para eliminación
+    btn.closest('.image-wrapper').style.opacity = 0.4;
+
     if (!imagesToDelete.includes(id)) {
         imagesToDelete.push(id);
     }
 
-    // Actualizar el hidden input
-    document.getElementById('remove_images').value = JSON.stringify(imagesToDelete);
+    document.getElementById('remove_images').value =
+        JSON.stringify(imagesToDelete);
 }
 
 // LÓGICA PARA SINCRONIZAR SWITCH DE PUBLICACIÓN
@@ -627,37 +620,123 @@ function recalculateEditTotal() {
 }
 
 // LÓGICA DE ETIQUETAS SEGÚN CATEGORÍA
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener('DOMContentLoaded', () => {
 
-    const tagMap = {
-        is_urgent: 'urgentContainer',
-        is_featured: 'featuredContainer',
-        is_premiere: 'premiereContainer',
-        is_semi_new: 'semiNewContainer',
-        is_new: 'newContainer',
-        is_available: 'availableContainer',
-        is_top: 'topContainer',
-    };
+    //const openBtn = document.getElementById('openImagesModalGeneral');
+    const confirmBtn = document.getElementById('confirmImage');
+    const imagesGrid = document.getElementById('modalImagesGrid');
 
-    const categoryId = document.getElementById('categorySelect')?.value;
+    const previewEmployment = document.getElementById('selectedPreviewListEmployment');
+    const previewGeneral = document.getElementById('selectedPreviewListGeneral');
+    const previewBox = document.getElementById('selectedPreview');
 
-    if (!categoryId) return;
+    const inputEmployment = document.getElementById('selected_subcategory_image_employment');
+    const inputGeneral = document.getElementById('selected_subcategory_image_general');
+    const removeInput = document.getElementById('remove_images');
 
-    fetch(`/advertising/my-ads/subcategories-with-category/${categoryId}`)
-        .then(res => res.json())
-        .then(data => {
+    const isEmployment = {{ $isEmployment ? 'true' : 'false' }};
 
-            // MOSTRAR SOLO LAS ETIQUETAS PERMITIDAS
-            Object.entries(tagMap).forEach(([flag, containerId]) => {
+    let selectedImages = [];
 
-                if (data.category[flag]) {
-                    const container = document.getElementById(containerId);
-                    if (container) {
-                        container.classList.remove('d-none');
-                    }
-                }
+    const modal = new bootstrap.Modal(
+        document.getElementById('modalSubcategoryImages')
+    );
+
+    // =========================
+    // ABRIR MODAL
+    // =========================
+    document.querySelectorAll('.open-images-modal').forEach(btn => {
+
+    btn.addEventListener('click', () => {
+
+        selectedImages = [];
+        imagesGrid.innerHTML = 'Cargando...';
+
+        fetch(`/advertising/subcategories/{{ $ad->ad_subcategories_id }}/images`)
+            .then(r => r.json())
+            .then(images => {
+
+                imagesGrid.innerHTML = '';
+
+                images.forEach(img => {
+
+                    const card = document.createElement('div');
+                    card.className = 'image-card';
+                    card.innerHTML = `<img src="/${img.image}">`;
+
+                    card.onclick = () => {
+
+                        if (isEmployment) {
+                            selectedImages = [img];
+
+                            document
+                                .querySelectorAll('#modalImagesGrid .image-card')
+                                .forEach(c => c.classList.remove('selected'));
+
+                            card.classList.add('selected');
+                        }
+                        else {
+                            if (selectedImages.find(i => i.id === img.id)) return;
+                            selectedImages.push(img);
+                            card.classList.add('selected');
+
+                        }
+                    };
+
+                    imagesGrid.appendChild(card);
+                });
             });
+
+        modal.show();
+    });
+
+});
+
+    // =========================
+    // CONFIRMAR
+    // =========================
+    confirmBtn?.addEventListener('click', () => {
+
+        if (!selectedImages.length) return;
+
+        const ids = selectedImages.map(i => i.id).join(',');
+
+        // LIMPIAR PREVIEW
+        previewEmployment && (previewEmployment.innerHTML = '');
+        previewGeneral && (previewGeneral.innerHTML = '');
+
+        selectedImages.forEach(img => {
+
+            const html = `
+                <div class="image-card border">
+                    <img src="/${img.image}">
+                </div>
+            `;
+
+            if (isEmployment && previewEmployment) {
+                previewEmployment.innerHTML = html;
+            }
+
+            if (!isEmployment && previewGeneral) {
+                previewGeneral.insertAdjacentHTML('beforeend', html);
+            }
         });
+
+        previewBox?.classList.remove('d-none');
+
+        // INPUTS
+        if (isEmployment && inputEmployment) {
+            inputEmployment.value = ids;
+            removeInput.value = 'all'; // 🔥 reemplaza
+        }
+
+        if (!isEmployment && inputGeneral) {
+            inputGeneral.value = ids; // 🔥 agrega
+        }
+
+        modal.hide();
+    });
+
 });
 
 
@@ -762,12 +841,11 @@ document.addEventListener("DOMContentLoaded", () => {
     recalculateEditTotal();
 });
 
-
+/*
 document.addEventListener("DOMContentLoaded", () => {
 
     const imagesContainer  = document.getElementById('imagesContainer');
     const imagesGrid       = document.getElementById('modalImagesGrid');
-    const selectedInput    = document.getElementById('selectedImage');
     const previewBox       = document.getElementById('selectedPreview');
     const previewList      = document.getElementById('selectedPreviewList');
     const openImagesBtn    = document.getElementById('openImagesModal');
@@ -783,31 +861,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('modalSubcategoryImages')
     );
 
-    // 🟢 PRE-CARGAR imagen seleccionada
-    if (selectedImageIds) {
-        fetch(`/advertising/subcategories/${currentSubcategory}/images`)
-            .then(r => r.json())
-            .then(images => {
-
-                const selected = images.filter(img =>
-                    selectedImageIds.split(',').includes(String(img.id))
-                );
-
-                previewList.innerHTML = '';
-
-                selected.forEach(img => {
-                    const item = document.createElement('div');
-                    item.className = 'image-card border border-dark';
-                    item.style.maxWidth = '120px';
-                    item.innerHTML = `<img src="/${img.image}">`;
-                    previewList.appendChild(item);
-                });
-
-                previewBox.classList.remove('d-none');
-            });
-    }
-
-    // 🟢 ABRIR MODAL (MISMO COMPORTAMIENTO QUE CREATE)
+    // ABRIR MODAL (MISMO COMPORTAMIENTO QUE CREATE)
     openImagesBtn?.addEventListener('click', () => {
 
         imagesGrid.innerHTML = `<small class="text-muted">Cargando imágenes...</small>`;
@@ -827,12 +881,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     card.addEventListener('click', () => {
 
-                        tempSelectedImages = [img];
+                        if (tempSelectedImages.find(i => i.id === img.id)) return;
 
-                        document.querySelectorAll('.image-card')
-                            .forEach(c => c.classList.remove('border', 'border-dark'));
+                        tempSelectedImages.push(img);
 
-                        card.classList.add('border', 'border-dark');
+                        const preview = document.createElement('div');
+                        preview.className = 'image-card position-relative';
+                        preview.innerHTML = `
+                            <img src="/${img.image}">
+                            <button class="delete-img-btn">×</button>
+                        `;
+
+                        preview.querySelector('button').onclick = () => {
+                            preview.remove();
+                            tempSelectedImages =
+                                tempSelectedImages.filter(i => i.id !== img.id);
+                        };
+
+                        previewList.appendChild(preview);
                     });
 
                     imagesGrid.appendChild(card);
@@ -842,12 +908,15 @@ document.addEventListener("DOMContentLoaded", () => {
         modal.show();
     });
 
-    // 🟢 CONFIRMAR
+    // CONFIRMAR
     confirmBtn?.addEventListener('click', () => {
 
         if (!tempSelectedImages.length) return;
 
         selectedInput.value = tempSelectedImages[0].id;
+
+        // limpiar eliminaciones previas
+        document.getElementById('remove_images').value = '';
 
         previewList.innerHTML = `
             <div class="image-card border border-dark" style="max-width:120px">
@@ -860,7 +929,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 });
-
+*/
 function deleteImage(id){
     if(!confirm("¿Eliminar esta imagen?")) return;
 
@@ -896,5 +965,75 @@ Swal.fire({
 @endif
 
 </script>
+
+<style>
+/* =========================
+   GRID DE IMÁGENES DEL MODAL
+   ========================= */
+.image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.image-grid .image-card {
+    width: 100%;
+    height: 140px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color .2s ease, transform .15s ease;
+    background: #f8f9fa;
+}
+
+/* Hover */
+.image-grid .image-card:hover {
+    border-color: #0d6efd; /* azul */
+    transform: scale(1.02);
+}
+
+/* ✅ Seleccionada */
+.image-grid .image-card.selected {
+    border-color: #198754; /* verde bootstrap */
+    box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.25);
+}
+
+/* Imagen */
+.image-grid .image-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+
+/* =========================
+   PREVIEW SELECCIONADO
+   ========================= */
+#selectedPreviewListEmployment,
+#selectedPreviewListGeneral {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+#selectedPreviewListEmployment .image-card,
+#selectedPreviewListGeneral .image-card {
+    width: 120px;
+    height: 120px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #198754; /* verde fijo */
+    background: #f8f9fa;
+}
+
+#selectedPreviewListEmployment img,
+#selectedPreviewListGeneral img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+</style>
 
 @endsection

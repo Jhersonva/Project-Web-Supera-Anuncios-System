@@ -1,5 +1,5 @@
 //js/home.js
-const isAuthenticated = window.IS_AUTHENTICATED === true;
+const isAuthenticated = Boolean(window.IS_AUTHENTICATED);
 
 
 function requireLogin(action, payload = null) {
@@ -73,14 +73,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnSearch = document.getElementById('btnSearch');
     const btnClear = document.getElementById('btnClear');
 
-    // Llenar subcategorías según categoría seleccionada
+    // Llenar subcategorías según categoría
     selectCategory.addEventListener('change', function () {
         const categoryId = this.value;
         selectSubcategory.innerHTML = '<option value="">Todas las subcategorías</option>';
-
         if (!categoryId) return;
-
-        // Buscar subcategorías de esa categoría
         allSubcategories.filter(sub => sub.ad_categories_id == categoryId)
                         .forEach(sub => {
                             const option = document.createElement('option');
@@ -91,58 +88,58 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // Botón Buscar
-    btnSearch.addEventListener('click', function () {
+    btnSearch.addEventListener('click', function (e) {
+        e.preventDefault(); // evita que se recargue la página
 
-    const titleQuery = inputSearch.value.trim().toLowerCase();
-    const locationQuery = inputLocation.value.trim().toLowerCase();
-    const categoryId = selectCategory.value;
-    const subcategoryId = selectSubcategory.value;
+        const titleQuery = inputSearch.value.trim().toLowerCase();
+        const locationQuery = inputLocation.value.trim().toLowerCase();
+        const categoryId = parseInt(selectCategory.value) || null;
+        const subcategoryId = parseInt(selectSubcategory.value) || null;
 
-    if (!titleQuery && !locationQuery && !categoryId && !subcategoryId) {
-        alert("Ingresa algún término de búsqueda");
-        return;
-    }
-
-    // Si es Servicios -> Privados
-    if (categoryId == window.SERVICIOS_CATEGORY_ID &&
-    subcategoryId == window.PRIVADOS_SUBCATEGORY_ID) {
-
-    if (!window.ALERTS || window.ALERTS.length === 0) {
-        return;
-    }
-
-    const alertData = window.ALERTS[0]; 
-
-    Swal.fire({
-        title: alertData.title,
-        html: `
-            ${alertData.logo ? `
-                <img src="/${alertData.logo}" style="max-width:120px" class="mb-3 rounded">
-            ` : ''}
-            <p>${alertData.description}</p>
-            <a href="${window.ADULT_TERMS_URL}" target="_blank" class="fw-bold text-primary">
-                Términos y Condiciones
-            </a>
-        `,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Aceptar y continuar',
-        cancelButtonText: 'Rechazar',
-        confirmButtonColor: '#0d6efd',
-        cancelButtonColor: '#dc3545',
-    }).then((result) => {
-        if (result.isConfirmed) {
-            filterAdsFull(titleQuery, locationQuery, categoryId, subcategoryId);
-        } else {
-            location.reload();
+        if (!titleQuery && !locationQuery && !categoryId && !subcategoryId) {
+            alert("Ingresa algún término de búsqueda");
+            return;
         }
-    });
 
-    return;
-}
-    // Para búsquedas normales, sin alert adulto
-    filterAdsFull(titleQuery, locationQuery, categoryId, subcategoryId);
-});
+        // Si es Servicios → Privados
+        if (categoryId === window.SERVICIOS_CATEGORY_ID &&
+            subcategoryId === window.PRIVADOS_SUBCATEGORY_ID) {
+
+            // 1️⃣ Usuario no autenticado
+            if (!window.IS_AUTHENTICATED) {
+                requireLogin("search_private_ads", { categoryId, subcategoryId, titleQuery, locationQuery });
+                return;
+            }
+
+            // 2️⃣ Usuario autenticado pero con alert adulto
+            if (window.ALERTS?.length > 0) {
+                const alertData = window.ALERTS[0];
+                Swal.fire({
+                    title: alertData.title,
+                    html: `
+                        ${alertData.logo ? `<img src="/${alertData.logo}" style="max-width:120px" class="mb-3 rounded">` : ''}
+                        <p>${alertData.description}</p>
+                        <a href="${window.ADULT_TERMS_URL}" target="_blank" class="fw-bold text-primary">Términos y Condiciones</a>
+                    `,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Aceptar y continuar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#0d6efd',
+                    cancelButtonColor: '#dc3545',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        filterAdsFull(titleQuery, locationQuery, categoryId, subcategoryId);
+                    }
+                    // si cancela, simplemente no hace nada
+                });
+                return;
+            }
+        }
+
+        // Búsqueda normal
+        filterAdsFull(titleQuery, locationQuery, categoryId, subcategoryId);
+    });
 
     // Botón Limpiar
     btnClear.addEventListener('click', function () {
@@ -156,37 +153,66 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Filtrar por título, ubicación, categoría y subcategoría
 function filterAdsFull(titleQuery, locationQuery, categoryId, subcategoryId) {
-    if (!allAds) return;
-
-    const filtered = {};
-    let hasResults = false;
-
-    for (const type in allAds) {
-        if (!allAds[type]?.data) continue;
-
-        const filteredData = allAds[type].data.filter(ad => {
-            const matchesTitle = titleQuery ? ad.title.toLowerCase().includes(titleQuery) : true;
-            const matchesLocation = locationQuery ? 
-                ((ad.province && ad.province.toLowerCase().includes(locationQuery)) ||
-                 (ad.district && ad.district.toLowerCase().includes(locationQuery))) 
-                : true;
-            const matchesCategory = categoryId ? ad.ad_categories_id == categoryId : true;
-            const matchesSubcategory = subcategoryId ? ad.ad_subcategories_id == subcategoryId : true;
-
-            return matchesTitle && matchesLocation && matchesCategory && matchesSubcategory;
+    // Verificar si es Servicios → Privados y usuario no autenticado
+    if (
+        categoryId == window.SERVICIOS_CATEGORY_ID &&
+        subcategoryId == window.PRIVADOS_SUBCATEGORY_ID &&
+        !window.IS_AUTHENTICATED
+    ) {
+        requireLogin("search_private_ads", {
+            categoryId,
+            subcategoryId,
+            titleQuery,
+            locationQuery
         });
-
-        filtered[type] = { ...allAds[type], data: filteredData };
-        if (filteredData.length > 0) hasResults = true;
+        return; 
     }
 
-    if (!hasResults) {
-        const container = document.getElementById('listaAnuncios');
-        container.innerHTML = `<p class="text-center mt-4 fw-bold">No se encontraron anuncios para tu búsqueda</p>`;
-        return;
-    }
+    // Construir URL de la API
+    let url = `/api/ads?`;
+    if (categoryId) url += `category_id=${categoryId}&`;
+    if (subcategoryId) url += `subcategory_id=${subcategoryId}&`;
 
-    renderAds(filtered);
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            const filteredAds = [];
+
+            for (const type in data) {
+                if (!data[type]?.data) continue;
+                filteredAds.push(...data[type].data);
+            }
+
+            // Filtrar por título y ubicación
+            const finalAds = filteredAds.filter(ad => {
+                const matchesTitle = titleQuery ? ad.title.toLowerCase().includes(titleQuery) : true;
+                const matchesLocation = locationQuery
+                    ? ((ad.province && ad.province.toLowerCase().includes(locationQuery)) ||
+                    (ad.district && ad.district.toLowerCase().includes(locationQuery)))
+                    : true;
+                return matchesTitle && matchesLocation;
+            });
+
+
+            // Mostrar resultados
+            const container = document.getElementById('listaAnuncios');
+            if (finalAds.length === 0) {
+                container.innerHTML = `<p class="text-center mt-4 fw-bold">No se encontraron anuncios para tu búsqueda</p>`;
+                return;
+            }
+
+            const adsPayload = {
+                featured: { data: [] },
+                urgent: { data: [] },
+                premiere: { data: [] },
+                semi_new: { data: [] },
+                new: { data: [] },
+                available: { data: [] },
+                top: { data: [] },
+                normal: { data: finalAds } 
+            };
+            renderAds(adsPayload);
+        });
 }
 
 // Mostrar resultados o mensaje de "no se encontraron"
@@ -223,7 +249,6 @@ function showAdultAlert() {
         confirmButtonText: 'Entendido'
     });
 }
-
 
 document.addEventListener("DOMContentLoaded", function () {
     loadAds();
@@ -370,7 +395,7 @@ function createAdCard(ad){
     const showVerified = userVerified || adVerified;
 
     return `
-    <div class="col-12 col-md-6 col-lg-4">
+    <div class="ad-card-wrapper col-12 col-md-6 col-lg-4 d-flex justify-content-center">
         <div class="ad-card-horizontal">
 
             <div class="position-relative">
@@ -519,6 +544,7 @@ function handleLlamada(numero) {
     realizarLlamada(numero);
 }
 
+//Accion Contactar
 if (pendingAction === "contact") {
     handleContact(data.adId);
 }

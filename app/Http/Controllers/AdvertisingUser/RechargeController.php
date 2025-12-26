@@ -27,7 +27,7 @@ class RechargeController extends Controller
         $request->validate([
             'monto'             => 'required|numeric|min:1',
             'payment_method_id' => 'required|exists:payment_methods,id',
-            'img_cap_pago'      => 'nullable|image|max:4096',
+            'img_cap_pago'      => 'required|image|max:4096',
         ], [
             'monto.required' => 'El monto es obligatorio.',
             'monto.numeric'  => 'El monto debe ser un número válido.',
@@ -38,6 +38,7 @@ class RechargeController extends Controller
 
             'img_cap_pago.image' => 'El archivo debe ser una imagen.',
             'img_cap_pago.max'   => 'La imagen no puede superar los 4MB.',
+            'img_cap_pago.required' => 'Debes subir un comprobante de pago.',
         ]);
 
         $rutaImagen = null;

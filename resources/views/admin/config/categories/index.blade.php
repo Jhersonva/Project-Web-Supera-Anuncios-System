@@ -276,7 +276,7 @@
 
 <!-- MODAL IMÁGENES SUBCATEGORÍA -->
 <div class="modal fade" id="modalImages" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content border-0 shadow">
 
             <!-- HEADER -->
@@ -640,8 +640,15 @@ document.addEventListener("DOMContentLoaded", () => {
     gap: 16px;
 }
 
+.image-grid > span {
+    grid-column: 1 / -1;
+    text-align: center;
+    align-self: center;
+}
+
 /* SCROLL CONTAINER */
 .image-scroll {
+    height: 360px; 
     max-height: 360px; 
     overflow-y: auto;
     padding-right: 6px;
