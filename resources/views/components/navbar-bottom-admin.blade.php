@@ -10,10 +10,17 @@
         <i class="fas fa-house"></i><br>Inicio
     </a>
 
-    <!-- SOLICITUDES DE ANUNCIOS -->
-    <a href="{{ route('admin.ads-history.index') }}" 
-       class="text-center {{ request()->routeIs('admin.ads-history.index') ? 'nav-item-active' : '' }}">
-        <i class="fa-solid fa-table-cells-large"></i><br>Hist. Anuncios
+    <!-- SOLICITUDES/HISTORIAL DE ANUNCIOS -->
+    <a href="{{ route('admin.ads-history.index') }}"
+    class="text-center position-relative {{ request()->routeIs('admin.ads-history.index') ? 'nav-item-active' : '' }}">
+        <i class="fa-solid fa-table-cells-large"></i><br>
+        Hist. Anuncios
+
+        <span id="badge-ads"
+            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+            style="display:none">
+            0
+        </span>
     </a>
 
     <!-- SOLICITUD DE RECARGAS -->
@@ -25,7 +32,6 @@
             0
         </span>
     </a>
-
 
     <!-- CONFIG -->
     <a href="{{ route('admin.config') }}"

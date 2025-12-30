@@ -119,4 +119,13 @@ class AdsHistoryController extends Controller
         return back()->with('success', 'Anuncio rechazado correctamente.');
     }
 
+    public function pendingCount()
+    {
+        $count = Advertisement::where('status', 'pendiente')->count();
+
+        return response()->json([
+            'count' => $count
+        ]);
+    }
+
 }

@@ -432,6 +432,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/ad/{id}/approve', [AdsHistoryController::class, 'approve'])->name('admin.ads.approve');
         Route::post('/ad/{id}/reject', [AdsHistoryController::class, 'reject'])->name('admin.ads.reject');
         Route::post('/ad/{ad}/verify',[AdsHistoryController::class, 'verify'])->name('admin.ads.verify');
+        Route::get('/anuncios/pending-count',[AdsHistoryController::class, 'pendingCount'])->name('admin.ads.pending-count');
 
         // Gestión de reclamos (admin)
         Route::get('/complaints-management', [ComplaintController::class, 'indexView'])->name('admin.config.complaints.index');

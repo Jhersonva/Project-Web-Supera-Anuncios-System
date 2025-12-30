@@ -59,30 +59,51 @@
 
     document.addEventListener('DOMContentLoaded', function () {
 
-        // Verificar que el usuario es admin o empleado
         @if(auth()->check() && in_array(auth()->user()->role->name, ['admin', 'employee']))
 
-            const badge = document.getElementById('badge-recargas');
-
-            // Si NO existe el badge, no ejecutar nada
-            if (!badge) return;
+            /* BADGE RECARGAS */
+            const badgeRecargas = document.getElementById('badge-recargas');
 
             async function actualizarRecargas() {
+                if (!badgeRecargas) return;
+
                 try {
-                    const response = await axios.get('{{ route('admin.reload-request.pending-count') }}');
-                    const count = response.data.count;
+                    const res = await axios.get('{{ route('admin.reload-request.pending-count') }}');
+                    const count = res.data.count;
 
-                    badge.textContent = count;
-                    badge.style.display = count > 0 ? 'inline-block' : 'none';
+                    badgeRecargas.textContent = count;
+                    badgeRecargas.style.display = count > 0 ? 'inline-block' : 'none';
 
-                } catch (error) {
-                    console.warn('No se pudo obtener recargas, usuario sin permisos.');
+                } catch (e) {
+                    console.warn('Error recargas');
+                }
+            }
+
+            /* BADGE ANUNCIOS */
+            const badgeAds = document.getElementById('badge-ads');
+
+            async function actualizarAnuncios() {
+                if (!badgeAds) return;
+
+                try {
+                    const res = await axios.get('{{ route('admin.ads.pending-count') }}');
+                    const count = res.data.count;
+
+                    badgeAds.textContent = count;
+                    badgeAds.style.display = count > 0 ? 'inline-block' : 'none';
+
+                } catch (e) {
+                    console.warn('Error anuncios');
                 }
             }
 
             actualizarRecargas();
+            actualizarAnuncios();
 
-            setInterval(actualizarRecargas, 10000);
+            setInterval(() => {
+                actualizarRecargas();
+                actualizarAnuncios();
+            }, 10000);
 
         @endif
 

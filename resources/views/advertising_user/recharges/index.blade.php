@@ -170,9 +170,7 @@
 </div>
 
 <script>
-/* ============================
-   SELECTOR ENTRE SECCIONES
-============================ */
+/* SELECTOR ENTRE SECCIONES */
 const btnRecargar = document.getElementById("btnRecargar");
 const btnHistorial = document.getElementById("btnHistorial");
 
@@ -196,9 +194,7 @@ btnHistorial.addEventListener("click", () => {
 });
 
 
-/* ============================
-   SISTEMA DE PAGO
-============================ */
+/* SISTEMA DE PAGO*/
 const paymentMethodsData = @json($paymentMethods);
 
 const inputMonto = document.getElementById("inputMonto");
