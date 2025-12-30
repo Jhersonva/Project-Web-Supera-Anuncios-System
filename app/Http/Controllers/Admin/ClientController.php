@@ -75,16 +75,21 @@ class ClientController extends Controller
             ->with('success', 'Cliente actualizado correctamente.');
     }
 
-    public function verify(User $client)
+    public function toggleVerification(User $client)
     {
-        $client->is_verified = true;
-        $client->verified_at = now();
+        if ($client->is_verified) {
+            $client->is_verified = false;
+            $client->verified_at = null;
+        } else {
+            $client->is_verified = true;
+            $client->verified_at = now();
+        }
+
         $client->save();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Usuario verificado correctamente.'
-        ]);
+        return redirect()
+            ->route('admin.config.clients')
+            ->with('success', 'Estado de verificación actualizado.');
     }
 
     public function toggleStatus(User $client)

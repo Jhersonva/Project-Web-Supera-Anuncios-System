@@ -104,6 +104,7 @@ class AdsHistoryController extends Controller
         $ad->status = 'publicado';
         $ad->published = 1; 
         $ad->save();
+        Log::info('DESPUÉS', $ad->only(['status','is_verified']));
 
         return back()->with('success', 'Anuncio aprobado correctamente.');
     }

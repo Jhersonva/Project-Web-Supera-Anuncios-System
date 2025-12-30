@@ -15,20 +15,20 @@ class AdCategorySeeder extends Seeder
                 'icon' => 'fa-briefcase',
             ],
 
-            'comprar' => [
-                'name' => 'Comprar / Traspaso',
-                'icon' => 'fa-cart-shopping',
+            'inmuebles' => [
+                'name' => 'Inmuebles',
+                'icon' => 'fa-building',
             ],
 
-            'alquiler' => [
-                'name' => 'Alquileres / Anticresis',
-                'icon' => 'fa-key',
+            'vehiculos_maquinarias' => [
+                'name' => 'Vehículos / Maquinarias y Otros',
+                'icon' => 'fa-car',
             ],
 
             'servicios' => [
                 'name' => 'Servicios',
                 'icon' => 'fa-screwdriver-wrench',
-            ]
+            ],
         ];
 
         foreach ($categories as $slug => $data) {

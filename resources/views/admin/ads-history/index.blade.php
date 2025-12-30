@@ -117,14 +117,14 @@
                                     @if($ad->receipt_file)
                                         <a href="{{ asset($ad->receipt_file) }}"
                                         target="_blank"
-                                        class="btn btn-sm btn-outline-info"
+                                        class="btn btn-sm btn-outline-secondary"
                                         title="Ver comprobante">
                                             <i class="fa-solid fa-file-invoice"></i>
                                         </a>
                                     @endif
 
                                     <a href="{{ route('my-ads.show', $ad->id) }}"
-                                        class="btn btn-sm btn-outline-secondary">
+                                        class="btn btn-sm btn-outline-success">
                                         <i class="fa-solid fa-eye"></i>
                                     </a>
 
@@ -201,13 +201,13 @@
                             @if($ad->receipt_file)
                                 <a href="{{ asset($ad->receipt_file) }}"
                                 target="_blank"
-                                class="btn btn-sm btn-outline-info">
-                                    <i class="fa-solid fa-file-invoice"></i> Comprobante
+                                class="btn btn-sm btn-outline-secondary">
+                                    <i class="fa-solid fa-file-invoice"></i>
                                 </a>
                             @endif
 
                             <a href="{{ route('my-ads.show', $ad->id) }}" 
-                            class="btn btn-sm btn-outline-secondary">
+                            class="btn btn-sm btn-outline-success">
                                 <i class="fa-solid fa-eye"></i>
                             </a>
 

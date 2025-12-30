@@ -145,7 +145,7 @@
         {{-- DATOS DE CONTACTO --}}
         <div class="field-card">
 
-            <label class="fw-semibold">WhatsApp</label>
+            <label class="fw-semibold">Contacto vía WhatsApp</label>
             <input
                 type="text"
                 name="whatsapp"
@@ -154,7 +154,7 @@
                 placeholder="Ej: +51 999 888 777"
             >
 
-            <label class="fw-semibold mt-2">Teléfono de llamadas</label>
+            <label class="fw-semibold mt-2">Contacto vía Llamada</label>
             <input
                 type="text"
                 name="call_phone"

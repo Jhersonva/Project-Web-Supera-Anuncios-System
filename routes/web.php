@@ -50,8 +50,7 @@ use App\Http\Controllers\Admin\AdultContentPublishTermController;
 // Página principal
 
 Route::get('/', function () {
-    $policy = PrivacyPolicySetting::first();
-    return view('public.home', compact('policy'));
+    return view('public.home');
 })->name('home');
 
 Route::get('/api/ads', function (Request $request) {
@@ -380,7 +379,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/config/clients/{client}/edit', [ClientController::class, 'edit'])->name('admin.config.clients.edit');
             Route::put('/config/clients/{client}', [ClientController::class, 'update'])->name('admin.config.clients.update');
             Route::put('/config/clients/{client}/toggle', [ClientController::class, 'toggleStatus'])->name('admin.config.clients.toggle');
-            Route::put('/config/clients/{client}/verify',[ClientController::class, 'verify'])->name('admin.config.clients.verify');
+            Route::put('/config/clients/{client}/verify',[ClientController::class, 'toggleVerification'])->name('admin.config.clients.verify.toggle');
 
             // Caja
             Route::get('/config/cash', [CashBoxController::class, 'index'])->name('admin.config.cash.index');

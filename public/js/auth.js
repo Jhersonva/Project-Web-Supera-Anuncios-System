@@ -40,7 +40,10 @@ if (loginForm) {
             return;
         }
 
-        // Redirección por rol
+        if (data.showPrivacy) {
+            sessionStorage.setItem('showPrivacy', '1');
+        }
+
         window.location.href = data.redirect;
     });
 }

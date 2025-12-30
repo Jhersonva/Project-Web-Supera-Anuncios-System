@@ -89,7 +89,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Botón Buscar
     btnSearch.addEventListener('click', function (e) {
-        e.preventDefault(); // evita que se recargue la página
+        e.preventDefault();
 
         const titleQuery = inputSearch.value.trim().toLowerCase();
         const locationQuery = inputLocation.value.trim().toLowerCase();
@@ -105,13 +105,13 @@ document.addEventListener("DOMContentLoaded", function () {
         if (categoryId === window.SERVICIOS_CATEGORY_ID &&
             subcategoryId === window.PRIVADOS_SUBCATEGORY_ID) {
 
-            // 1️⃣ Usuario no autenticado
+            // Usuario no autenticado
             if (!window.IS_AUTHENTICATED) {
                 requireLogin("search_private_ads", { categoryId, subcategoryId, titleQuery, locationQuery });
                 return;
             }
 
-            // 2️⃣ Usuario autenticado pero con alert adulto
+            // Usuario autenticado pero con alert adulto
             if (window.ALERTS?.length > 0) {
                 const alertData = window.ALERTS[0];
                 Swal.fire({
@@ -267,68 +267,48 @@ function renderAds(data) {
     const container = document.getElementById('listaAnuncios');
     container.innerHTML = '';
 
-    // DESTACADOS
-    if (data.featured.data.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Anuncios Destacados</h5>`;
-        data.featured.data.forEach(ad => container.innerHTML += createAdCard(ad));
+    const adsMap = new Map(); //clave: ad.id
 
-        container.innerHTML += `<nav class="mt-2 d-flex justify-content-center">
-            ${renderPagination(data.featured, 'featured')}
-        </nav>`;
+    // Destacados primero (prioridad máxima)
+    if (data.featured?.data?.length > 0) {
+        data.featured.data.forEach(ad => {
+            adsMap.set(ad.id, ad);
+        });
     }
 
-    // URGENTES
-    if (data.urgent.data.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Anuncios Urgentes</h5>`;
-        data.urgent.data.forEach(ad => container.innerHTML += createAdCard(ad));
+    // Resto de tipos (si ya existe, NO se duplica)
+    const otherTypes = ['urgent', 'premiere', 'semi_new', 'new', 'available', 'top', 'normal'];
 
-        container.innerHTML += `<nav class="mt-2 d-flex justify-content-center">
-            ${renderPagination(data.urgent, 'urgent')}
-        </nav>`;
+    otherTypes.forEach(type => {
+        if (data[type]?.data?.length > 0) {
+            data[type].data.forEach(ad => {
+                if (!adsMap.has(ad.id)) {
+                    adsMap.set(ad.id, ad);
+                }
+            });
+        }
+    });
+
+    const finalAds = Array.from(adsMap.values());
+
+    // Si no hay anuncios
+    if (finalAds.length === 0) {
+        container.innerHTML = `<p class="text-center mt-4 fw-bold">No hay anuncios disponibles</p>`;
+        return;
     }
 
-    // ESTRENO
-    if (data.premiere?.data?.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Anuncios en Estreno</h5>`;
-        data.premiere.data.forEach(ad => container.innerHTML += createAdCard(ad));
+    // Render único (SIN DUPLICADOS)
+    finalAds.forEach(ad => {
+        container.innerHTML += createAdCard(ad);
+    });
 
-        container.innerHTML += `<nav class="mt-2 d-flex justify-content-center">
-            ${renderPagination(data.premiere, 'premiere')}
-        </nav>`;
-    }
-
-    // SEMI-NUEVO
-    if (data.semi_new?.data?.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Semi-Nuevos</h5>`;
-        data.semi_new.data.forEach(ad => container.innerHTML += createAdCard(ad));
-    }
-
-    // NUEVOS
-    if (data.new?.data?.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Nuevos</h5>`;
-        data.new.data.forEach(ad => container.innerHTML += createAdCard(ad));
-    }
-
-    // DISPONIBLES
-    if (data.available?.data?.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Disponibles</h5>`;
-        data.available.data.forEach(ad => container.innerHTML += createAdCard(ad));
-    }
-
-    // TOP
-    if (data.top?.data?.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Top</h5>`;
-        data.top.data.forEach(ad => container.innerHTML += createAdCard(ad));
-    }
-
-    // NORMALES
-    if (data.normal.data.length > 0) {
-        container.innerHTML += `<h5 class="fw-bold mt-3 mb-2">Otros Anuncios</h5>`;
-        data.normal.data.forEach(ad => container.innerHTML += createAdCard(ad));
-
-        container.innerHTML += `<nav class="mt-2 d-flex justify-content-center">
-            ${renderPagination(data.normal, 'normal')}
-        </nav>`;
+    // Paginación SOLO NORMAL (se mantiene)
+    if (data.normal?.data?.length > 0) {
+        container.innerHTML += `
+            <nav class="mt-3 d-flex justify-content-center">
+                ${renderPagination(data.normal, 'normal')}
+            </nav>
+        `;
     }
 }
 
@@ -366,8 +346,10 @@ function renderPagination(paginatedData, type) {
 
 function goToPage(type, page) {
     const params = new URLSearchParams();
-    if (type === 'urgent') params.set('page_urgent', page);
-    if (type === 'normal') params.set('page_normal', page);
+
+    if (type === 'normal') {
+        params.set('page_normal', page);
+    }
 
     fetch('/api/ads?' + params.toString())
         .then(res => res.json())
@@ -377,13 +359,17 @@ function goToPage(type, page) {
         });
 }
 
-
 function createAdCard(ad){
     const img = ad.images.length
         ? '/' + ad.images[0].image
         : '/images/no-image.png';
 
     const subcategory = ad.subcategory?.name ?? "Sin subcategoría";
+
+    // Detectar Servicios → Privados
+    const isPrivateService =
+        ad.ad_categories_id == window.SERVICIOS_CATEGORY_ID &&
+        ad.ad_subcategories_id == window.PRIVADOS_SUBCATEGORY_ID;
 
     // Usuario
     const userImg = ad.user_info.profile_image;
@@ -408,7 +394,7 @@ function createAdCard(ad){
                     : ''
                 }
 
-                ${ad.premiere_publication == 1? `<div class="badge-estreno">ESTRENO</div>`
+                ${ad.premiere_publication == 1 ? `<div class="badge-estreno">ESTRENO</div>`
                     : ad.available_publication
                         ? `<div class="badge-available">DISPONIBLE</div>`
                         : ''
@@ -417,8 +403,7 @@ function createAdCard(ad){
                 ${ad.semi_new_publication ? `<div class="badge-seminew">SEMI-NUEVO</div>` : ''}
                 ${ad.new_publication ? `<div class="badge-new">NUEVO</div>` : ''}
                 
-        </div>
-
+            </div>
 
             <div class="ad-content">
 
@@ -458,29 +443,33 @@ function createAdCard(ad){
 
                 <div class="ad-tags">
                     <span class="ad-badge"><i class="fa-solid fa-tag"></i> ${subcategory}</span>
-                    <span class="ad-location"><i class="fa-solid fa-location-dot"></i>${ad.department && ad.province ? `${ad.department} - ${ad.province}` : 'Sin ubicación'}</span>
+                    <span class="ad-location">
+                        <i class="fa-solid fa-location-dot"></i>
+                        ${ad.department && ad.province ? `${ad.department} - ${ad.province}` : 'Sin ubicación'}
+                    </span>
                 </div>
 
                 <div class="ad-price-box">
-                <p class="fw-bold ${ad.amount_visible === 0 ? 'text-secondary' : 'text-success'}">
-                    ${
-                        ad.amount_visible === 1
-                            ? `S/ ${ad.amount}`
-                            : ad.amount_text
-                                ? `S/ ${ad.amount_text}`
-                                : "S/ No especificado"
-                    }
-                </p>
+                    <p class="fw-bold ${ad.amount_visible === 0 ? 'text-secondary' : 'text-success'}">
+                        ${
+                            ad.amount_visible === 1
+                                ? `S/ ${ad.amount}`
+                                : ad.amount_text
+                                    ? `S/ ${ad.amount_text}`
+                                    : "S/ No especificado"
+                        }
+                    </p>
                 </div>
 
-                <!-- Usuario -->
+                <!-- USUARIO (SOLO SI NO ES PRIVADO) -->
+                ${!isPrivateService ? `
                 <div class="d-flex align-items-center mb-2 user-info">
                     <div class="position-relative me-2">
                         <img src="${userImg}" class="rounded-circle user-avatar">
                     </div>
                     <span class="fw-bold user-name">${userName}</span>
                 </div>
-
+                ` : ''}
 
                 <div class="ad-buttons"> 
 

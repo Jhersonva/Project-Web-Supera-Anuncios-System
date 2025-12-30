@@ -78,6 +78,10 @@
             {{ $ad->created_at->format('d/m/Y') }}
         </p>
 
+        <p>
+            <i class="fa-regular fa-clock"></i>
+            {{ $ad->time_ago }}
+        </p>
     </div>
 
 

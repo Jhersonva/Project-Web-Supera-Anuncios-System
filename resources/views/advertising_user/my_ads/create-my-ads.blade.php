@@ -117,7 +117,7 @@
                 {{-- DATOS DE CONTACTO DEL USUARIO --}}
                 <div class="field-card d-none" id="contactDataContainer">
 
-                    <label class="fw-semibold">WhatsApp</label>
+                    <label class="fw-semibold">Contacto vía WhatsApp</label>
                     <input
                         type="text"
                         name="whatsapp"
@@ -126,7 +126,7 @@
                         placeholder="Ej: +51 999 888 777"
                     >
 
-                    <label class="fw-semibold mt-2">Teléfono de llamadas</label>
+                    <label class="fw-semibold mt-2">Contacto vía Llamada</label>
                     <input
                         type="text"
                         name="call_phone"
@@ -149,7 +149,8 @@
                             <!-- Opciones de texto por defecto -->
                             <select id="amountTextSelect" class="form-select mt-2 d-none">
                                 <option value="">Selecciona texto por defecto...</option>
-                                <option value="Sueldo a tratar">(Monto a tratar)</option>
+                                <option value="Sueldo a tratar">(Sueldo a tratar)</option>
+                                <option value="Monto a tratar">(Monto a tratar)</option>
                                 <option value="Sueldo por comisiones">(Sueldo por comisiones)</option>
                                 <option value="No especificado">(No especificado)</option>
                             </select>
@@ -174,7 +175,7 @@
 
                 <div class="field-card d-none" id="costContainer">
                     <label class="fw-semibold">Días de publicación *</label>
-                    <input type="number" min="1" name="days_active" id="days_active" class="form-control" required>
+                    <input type="number" min="2" step="1" value="2" name="days_active" id="days_active" class="form-control" required>
                     <small class="text-muted">Indica cuántos días deseas que tu anuncio esté activo.</small>
 
                     <br>
@@ -267,7 +268,7 @@
                     </small>
                 </div>
 
-                <!-- PUBLICACIÓN SEMI-NUEVO -->
+                <!-- PUBLICACIÓN NUEVA -->
                 <div class="field-card d-none" id="newContainer">
                     <label class="fw-semibold">¿Publicación nueva?</label>
 
@@ -513,11 +514,10 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
-    window.SERVICIOS_CATEGORY_ID = 4;
-    window.PRIVADOS_SUBCATEGORY_ID = 21;
-    window.ADULT_TERMS_URL = "{{ route('adult.terms.adult') }}";
+window.SERVICIOS_CATEGORY_ID = 4;
+window.PRIVADOS_SUBCATEGORY_ID = 21;
 
-    window.ALERTS = @json($alerts);
+window.ALERTS = @json($alertsPrepared);
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -525,46 +525,130 @@
 
 <script>
 
+//Title personalizado para cada categoria
+document.addEventListener("DOMContentLoaded", () => {
+
+    const titleInput = document.getElementById("titleInput");
+    const categorySelect = document.getElementById("categorySelect");
+
+    const titlePlaceholders = {
+        "EMPLEOS": "Ej: Se busca Ayudante de Cocina / Perforista / Chofer A1",
+        "INMUEBLES": "Ej: Departamento en alquiler 2 habitaciones en Miraflores",
+        "VEHICULOS, MOTOS, MAQUINARIAS, EQUIPOS Y OTROS": "Ej: Toyota Corolla 2018 automático",
+        "SERVICIOS": "Ej: Servicio de gasfitería y electricidad a domicilio"
+    };
+
+    categorySelect.addEventListener("change", function () {
+
+        const selectedOption = this.options[this.selectedIndex];
+        const categoryName = selectedOption.text.trim().toUpperCase();
+
+        if (titlePlaceholders[categoryName]) {
+            titleInput.placeholder = titlePlaceholders[categoryName];
+        } else {
+            titleInput.placeholder = "Escribe un título para tu anuncio";
+        }
+
+        titleInput.value = "";
+    });
+
+});
+
+function buildTermsHtml(terms) {
+    return terms.map(term => `
+        <div style="border:1px solid #eee;border-radius:12px;padding:16px;margin-bottom:16px;">
+            ${term.icon ? `
+                <div style="text-align:center;margin-bottom:10px;">
+                    <img src="/${term.icon}" style="max-height:90px">
+                </div>
+            ` : ''}
+            <h5 style="font-weight:600;text-align:center;">${term.title}</h5>
+            <p style="font-size:14px;color:#555;">${term.description}</p>
+        </div>
+    `).join('');
+}
+
+function getMainHtml(alertData) {
+    return `
+        ${alertData.logo ? `
+            <div class="text-center mb-2">
+                <img src="/${alertData.logo}" style="max-width:120px" class="rounded">
+            </div>
+        ` : ''}
+
+        <p style="font-size:14px; line-height:1.6;">
+            ${alertData.description ?? ''}
+        </p>
+
+        <button id="openTermsBtn"
+            type="button"
+            class="btn btn-link p-0 fw-semibold"
+            style="color:#0d6efd;text-decoration:underline;">
+            Términos y Condiciones
+        </button>
+    `;
+}
+
+
+let openingTerms = false;
+
+// Alerta de categoria servicios y privados
 function showAdultServicesAlert() {
 
-    if (!window.ALERTS || window.ALERTS.length === 0) {
-        console.warn('No hay alertas configuradas');
-        return;
-    }
+    if (!window.ALERTS || window.ALERTS.length === 0) return;
 
     const alertData = window.ALERTS[0];
 
     Swal.fire({
         title: alertData.title ?? 'Contenido sensible',
-        html: `
-            ${alertData.logo ? `
-                <div style="margin-bottom:12px;">
-                    <img src="/${alertData.logo}"
-                         style="max-width:120px"
-                         class="rounded">
-                </div>
-            ` : ''}
-
-            <p style="font-size:14px; line-height:1.6; color:#333;">
-                ${alertData.description ?? ''}
-            </p>
-
-            <a href="${window.ADULT_TERMS_URL}"
-               target="_blank"
-               style="font-weight:600;color:#0d6efd;text-decoration:underline;">
-                Términos y Condiciones
-            </a>
-        `,
         icon: 'warning',
+        html: getMainHtml(alertData),
         showCancelButton: true,
         confirmButtonText: 'Aceptar y continuar',
         cancelButtonText: 'Rechazar',
         confirmButtonColor: '#0d6efd',
         cancelButtonColor: '#dc3545',
-        reverseButtons: true
-    }).then((result) => {
-        if (!result.isConfirmed) {
-            location.reload(); 
+        reverseButtons: true,
+        allowOutsideClick: false,
+        didOpen: () => {
+
+            document
+                .getElementById('openTermsBtn')
+                .addEventListener('click', () => {
+
+                    // ACTUALIZAMOS EL MISMO MODAL
+                    Swal.update({
+                        title: 'Términos y Condiciones',
+                        icon: undefined,
+                        showCancelButton: false,
+                        confirmButtonText: 'Volver',
+                        html: `
+                            <div style="max-height:420px;overflow-y:auto;text-align:left;">
+                                ${buildTermsHtml(alertData.terms)}
+                            </div>
+                        `
+                    });
+
+                    // BOTÓN VOLVER
+                    Swal.getConfirmButton().onclick = () => {
+                        Swal.update({
+                            title: alertData.title,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Aceptar y continuar',
+                            cancelButtonText: 'Rechazar',
+                            html: getMainHtml(alertData)
+                        });
+
+                        // volver a bindear
+                        setTimeout(() => showAdultServicesAlert(), 0);
+                    };
+                });
+        }
+
+    }).then(result => {
+        if (result.dismiss === Swal.DismissReason.cancel) {
+            location.reload();
         }
     });
 }
@@ -573,7 +657,7 @@ let MAX_IMAGES = 5;
 let isEmpleosCategory = false;
 let previewCarouselIndex = 0;
 let previewCarouselTimer = null;
-const PREVIEW_INTERVAL = 2500; // 2.5 segundos
+const PREVIEW_INTERVAL = 2500; 
 
 // CONTADOR DE CARACTERES EN TÍTULO
 const titleInput = document.getElementById('titleInput');
@@ -590,7 +674,6 @@ function safeListener(id, event, callback) {
     }
 }
 
-//    //contact_location: "",
 // OBJETO BASE DEL PREVIEW
 let adPreview = {
     images: [],
@@ -664,8 +747,13 @@ function createAdCard(ad) {
                         : ''
                 }
 
-                ${ad.semi_new_publication ? `<div class="badge-seminew">SEMI-NUEVO</div>` : ''}
-                ${ad.new_publication ? `<div class="badge-new">NUEVO</div>` : ''}         
+                ${
+                    ad.new_publication
+                        ? `<div class="badge-new">NUEVO</div>`
+                        : ad.semi_new_publication
+                            ? `<div class="badge-seminew">SEMI-NUEVO</div>`
+                            : ''
+                }
 
             </div>
 
@@ -910,6 +998,7 @@ document.addEventListener("DOMContentLoaded", () => {
         top: document.getElementById('topContainer'),
     };
 
+
     const tagMap = {
         is_urgent:     { container: 'urgentContainer',     input: 'urgent_publication' },
         is_featured:   { container: 'featuredContainer',   input: 'featured_publication' },
@@ -919,6 +1008,29 @@ document.addEventListener("DOMContentLoaded", () => {
         is_available:  { container: 'availableContainer',  input: 'available_publication' },
         is_top:        { container: 'topContainer',        input: 'top_publication' }
     };
+
+    document.addEventListener('change', function (e) {
+
+        if (e.target.id !== 'semi_new_publication' && e.target.id !== 'new_publication') {
+            return;
+        }
+
+        const semiNewInput = document.getElementById('semi_new_publication');
+        const newInput     = document.getElementById('new_publication');
+
+        // Si marco NUEVO → desmarco SEMI-NUEVO
+        if (e.target.id === 'new_publication' && newInput.checked) {
+            semiNewInput.checked = false;
+        }
+
+        // Si marco SEMI-NUEVO → desmarco NUEVO
+        if (e.target.id === 'semi_new_publication' && semiNewInput.checked) {
+            newInput.checked = false;
+        }
+
+        updatePreview();
+    });
+
 
     // RESET IMÁGENES
     function resetImages() {
@@ -1023,7 +1135,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     updateVerifiedVisibility(categoryId, subId);
                     currentSubcategory = subId;
 
-                    // 👉 ALERTA SERVICIOS PRIVADOS
+                    // ALERTA SERVICIOS PRIVADOS
                     if (
                         parseInt(categoryId) === window.SERVICIOS_CATEGORY_ID &&
                         parseInt(subId) === window.PRIVADOS_SUBCATEGORY_ID
@@ -1041,6 +1153,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     imagesContainer.classList.remove('d-none');
                 };
+
+                calculateDatesAndCosts();
             });
     });
 
@@ -1142,9 +1256,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 
-document.addEventListener("DOMContentLoaded", () => {
 
-    let subcatPrice = 0;
+let subcatPrice = 0;
+
+// PRECIO URGENTE 
+let urgentPrice = {{ $urgentPrice }};
+let featuredPrice = {{ $featuredPrice }};
+let premierePrice  = {{ $premierePrice  }};
+let semiNewPrice   = {{ $semiNewPrice }};
+let newPrice       = {{ $newPrice }};
+let availablePrice = {{ $availablePrice }};
+let topPrice       = {{ $topPrice }};
+
+// DEFINE PRIMERO LA FUNCIÓN
+function calculateDatesAndCosts() {
+
+    if (!subcatPrice || subcatPrice <= 0) return;
+
+        const daysInput = document.getElementById("days_active");
+        let days = parseInt(daysInput.value);
+
+        if (!days || days < 2) {
+            days = 2;
+            daysInput.value = 2;
+        }
+
+        let total = subcatPrice * days;
+
+        if (document.getElementById("urgent_publication")?.checked) total += urgentPrice;
+        if (document.getElementById("featured_publication")?.checked) total += featuredPrice;
+        if (document.getElementById("premiere_publication_switch")?.checked) total += premierePrice;
+        if (document.getElementById("semi_new_publication")?.checked) total += semiNewPrice;
+        if (document.getElementById("new_publication")?.checked) total += newPrice;
+        if (document.getElementById("available_publication")?.checked) total += availablePrice;
+        if (document.getElementById("top_publication")?.checked) total += topPrice;
+
+        document.getElementById("pricePerDay").value = `S/. ${subcatPrice.toFixed(2)}`;
+        document.getElementById("totalCost").value = `S/. ${total.toFixed(2)}`;
+        document.getElementById("summaryTotalCost").textContent = `S/. ${total.toFixed(2)}`;
+
+            const today = new Date();
+            today.setDate(today.getDate() + days);
+
+            document.getElementById("expiresAt").value =
+                today.toISOString().split("T")[0];
+}
+
+document.addEventListener("DOMContentLoaded", () => {
 
     // CARGAR CAMPOS + PRECIO 
     document.getElementById('subcategorySelect').addEventListener('change', function () {
@@ -1170,6 +1328,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 subcatPrice = parseFloat(selected.price ?? 0);
                 document.getElementById("pricePerDay").value = `S/. ${subcatPrice.toFixed(2)}`;
                 document.getElementById("costContainer").classList.remove("d-none");
+                calculateDatesAndCosts();
             });
 
         // OBTENER CAMPOS DINÁMICOS (ESTO FALTABA)
@@ -1262,103 +1421,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // CALCULAR TOTAL + FECHA 
-    document.getElementById("days_active")
-        .addEventListener("input", function () {
+        // escucha el cambio del switch de urgente
+        safeListener("urgent_publication", "change", calculateDatesAndCosts);
+        safeListener("featured_publication", "change", calculateDatesAndCosts);
+        safeListener("premiere_publication_switch", "change", calculateDatesAndCosts);
+        safeListener("semi_new_publication", "change", calculateDatesAndCosts);
+        safeListener("new_publication", "change", calculateDatesAndCosts);
+        safeListener("available_publication", "change", calculateDatesAndCosts);
+        safeListener("top_publication", "change", calculateDatesAndCosts);
 
-            const days = parseInt(this.value);
-
-            if (!days || days <= 0) {
-                document.getElementById('totalCost').value = "";
-                document.getElementById('expiresAt').value = "";
-                return;
+        document.getElementById("days_active").addEventListener("input", () => {
+            const input = document.getElementById("days_active");
+            if (!input.value || parseInt(input.value) < 2) {
+                input.value = 2;
             }
-
-            const total = subcatPrice * days;
-            document.getElementById("totalCost").value = `S/. ${total.toFixed(2)}`;
-
-            const today = new Date();
-            today.setDate(today.getDate() + days);
-
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const dd = String(today.getDate()).padStart(2, '0');
-
-            document.getElementById("expiresAt").value = `${yyyy}-${mm}-${dd}`;
+            calculateDatesAndCosts();
         });
 
-        // PRECIO URGENTE 
-        let urgentPrice = {{ $urgentPrice }};
-        let featuredPrice = {{ $featuredPrice }};
-        let premierePrice  = {{ $premierePrice  }};
-        let semiNewPrice   = {{ $semiNewPrice }};
-        let newPrice       = {{ $newPrice }};
-        let availablePrice = {{ $availablePrice }};
-        let topPrice       = {{ $topPrice }};
-
-
-        // escucha el cambio del switch de urgente
-        safeListener("urgent_publication", "change", updateTotalCost);
-        safeListener("featured_publication", "change", updateTotalCost);
-        safeListener("premiere_publication_switch", "change", updateTotalCost);
-        safeListener("semi_new_publication", "change", updateTotalCost);
-        safeListener("new_publication", "change", updateTotalCost);
-        safeListener("available_publication", "change", updateTotalCost);
-        safeListener("top_publication", "change", updateTotalCost);
-
-        // escucha cambios en días
-        document.getElementById("days_active").addEventListener("input", updateTotalCost);
-
-        function updateTotalCost() {
-
-            const days = parseInt(document.getElementById("days_active").value);
-
-            if (!days || days <= 0) {
-                document.getElementById("totalCost").value = "";
-                document.getElementById("summaryTotalCost").textContent = "S/. 0.00";
-                return;
-            }
-
-            let total = subcatPrice * days;
-
-            // Urgente
-            if (document.getElementById("urgent_publication").checked) {
-                total += urgentPrice;
-            }
-
-            // Destacado
-            if (document.getElementById("featured_publication").checked) {
-                total += featuredPrice;
-            }
-
-            // Estreno
-            if (document.getElementById("premiere_publication_switch").checked) {
-                total += premierePrice;
-            }
-
-            // Semi-nuevo
-            if (document.getElementById("semi_new_publication")?.checked) {
-                total += semiNewPrice;
-            }
-
-            // Nuevo
-            if (document.getElementById("new_publication")?.checked) {
-                total += newPrice;
-            }
-
-            // Disponible
-            if (document.getElementById("available_publication")?.checked) {
-                total += availablePrice;
-            }
-
-            // TOP
-            if (document.getElementById("top_publication")?.checked) {
-                total += topPrice;
-            }
-
-            document.getElementById("totalCost").value = `S/. ${total.toFixed(2)}`;
-            document.getElementById("summaryTotalCost").textContent = `S/. ${total.toFixed(2)}`;
-        }
 
     // MOSTRAR CAMPOS OBLIGATORIOS 
     function showMainFields() {
@@ -1449,15 +1528,13 @@ function validateAdForm() {
     document.querySelectorAll(".error-text").forEach(e => e.remove());
     document.querySelectorAll(".is-invalid").forEach(e => e.classList.remove("is-invalid"));
 
-    // =====================
     // VALIDACIÓN CAMPOS NORMALES
-    // =====================
     const requiredFields = [
         { selector: "#categorySelect", message: "Selecciona una categoría" },
         { selector: "#subcategorySelect", message: "Selecciona una subcategoría" },
         { selector: "#titleInput", message: "El título es obligatorio" },
         { selector: "[name='description']", message: "La descripción es obligatoria" },
-        { selector: "#days_active", message: "Indica los días de publicación" }
+        { selector: "#days_active", message: "Indica los días de publicación" }//
     ];
 
     requiredFields.forEach(field => {
@@ -1484,7 +1561,7 @@ function validateAdForm() {
         const hasAmount = amountVisible && amountInput.value && Number(amountInput.value) > 0;
         const hasText = !amountVisible && amountTextSelect.value;
 
-        // ❌ Caso inválido: TODO vacío
+        // Caso inválido: TODO vacío
         if (!hasAmount && !hasText) {
             isValid = false;
 

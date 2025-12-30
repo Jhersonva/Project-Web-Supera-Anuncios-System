@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class Advertisement extends Model
 {
     protected $table = 'advertisementss';
+    protected $appends = ['time_ago'];  
 
     protected $fillable = [
         'ad_categories_id',
@@ -129,16 +131,11 @@ class Advertisement extends Model
     {
         return url("/detalle-anuncio/{$this->slug}/{$this->id}");
     }
-/*
-    public function getMainImageAttribute()
+
+    public function getTimeAgoAttribute()
     {
-        // Si tiene imágenes, devuelve la primera
-        if ($this->images && $this->images->count() > 0) {
-            return asset($this->images->first()->image);
-        }
-
-        // Imagen por defecto
-        return asset('assets/img/not-found-image/failed-image.jpg');
-    }*/
-
+        return $this->created_at
+            ? $this->created_at->diffForHumans()
+            : null;
+    }
 }

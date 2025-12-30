@@ -27,7 +27,7 @@
 
             <div>
                 <h5 class="fw-bold m-0">Clientes Registrados</h5>
-                <small class="text-muted">Usuarios con rol publicitario (advertising_user)</small>
+                <small class="text-muted">Usuarios con rol publicitario (Anunciantes)</small>
             </div>
         </div>
 
@@ -79,27 +79,22 @@
                                                 Editar
                                             </a>
 
-                                            <form action="{{ route('admin.config.clients.toggle', $client) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('admin.config.clients.verify.toggle', $client) }}"
+                                                method="POST"
+                                                class="d-inline">
                                                 @csrf
                                                 @method('PUT')
 
-                                                @if($client->is_active)
-                                                    <button class="btn btn-sm btn-warning">Desactivar</button>
+                                                @if(!$client->is_verified)
+                                                    <button class="btn btn-sm btn-success">
+                                                        <i class="fa-solid fa-circle-check"></i> Verificar
+                                                    </button>
                                                 @else
-                                                    <button class="btn btn-sm btn-success">Activar</button>
+                                                    <button class="btn btn-sm btn-secondary">
+                                                        <i class="fa-solid fa-circle-xmark"></i> Quitar verificación
+                                                    </button>
                                                 @endif
                                             </form>
-                                            @if(!$client->is_verified)
-                                            <button
-                                                class="btn btn-sm btn-success"
-                                                onclick="verifyUser({{ $client->id }})">
-                                                <i class="fa-solid fa-circle-check"></i> Verificar
-                                            </button>
-                                            @else
-                                            <span class="badge bg-primary">
-                                                <i class="fa-solid fa-shield-check"></i> Verificado
-                                            </span>
-                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach
@@ -139,29 +134,22 @@
                                             Editar
                                         </a>
 
-                                        <form action="{{ route('admin.config.clients.toggle', $client) }}"
-                                            method="POST" class="w-100">
+                                        <form action="{{ route('admin.config.clients.verify.toggle', $client) }}"
+                                            method="POST"
+                                            class="w-100">
                                             @csrf
                                             @method('PUT')
 
-                                            @if($client->is_active)
-                                                <button class="btn btn-warning btn-sm w-100">Desactivar</button>
+                                            @if(!$client->is_verified)
+                                                <button class="btn btn-success btn-sm w-100">
+                                                    <i class="fa-solid fa-circle-check"></i> Verificar
+                                                </button>
                                             @else
-                                                <button class="btn btn-success btn-sm w-100">Activar</button>
+                                                <button class="btn btn-secondary btn-sm w-100">
+                                                    <i class="fa-solid fa-circle-xmark"></i> Quitar verificación
+                                                </button>
                                             @endif
                                         </form>
-
-                                        @if(!$client->is_verified)
-                                            <button
-                                                class="btn btn-sm btn-success"
-                                                onclick="verifyUser({{ $client->id }})">
-                                                <i class="fa-solid fa-circle-check"></i> Verificar
-                                            </button>
-                                            @else
-                                            <span class="badge bg-primary">
-                                                <i class="fa-solid fa-shield-check"></i> Verificado
-                                            </span>
-                                        @endif
                                     </div>
 
                                 </div>

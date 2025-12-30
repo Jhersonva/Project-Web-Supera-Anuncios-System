@@ -40,9 +40,10 @@ class AuthController extends Controller
 
         Auth::login($user);
 
-        return redirect()->route('privacy-policy.show');
-        //return redirect()->route('login')->with('success', 'Cuenta creada correctamente. Ahora inicia sesión.');
-    }
+        return redirect()
+            ->route('login')
+            ->with('showPrivacy', true);
+            }
 
     /**
      * Login de usuario
@@ -76,13 +77,17 @@ class AuthController extends Controller
         $roleName = $user->role->name;
 
         // Redirección según rol (por ahora igual)
-        $redirect = Auth::user()->privacy_policy_accepted
-        ? route('home')
-        : route('home', ['showPrivacy' => 1]);
+        if (!$user->privacy_policy_accepted) {
+            return response()->json([
+                'message' => 'Debes aceptar los términos',
+                'redirect' => route('login'),
+                'showPrivacy' => true
+            ]);
+        }
 
         return response()->json([
             'message'  => 'Inicio de sesión correcto',
-            'redirect' => $redirect
+            'redirect' => route('home')
         ]);
     }
 

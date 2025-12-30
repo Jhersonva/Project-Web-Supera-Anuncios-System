@@ -132,16 +132,16 @@
                                         </form>
                                     @endif
 
-                                    {{-- 
-                                    @if($ad->receipt_file)
-                                        <a href="{{ asset($ad->receipt_file) }}" target="_blank" class="btn btn-outline-primary">
-                                            Com. Pago
+                                    @if($ad->receipt_type === 'nota_venta' && $ad->receipt_file)
+                                        <a href="{{ asset($ad->receipt_file) }}"
+                                        target="_blank"
+                                        class="btn btn-sm btn-outline-secondary">
+                                            <i class="fa-solid fa-file-invoice"></i>
                                         </a>
-                                    @endif --}}
-
+                                    @endif
 
                                     <a href="{{ route('my-ads.show', $ad->id) }}"
-                                        class="btn btn-sm btn-outline-secondary">
+                                        class="btn btn-sm btn-outline-success">
                                         <i class="fa-solid fa-eye"></i>
                                     </a>
 
@@ -221,7 +221,7 @@
                             @if($ad->published)
                                 <button class="btn btn-sm btn-outline-info"
                                     onclick="confirmDeactivate({{ $ad->id }})">
-                                    <i class="fa-solid fa-ban"></i> Dar de baja
+                                    <i class="fa-solid fa-ban"></i>
                                 </button>
 
                                 <form id="deactivateForm-{{ $ad->id }}"
@@ -231,7 +231,15 @@
                                 </form>
                             @endif
 
-                            <a href="{{ route('my-ads.show', $ad->id) }}" class="btn btn-sm btn-outline-secondary">
+                            @if($ad->receipt_type === 'nota_venta' && $ad->receipt_file)
+                                <a href="{{ asset($ad->receipt_file) }}"
+                                target="_blank"
+                                class="btn btn-sm btn-outline-secondary">
+                                    <i class="fa-solid fa-file-invoice"></i>
+                                </a>
+                            @endif
+
+                            <a href="{{ route('my-ads.show', $ad->id) }}" class="btn btn-sm btn-outline-success">
                                 <i class="fa-solid fa-eye"></i>
                             </a>
 

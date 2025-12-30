@@ -12,6 +12,7 @@ use App\Models\AdvertisementImage;
 use App\Models\Setting;
 use App\Models\Alert;
 use App\Models\AdSubcategoryImage;
+use App\Models\AdultContentPublishTerm;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use App\Support\AdPrices;
@@ -29,8 +30,23 @@ class MyAdRequestController extends Controller
         $user = auth()->user();
 
         $alerts = Alert::where('is_active', true)
-        ->orderByDesc('created_at')
-        ->get();
+            ->orderByDesc('created_at')
+            ->get();
+
+        // términos
+        $terms = AdultContentPublishTerm::orderBy('id')->get();
+
+        // preparamos alerts para JS
+        $alertsPrepared = [];
+
+        foreach ($alerts as $alert) {
+            $alertsPrepared[] = [
+                'title' => $alert->title,
+                'description' => $alert->description,
+                'logo' => $alert->logo,
+                'terms' => $terms, 
+            ];
+        }
 
         $urgentPrice = Setting::get('urgent_publication_price', 7.00);
         $featuredPrice  = Setting::get('featured_publication_price', 6.00);
@@ -40,7 +56,21 @@ class MyAdRequestController extends Controller
         $availablePrice  = Setting::get('available_publication_price', 2.00);
         $topPrice  = Setting::get('top_publication_price', 1.00);
 
-        return view('advertising_user.my_ads.create-my-ads', compact('categories', 'urgentPrice', 'featuredPrice', 'premierePrice', 'semiNewPrice', 'newPrice', 'availablePrice', 'topPrice', 'user', 'alerts'));
+        return view(
+            'advertising_user.my_ads.create-my-ads',
+            compact(
+                'categories',
+                'user',
+                'urgentPrice',
+                'featuredPrice',
+                'premierePrice',
+                'semiNewPrice',
+                'newPrice',
+                'availablePrice',
+                'topPrice',
+                'alertsPrepared'
+            )
+        );
     }
 
     public function show($id)
@@ -400,9 +430,7 @@ class MyAdRequestController extends Controller
     {
         $ad = Advertisement::with('images', 'mainImage')->findOrFail($id);
 
-        // ===============================
-        // 1. ELIMINAR IMÁGENES SI SE PIDE
-        // ===============================
+        // ELIMINAR IMÁGENES SI SE PIDE
         if ($request->remove_images === 'all') {
             foreach ($ad->images as $img) {
                 if (file_exists(public_path($img->image))) {
@@ -412,9 +440,7 @@ class MyAdRequestController extends Controller
             }
         }
 
-        // ===============================
-        // 3. IMÁGENES SUBIDAS DESDE PC
-        // ===============================
+        // IMÁGENES SUBIDAS DESDE PC
         //EMPLEOS   
         $isEmployment = $ad->ad_categories_id == 1;
 
@@ -491,9 +517,7 @@ class MyAdRequestController extends Controller
             }
         }
 
-        // ===============================
-        // 4. GUARDAR RESTO DE DATOS
-        // ===============================
+        // GUARDAR RESTO DE DATOS
         // Actualizar datos del usuario
         $user = $ad->user;
 
@@ -525,7 +549,6 @@ class MyAdRequestController extends Controller
         $ad->delete();
 
         return redirect()->to($request->return_to)
-    ->with('success', 'Anuncio eliminado correctamente.');
-
+        ->with('success', 'Anuncio eliminado correctamente.');
     }
 }
