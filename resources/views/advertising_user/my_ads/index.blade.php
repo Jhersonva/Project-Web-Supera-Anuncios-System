@@ -272,7 +272,7 @@
         <!-- BOTÓN FLOTANTE CREAR ANUNCIO -->
         {{-- BOTONES FLOTANTES --}}
         @auth
-            @if(auth()->user()->role_id !== 1)
+            @if(!in_array((int) auth()->user()->role_id, [1, 3]))
                 <div class="floating-actions">
 
                     <!-- WhatsApp -->

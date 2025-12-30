@@ -101,7 +101,7 @@
 
 {{-- BOTÓN FLOTANTE --}}
 @auth
-    @if(auth()->user()->role_id !== 1)
+    @if(!in_array((int) auth()->user()->role_id, [1, 3]))
         <div class="floating-actions">
 
             <!-- WhatsApp -->
@@ -162,12 +162,9 @@
 </script>
 
 <script src="{{ asset('js/home.js') }}"></script>
-
-
+<script src="{{ asset('js/auth-actions.js') }}"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-
 
 <style>
 
@@ -653,5 +650,4 @@
         height: 160px;
     }
 }
-
 </style>

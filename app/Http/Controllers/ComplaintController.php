@@ -31,24 +31,35 @@ class ComplaintController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'full_name' => 'required|string|max:255',
             'email' => 'required|email',
-            'phone' => 'nullable|string|max:20',
-            'document_type' => 'nullable|string|max:20',
-            'document_number' => 'nullable|string|max:20',
             'complaint_type' => 'required|in:reclamo,queja',
             'subject' => 'required|string|max:255',
             'description' => 'required|string',
-            'request' => 'nullable|string',
+            'captcha' => 'required|numeric',
         ]);
 
-        $complaint = Complaint::create([
+        if ((int) $request->captcha !== session('captcha_result')) {
+            return back()
+                ->withErrors(['captcha' => 'Respuesta incorrecta.'])
+                ->withInput();
+        }
+
+        session()->forget('captcha_result');
+
+        Complaint::create([
             'user_id' => Auth::id(),
-            ...$request->all(),
+            'full_name' => $data['full_name'],
+            'email' => $data['email'],
+            'complaint_type' => $data['complaint_type'],
+            'subject' => $data['subject'],
+            'description' => $data['description'],
         ]);
 
-        return back()->with('success', 'Tu reclamo fue enviado correctamente.');
+        return redirect()
+            ->route('public.complaint-book')
+            ->with('success', 'Tu reclamo fue enviado correctamente.');
     }
 
     /**

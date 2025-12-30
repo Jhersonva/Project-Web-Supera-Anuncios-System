@@ -80,15 +80,26 @@ Route::get('/api/ads', function (Request $request) {
 
     // Lógica de filtrado
     if ($categoryId) {
+
+        // Categoría seleccionada
         $baseQuery->where('ad_categories_id', $categoryId);
+
         if ($subcategoryId) {
+            // Caso exacto: Servicios → Privados
             $baseQuery->where('ad_subcategories_id', $subcategoryId);
+        } else {
+            // Servicios (sin subcategoría) → excluir Privados
+            if ((int)$categoryId === 4) {
+                $baseQuery->where('ad_subcategories_id', '!=', 21);
+            }
         }
+
     } else {
-        // Si no hay categoría, excluir solo Servicios → Privados
-        $baseQuery->where(function ($q) {
-            $q->where('ad_categories_id', '!=', 4)
-            ->orWhere('ad_subcategories_id', '!=', 21);
+
+        // Sin categoría → excluir Servicios → Privados
+        $baseQuery->whereNot(function ($q) {
+            $q->where('ad_categories_id', 4)
+            ->where('ad_subcategories_id', 21);
         });
     }
 
@@ -217,8 +228,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])
         ->name('auth.logout');
 
-    Route::get('/libro-de-reclamaciones', [ComplaintBookSettingController::class, 'publicView'])->name('public.complaint-book');
-
+    // Obtener alertas activas
     Route::get('/api/alerts', function () {
         return \App\Models\Alert::where('is_active', true)
             ->orderByDesc('created_at')
@@ -227,14 +237,15 @@ Route::prefix('auth')->group(function () {
 
 });
 
+/*RUTAS PÚBLICAS — Libro de Reclamaciones*/
+Route::get('/libro-de-reclamaciones', [ComplaintBookSettingController::class, 'publicView'])->name('public.complaint-book');
+Route::post('/advertising/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
+
 /* Politicas de Privacidad */
-Route::post('/privacy-policy/accept', [PrivacyPolicyAcceptanceController::class, 'accept'])
-    ->name('privacy-policy.accept');
+Route::post('/privacy-policy/accept', [PrivacyPolicyAcceptanceController::class, 'accept'])->name('privacy-policy.accept');
 
-Route::post('/privacy-policy/reject', [PrivacyPolicyAcceptanceController::class, 'reject'])
-    ->name('privacy-policy.reject');
+Route::post('/privacy-policy/reject', [PrivacyPolicyAcceptanceController::class, 'reject'])->name('privacy-policy.reject');
 
-//Route::get('/', [PublicAdController::class, 'index'])->name('home');
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -301,7 +312,7 @@ Route::middleware(['auth'])->group(function () {
         |--------------------------------------------------------------------------
         */
         Route::get('/complaint-book', [ComplaintBookSettingController::class, 'show']);
-        Route::post('/complaints', [ComplaintController::class, 'store']);
+        //Route::post('/complaints', [ComplaintController::class, 'store']);
 
         /*
         |--------------------------------------------------------------------------

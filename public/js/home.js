@@ -131,7 +131,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (result.isConfirmed) {
                         filterAdsFull(titleQuery, locationQuery, categoryId, subcategoryId);
                     }
-                    // si cancela, simplemente no hace nada
                 });
                 return;
             }
@@ -265,52 +264,64 @@ function loadAds() {
 
 function renderAds(data) {
     const container = document.getElementById('listaAnuncios');
-    container.innerHTML = '';
 
-    const adsMap = new Map(); //clave: ad.id
+    const adsMap = new Map();
 
-    // Destacados primero (prioridad máxima)
     if (data.featured?.data?.length > 0) {
-        data.featured.data.forEach(ad => {
-            adsMap.set(ad.id, ad);
-        });
+        data.featured.data.forEach(ad => adsMap.set(ad.id, ad));
     }
 
-    // Resto de tipos (si ya existe, NO se duplica)
-    const otherTypes = ['urgent', 'premiere', 'semi_new', 'new', 'available', 'top', 'normal'];
-
+    const otherTypes = ['urgent','premiere','semi_new','new','available','top','normal'];
     otherTypes.forEach(type => {
-        if (data[type]?.data?.length > 0) {
-            data[type].data.forEach(ad => {
-                if (!adsMap.has(ad.id)) {
-                    adsMap.set(ad.id, ad);
-                }
-            });
-        }
+        data[type]?.data?.forEach(ad => {
+            if (!adsMap.has(ad.id)) adsMap.set(ad.id, ad);
+        });
     });
 
     const finalAds = Array.from(adsMap.values());
 
-    // Si no hay anuncios
-    if (finalAds.length === 0) {
+    if (!finalAds.length) {
         container.innerHTML = `<p class="text-center mt-4 fw-bold">No hay anuncios disponibles</p>`;
         return;
     }
 
-    // Render único (SIN DUPLICADOS)
+    let html = '';
+
     finalAds.forEach(ad => {
-        container.innerHTML += createAdCard(ad);
+        html += createAdCard(ad);
     });
 
-    // Paginación SOLO NORMAL (se mantiene)
+    // PAGINACIÓN ANTES
     if (data.normal?.data?.length > 0) {
-        container.innerHTML += `
+        html += `
             <nav class="mt-3 d-flex justify-content-center">
                 ${renderPagination(data.normal, 'normal')}
             </nav>
         `;
     }
+
+    container.innerHTML = html;
+    initAdCarousels();
 }
+
+function initAdCarousels() {
+
+    document.querySelectorAll('.carousel-container').forEach(container => {
+        if (container.dataset.started === '1') return;
+        const images = container.dataset.images.split('|');
+        if (images.length <= 1) return;
+        container.dataset.started = '1';
+
+        let index = 0;
+        const img = container.querySelector('.carousel-image');
+
+        setInterval(() => {
+            index = (index + 1) % images.length;
+            img.src = images[index];
+        }, 3000);
+    });
+}
+
 
 function renderPagination(paginatedData, type) {
     let html = `<ul class="pagination pagination-sm">`;
@@ -360,9 +371,9 @@ function goToPage(type, page) {
 }
 
 function createAdCard(ad){
-    const img = ad.images.length
-        ? '/' + ad.images[0].image
-        : '/images/no-image.png';
+    const images = ad.images.length
+        ? ad.images.map(i => '/' + i.image)
+        : ['assets/img/not-found-image/failed-image.jpg'];
 
     const subcategory = ad.subcategory?.name ?? "Sin subcategoría";
 
@@ -386,7 +397,10 @@ function createAdCard(ad){
 
             <div class="position-relative">
 
-                <img src="${img}" class="w-100 home-card-img">
+                <div class="carousel-container"
+                    data-images="${images.join('|')}">
+                    <img src="${images[0]}" class="w-100 home-card-img carousel-image">
+                </div>
 
                 ${ad.top_publication == 1 ? `<div class="badge-top">TOP</div>`
                     : ad.urgent_publication
@@ -479,7 +493,6 @@ function createAdCard(ad){
                         <i class="fa-solid fa-eye"></i> Ver
                     </button>
 
-
                     <!-- WhatsApp -->
                     <button class="btn btn-sm btn-success"
                         onclick="handleWhatsapp('${ad.whatsapp}', '${ad.title}')">
@@ -510,10 +523,16 @@ function createAdCard(ad){
     </div>`;
 }
 
-// -Acción VER
+// Acción VER
 function handleVer(url) {
+    if (!isAuthenticated) {
+        requireLogin("ver", { url });
+        return;
+    }
+
     window.location.href = url;
 }
+
 
 // Acción WHATSAPP 
 function handleWhatsapp(numero, titulo) {
@@ -532,12 +551,6 @@ function handleLlamada(numero) {
     }
     realizarLlamada(numero);
 }
-
-//Accion Contactar
-if (pendingAction === "contact") {
-    handleContact(data.adId);
-}
-
 
 // Acción CONTACTAR
 function handleContact(adId) {
@@ -624,34 +637,3 @@ function copiarLink() {
             });
         });
 }
-
-//  AUTO-EJECUTAR ACCIÓN PENDIENTE AL VOLVER DEL LOGIN
-document.addEventListener("DOMContentLoaded", () => {
-    const pendingAction = localStorage.getItem("pending_action");
-    const pendingPayload = localStorage.getItem("pending_payload");
-
-    // Si NO hay acción → no hacemos nada
-    if (!pendingAction) return;
-
-    const data = pendingPayload ? JSON.parse(pendingPayload) : null;
-
-    // Se ejecuta solo si ahora SÍ está autenticado
-    if (isAuthenticated) {
-
-        if (pendingAction === "ver") {
-            handleVer(data.url);
-        }
-
-        if (pendingAction === "whatsapp") {
-            handleWhatsapp(data.numero, data.titulo);
-        }
-
-        if (pendingAction === "llamar") {
-            handleLlamada(data.numero);
-        }
-
-        // Limpiar para que no se repita
-        localStorage.removeItem("pending_action");
-        localStorage.removeItem("pending_payload");
-    }
-});

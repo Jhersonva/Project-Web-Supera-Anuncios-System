@@ -21,8 +21,18 @@ class ComplaintBookSettingController extends Controller
     public function publicView()
     {
         $settings = ComplaintBookSetting::firstOrFail();
-        return view('public.complaint-book', compact('settings'));
+
+        // Captcha matemático
+        $a = rand(1, 9);
+        $b = rand(1, 9);
+
+        session([
+            'captcha_result' => $a + $b
+        ]);
+
+        return view('public.complaint-book', compact('settings', 'a', 'b'));
     }
+
 
     /**
      * Actualizar desde panel admin (blade)

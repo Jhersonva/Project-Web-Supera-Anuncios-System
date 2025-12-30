@@ -80,7 +80,7 @@
     justify-content: center;
     align-items: center;
     gap: 14px;
-    flex-wrap: nowrap; /* SIEMPRE EN FILA */
+    flex-wrap: nowrap;
     margin-top: 10px;
     margin-bottom: 10px;
 }
@@ -95,7 +95,7 @@
     justify-content: center;
     text-decoration: none;
     transition: all .25s ease;
-    flex-shrink: 0; /* NO SE DEFORMAN */
+    flex-shrink: 0; 
 }
 
 .footer-social-link img {

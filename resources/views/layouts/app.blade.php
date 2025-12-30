@@ -82,7 +82,6 @@
 
             actualizarRecargas();
 
-            // Actualizar cada 15 segundos
             setInterval(actualizarRecargas, 10000);
 
         @endif

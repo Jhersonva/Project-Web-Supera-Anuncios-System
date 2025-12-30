@@ -19,52 +19,72 @@
         </div>
     </div>
 
-    @auth
         {{-- FORMULARIO --}}
         <div class="card shadow-sm border-0 p-4" style="border-radius:16px;">
             <h5 class="fw-bold mb-3">Registrar reclamo / queja</h5>
 
-            <form method="POST" action="{{ url('/advertising/complaints') }}">
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <strong>Corrige los siguientes errores:</strong>
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('complaints.store') }}" id="complaint-form">
                 @csrf
 
                 <div class="mb-3">
                     <label class="form-label">Nombre completo</label>
-                    <input type="text" name="full_name" class="form-control" required>
+                    <input type="text" name="full_name" value="{{ old('full_name') }}" class="form-control @error('full_name') is-invalid @enderror" required>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">Correo electrónico</label>
-                    <input type="email" name="email" class="form-control" required>
+                    <input type="email" name="email" value="{{ old('email') }}" class="form-control @error('email') is-invalid @enderror" required>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">Tipo</label>
-                    <select name="complaint_type" class="form-select" required>
-                        <option value="reclamo">Reclamo</option>
-                        <option value="queja">Queja</option>
+                    <select name="complaint_type"class="form-select @error('complaint_type') is-invalid @enderror"required>
+                        <option value="">Seleccione</option>
+                        <option value="reclamo" {{ old('complaint_type') == 'reclamo' ? 'selected' : '' }}>
+                            Reclamo
+                        </option>
+                        <option value="queja" {{ old('complaint_type') == 'queja' ? 'selected' : '' }}>
+                            Queja
+                        </option>
                     </select>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">Asunto</label>
-                    <input type="text" name="subject" class="form-control" required>
+                    <input type="text" name="subject" value="{{ old('subject') }}" class="form-control @error('subject') is-invalid @enderror" required>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">Descripción</label>
-                    <textarea name="description" class="form-control" rows="4" required></textarea>
+                    <textarea name="description" rows="4" class="form-control @error('description') is-invalid @enderror" required>{{ old('description') }}</textarea>
                 </div>
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        ¿Cuánto es {{ $a }} + {{ $b }}?
+                    </label>
+                    <input type="number" name="captcha" value="{{ old('captcha') }}" class="form-control @error('captcha') is-invalid @enderror" required>
+                    @error('captcha')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+                
 
                 <button class="btn btn-danger w-100">
                     Enviar reclamo
                 </button>
             </form>
         </div>
-    @else
-        <div class="alert alert-warning text-center">
-            Debes <a href="{{ route('login') }}">iniciar sesión</a> para enviar un reclamo.
-        </div>
-    @endauth
-
 </div>
 @endsection
