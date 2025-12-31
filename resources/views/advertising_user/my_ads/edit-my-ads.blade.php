@@ -727,11 +727,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // INPUTS
         if (isEmployment && inputEmployment) {
             inputEmployment.value = ids;
-            removeInput.value = 'all'; // 🔥 reemplaza
+            removeInput.value = 'all'; 
         }
 
         if (!isEmployment && inputGeneral) {
-            inputGeneral.value = ids; // 🔥 agrega
+            inputGeneral.value = ids; 
         }
 
         modal.hide();

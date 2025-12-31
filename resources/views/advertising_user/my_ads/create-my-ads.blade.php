@@ -382,7 +382,7 @@
                     </small>
                 </div>
 
-
+                <!-- IMÁGENES DE GALERIA-->
                 <div class="field-card d-none" id="imagesContainer">
                     <label class="fw-semibold mb-2">Imagen de referencia</label>
                     <!-- BOTÓN -->
