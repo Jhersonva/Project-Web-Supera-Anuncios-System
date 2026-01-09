@@ -23,10 +23,8 @@ class UserProfileController extends Controller
     {
         $user = Auth::user();
 
-        $request->validate([
-            'full_name' => 'required|string|max:255',
+        $rules = [
             'email'     => 'required|email|unique:users,email,' . $user->id,
-            'dni'       => 'required|digits:8|unique:users,dni,' . $user->id,
             'phone'     => 'nullable|digits:9',
             'locality'  => 'nullable|max:150',
             'whatsapp'  => 'nullable|max:20',
@@ -35,25 +33,45 @@ class UserProfileController extends Controller
             'address'   => 'nullable|max:200',
             'password'  => 'nullable|min:6',
             'profile_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048'
-        ]);
+        ];
 
-        $data = $request->only([
-            'full_name',
-            'email',
-            'dni',
-            'phone',
-            'locality',
-            'whatsapp',
-            'call_phone',
-            'contact_email',
-            'address'
-        ]);
-
-        if ($request->password) {
-            $data['password'] = Hash::make($request->password);
+        // PERSONA
+        if ($user->account_type === 'person') {
+            $rules['full_name'] = 'required|string|max:255';
+            $rules['dni'] = 'required|digits:8|unique:users,dni,' . $user->id;
+            $rules['birthdate'] = 'nullable|date|before_or_equal:today';
         }
 
-        /* ========= SUBIR IMAGEN ========= */
+        // EMPRESA
+        if ($user->account_type === 'business') {
+            $rules['company_reason'] = 'required|string|max:150';
+            $rules['ruc'] = 'required|digits:11|unique:users,ruc,' . $user->id;
+        }
+
+        $validated = $request->validate($rules);
+
+        // Datos comunes
+        $data = collect($validated)->only([
+            'email','phone','locality','whatsapp','call_phone','contact_email','address'
+        ])->toArray();
+
+        // Datos según tipo
+        if ($user->account_type === 'person') {
+            $data['full_name'] = $validated['full_name'];
+            $data['dni'] = $validated['dni'];
+            $data['birthdate'] = $validated['birthdate'] ?? null;
+        }
+
+        if ($user->account_type === 'business') {
+            $data['company_reason'] = $validated['company_reason'];
+            $data['ruc'] = $validated['ruc'];
+        }
+
+        if (!empty($validated['password'])) {
+            $data['password'] = Hash::make($validated['password']);
+        }
+
+        /* IMAGEN */
         if ($request->hasFile('profile_image')) {
 
             $path = public_path('assets/img/profile-image');
@@ -61,7 +79,6 @@ class UserProfileController extends Controller
                 File::makeDirectory($path, 0755, true);
             }
 
-            // Eliminar imagen anterior (si existe)
             if ($user->profile_image && File::exists(public_path($user->profile_image))) {
                 File::delete(public_path($user->profile_image));
             }

@@ -15,6 +15,7 @@ class AlertController extends Controller
         $alerts = Alert::orderByDesc('created_at')->get();
         return view('admin.adult.alert.index', compact('alerts'));
     }
+    
 
     public function update(Request $request, Alert $alert)
     {

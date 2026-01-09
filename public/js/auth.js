@@ -44,6 +44,13 @@ if (loginForm) {
             sessionStorage.setItem('showPrivacy', '1');
         }
 
-        window.location.href = data.redirect;
+        const redirectUrl =
+            sessionStorage.getItem('redirect_after_login') || data.redirect;
+
+        // limpiar para no reutilizar
+        sessionStorage.removeItem('redirect_after_login');
+
+        window.location.href = redirectUrl;
+
     });
 }

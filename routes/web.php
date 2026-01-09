@@ -249,15 +249,20 @@ Route::post('/privacy-policy/reject', [PrivacyPolicyAcceptanceController::class,
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-Route::get(
-    '/terminos/contenido-adulto',
-    [AdultContentViewTermController::class, 'publicTerms']
-)->name('adult.terms');
+Route::get('/terminos/contenido-adulto',[AdultContentViewTermController::class, 'publicTerms'])->name('adult.terms');
+
+Route::get('/terminos/contenido-publicacion-adulto',[AdultContentPublishTermController::class, 'publicTermsAdult'])->name('adult.terms.adult');
 
 Route::get(
-    '/terminos/contenido-publicacion-adulto',
-    [AdultContentPublishTermController::class, 'publicTermsAdult']
-)->name('adult.terms.adult');
+    '/terminos/contenido-visualizar-adulto',
+    function () {
+        return \App\Models\AdultContentViewTerm::select(
+            'title',
+            'description',
+            'icon'
+        )->orderBy('id')->get();
+    }
+)->name('terminos.adult.view.terms');
 
 
 /*

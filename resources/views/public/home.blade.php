@@ -143,7 +143,7 @@
 
 <script>
     window.ALERTS = [];
-
+    window.ADULT_VIEW_TERMS_API = "{{ route('terminos.adult.view.terms') }}";
     @auth
         fetch("{{ route('api.alerts') }}")
             .then(response => response.json())
@@ -344,7 +344,7 @@
         flex-wrap: wrap;
         gap: 6px;
         font-size: 0.75rem;
-        color: #555555;
+        color: #555;
     }
 
     .ad-dynamic-fields li {
@@ -355,11 +355,21 @@
         white-space: nowrap;
         display: flex;
         gap: 4px;
+        max-width: 100%;
     }
 
     .ad-dynamic-fields li strong {
         font-weight: 600;
         color: #333;
+        white-space: nowrap;
+    }
+
+    .dynamic-value {
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        line-height: 1.3;
+        flex: 1;
     }
 
     .ad-card-horizontal:hover {
@@ -587,6 +597,7 @@
     flex-direction: column;
     background: #ffffff;
     border-radius: 14px;
+    overflow: visible;
     overflow: hidden;
     border: 1px solid #e7e7e7;
     transition: .25s;
@@ -611,10 +622,17 @@
 
 /* Contenido del anuncio */
 .ad-content {
+    display: flex;
     padding: 12px 14px;
     display: flex;
     flex-direction: column;
+    flex: 1;
     gap: 6px;
+}
+
+.carousel-container {
+    overflow: hidden;
+    border-radius: 14px 14px 0 0;
 }
 
 /* Responsive: tablets y móviles */

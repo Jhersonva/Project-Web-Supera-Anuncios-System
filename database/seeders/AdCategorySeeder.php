@@ -10,33 +10,18 @@ class AdCategorySeeder extends Seeder
     public function run(): void
     {
         $categories = [
-            'empleos' => [
-                'name' => 'Empleos',
-                'icon' => 'fa-briefcase',
-            ],
-
-            'inmuebles' => [
-                'name' => 'Inmuebles',
-                'icon' => 'fa-building',
-            ],
-
-            'vehiculos_maquinarias' => [
-                'name' => 'Vehículos / Maquinarias y Otros',
-                'icon' => 'fa-car',
-            ],
-
-            'servicios' => [
-                'name' => 'Servicios',
-                'icon' => 'fa-screwdriver-wrench',
-            ],
+            ['name' => 'EMPLEOS', 'icon' => 'fa-briefcase'],
+            ['name' => 'INMUEBLES', 'icon' => 'fa-building'],
+            ['name' => 'VEHICULOS, MOTOS, MAQUINARIAS, EQUIPOS Y OTROS', 'icon' => 'fa-car'],
+            ['name' => 'SERVICIOS', 'icon' => 'fa-screwdriver-wrench'],
         ];
 
-        foreach ($categories as $slug => $data) {
+        foreach ($categories as $category) {
             DB::table('ad_categories')->insert([
-                'name'        => $data['name'],
-                'icon'        => $data['icon'],
-                'created_at'  => now(),
-                'updated_at'  => now(),
+                'name' => $category['name'],
+                'icon' => $category['icon'],
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
     }

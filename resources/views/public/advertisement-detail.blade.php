@@ -106,4 +106,16 @@
 
 </div>
 
+<script src="{{ asset('js/auth-guard.js') }}"></script>
+
+@if(!auth()->check())
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    sessionStorage.setItem('redirect_after_login', "{{ request()->fullUrl() }}");
+    requireLogin('view_ad');
+});
+</script>
+@endif
+
+
 @endsection

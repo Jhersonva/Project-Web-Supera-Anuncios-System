@@ -80,22 +80,48 @@
             <!-- GRID 2 COLUMNAS -->
             <div class="row g-3">
 
-                <div class="col-md-6">
-                    <label class="profile-label">Nombre completo</label>
-                    <input type="text" class="form-control" name="full_name"
-                        value="{{ old('full_name', $client->full_name) }}" required>
-                </div>
+                @if($client->account_type === 'person')
+                    <div class="col-md-6">
+                        <label class="profile-label">Nombre completo</label>
+                        <input type="text" class="form-control" name="full_name"
+                            value="{{ old('full_name', $client->full_name) }}" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="profile-label">DNI</label>
+                        <input type="text" class="form-control" name="dni"
+                            value="{{ old('dni', $client->dni) }}" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="profile-label">Fecha de nacimiento</label>
+                        <input
+                            type="date"
+                            class="form-control"
+                            name="birthdate"
+                            value="{{ old('birthdate', optional($client->birthdate)->format('Y-m-d')) }}"
+                        >
+                    </div>
+                @endif
+
+                @if($client->account_type === 'business')
+                    <div class="col-md-6">
+                        <label class="profile-label">Razón social</label>
+                        <input type="text" class="form-control" name="company_reason"
+                            value="{{ old('company_reason', $client->company_reason) }}" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="profile-label">RUC</label>
+                        <input type="text" class="form-control" name="ruc"
+                            value="{{ old('ruc', $client->ruc) }}" required>
+                    </div>
+                @endif
 
                 <div class="col-md-6">
                     <label class="profile-label">Correo</label>
                     <input type="email" class="form-control" name="email"
                         value="{{ old('email', $client->email) }}" required>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="profile-label">DNI</label>
-                    <input type="text" class="form-control" name="dni"
-                        value="{{ old('dni', $client->dni) }}">
                 </div>
 
                 <div class="col-md-6">

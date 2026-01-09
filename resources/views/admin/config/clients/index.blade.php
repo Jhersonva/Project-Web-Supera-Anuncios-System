@@ -31,6 +31,24 @@
             </div>
         </div>
 
+        <div class="d-flex justify-content-center gap-2 mb-4">
+            <a href="{{ route('admin.config.clients') }}"
+            class="btn btn-outline-secondary {{ empty($accountType) ? 'active' : '' }}">
+                Todos
+            </a>
+
+            <a href="{{ route('admin.config.clients', ['account_type' => 'person']) }}"
+            class="btn btn-outline-primary {{ $accountType === 'person' ? 'active' : '' }}">
+                Personas
+            </a>
+
+            <a href="{{ route('admin.config.clients', ['account_type' => 'business']) }}"
+            class="btn btn-outline-success {{ $accountType === 'business' ? 'active' : '' }}">
+                Empresas
+            </a>
+        </div>
+
+
         @if ($clients->isEmpty())
             <p class="text-center text-muted">No existen clientes registrados.</p>
         @else
@@ -50,7 +68,7 @@
                                     <th>Email</th>
                                     <th>Teléfono</th>
                                     <th>Localidad</th>
-                                    <th>DNI</th>
+                                    <th>Documento</th>
                                     <th>Registrado</th>
                                     <th>Estado</th>
                                     <th>Acciones</th>
@@ -60,11 +78,29 @@
                             <tbody>
                                 @foreach ($clients as $client)
                                     <tr>
-                                        <td class="fw-semibold">{{ $client->full_name }}</td>
+                                        <td class="fw-semibold">
+                                            @if($client->account_type === 'person')
+                                                {{ $client->full_name }}
+                                                <br>
+                                                <span class="badge bg-primary">Persona</span>
+                                            @else
+                                                {{ $client->company_reason }}
+                                                <br>
+                                                <span class="badge bg-success">Empresa</span>
+                                            @endif
+                                        </td>
+
                                         <td>{{ $client->email }}</td>
                                         <td>{{ $client->phone }}</td>
                                         <td>{{ $client->locality }}</td>
-                                        <td>{{ $client->dni }}</td>
+                                        <td>
+                                            @if($client->account_type === 'person')
+                                                DNI: {{ $client->dni }}
+                                            @else
+                                                RUC: {{ $client->ruc }}
+                                            @endif
+                                        </td>
+
                                         <td>{{ $client->created_at->format('d/m/Y') }}</td>
                                         <td>
                                             @if($client->is_active)
@@ -110,7 +146,18 @@
                             <div class="card mb-3 shadow-sm border-0" style="border-radius: 14px;">
                                 <div class="card-body">
 
-                                    <h6 class="fw-bold mb-1">{{ $client->full_name }}</h6>
+                                    @if($client->account_type === 'person')
+                                        <div>
+                                            <strong>Tipo:</strong> Persona<br>
+                                            <strong>DNI:</strong> {{ $client->dni }}
+                                        </div>
+                                    @else
+                                        <div>
+                                            <strong>Tipo:</strong> Empresa<br>
+                                            <strong>RUC:</strong> {{ $client->ruc }}
+                                        </div>
+                                    @endif
+
                                     <p class="text-muted mb-2">{{ $client->email }}</p>
 
                                     <div class="small mb-3">

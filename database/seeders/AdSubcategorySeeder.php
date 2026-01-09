@@ -11,70 +11,59 @@ class AdSubcategorySeeder extends Seeder
     {
         $structure = [
 
-            [
-                'category_name' => 'Empleos',
-                'items' => [
-                    ["Mina", 1.00],
-                ]
+            // ================= EMPLEOS =================
+            'EMPLEOS' => [
+                ['Mineria', 6.00],
+                ['Restaurante', 5.00],
+                ['Gasfitero', 4.00],
+                ['Conductor', 3.00],
+                ['Construccion De Obras e Infraestructuras', 5.00],
+                ['Construcion De Casas', 3.50],
+                ['Sector Comidas', 3.50],
+                ['Discotecas y Restobar', 4.00],
+                ['Neght Club, Disco Bar', 5.00],
+                ['Empleadas, Cocinera, Niñeras y Limpieza', 2.50],
             ],
 
-            [
-                'category_name' => 'Comprar / Traspaso',
-                'items' => [
-                    ["Inmobiliaria", 3.00],
-                    ["Vehiculos", 3.00],
-                    ["Casa", 3.00],
-                    ["Departamento", 3.00],
-                    ["Oficina", 3.00],
-                    ["Terreno / Lotes / Chacra", 3.00],
-                    ["Local Comercial", 3.00],
-                    ["Puesto", 3.00],
-                    ["Otros Inmuebles", 3.00],
-                ]
+            // ================= INMUEBLES =================
+            'INMUEBLES' => [
+                ['Ventas', 3.00],
+                ['Alquiler', 3.00],
+                ['Traspaso', 3.00],
+                ['Anticresis', 3.00],
+                ['Otros Inmuebles', 3.00],
             ],
 
-            [
-                'category_name' => 'Alquileres / Anticresis',
-                'items' => [
-                    ["Inmobiliaria", 3.00],
-                    ["Vehiculos", 3.00],
-                    ["Casa", 3.00],
-                    ["Departamento / Mini", 3.00],
-                    ["Cuarto / Oficina", 3.00],
-                    ["Garaje / Estacionamiento", 3.00],
-                    ["Local Comercial / Puesto", 3.00],
-                    ["Otros Inmuebles", 3.00],
-                ]
+            // ================= VEHÍCULOS =================
+            'VEHICULOS, MOTOS, MAQUINARIAS, EQUIPOS Y OTROS' => [
+                ['Venta', 3.00],
+                ['Alquiler', 3.00],
+                ['Otros', 3.00],
             ],
 
-            [
-                'category_name' => 'Servicios',
-                'items' => [
-                    ["Oficios", 2.00],
-                    ["Profesionales", 2.50],
-                    ["Privados", 2.00],
-                ]
+            // ================= SERVICIOS =================
+            'SERVICIOS' => [
+                ['Oficios', 2.50],
+                ['Profesionales', 2.50],
+                ['Privados', 5.00],
             ],
-
         ];
 
-        foreach ($structure as $entry) {
+        foreach ($structure as $categoryName => $subs) {
 
-            $category = DB::table('ad_categories')
-                ->where('name', $entry['category_name'])
-                ->first();
+            $categoryId = DB::table('ad_categories')
+                ->where('name', $categoryName)
+                ->value('id');
 
-            if (!$category) {
-                continue;
-            }
+            if (!$categoryId) continue;
 
-            foreach ($entry['items'] as [$name, $price]) {
+            foreach ($subs as [$name, $price]) {
                 DB::table('ad_subcategories')->insert([
-                    'ad_categories_id' => $category->id,
-                    'name'             => $name,
-                    'price'            => $price,
-                    'created_at'       => now(),
-                    'updated_at'       => now(),
+                    'ad_categories_id' => $categoryId,
+                    'name' => $name,
+                    'price' => $price,
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]);
             }
         }

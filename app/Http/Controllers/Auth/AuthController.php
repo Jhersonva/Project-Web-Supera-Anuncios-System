@@ -8,6 +8,8 @@ use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+
 
 class AuthController extends Controller
 {
@@ -16,34 +18,55 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
-        $request->validate([
-            'full_name' => 'required|string|max:120',
-            'email' => 'required|string|email|max:120|unique:users',
-            'password' => 'required|string|min:6',
-            'dni' => 'required|string|size:8|unique:users',
-            'phone' => 'nullable|string|max:9',
-            'locality' => 'nullable|string|max:150',
-        ]);
 
-        // obtener rol advertising_user
-        $role = Role::where('name', 'advertising_user')->firstOrFail();
+        try {
 
-        $user = User::create([
-            'role_id'   => $role->id,
-            'full_name' => $request->full_name,
-            'email'     => $request->email,
-            'password'  => Hash::make($request->password),
-            'dni'       => $request->dni,
-            'phone'     => $request->phone,
-            'locality'  => $request->locality,
-        ]);
+            $validated = $request->validate([
+                'accept_terms' => 'required|accepted',
 
-        Auth::login($user);
+                'account_type' => 'required|in:person,business',
 
-        return redirect()
-            ->route('login')
-            ->with('showPrivacy', true);
-            }
+                // PERSONA
+                'full_name' => 'required_if:account_type,person|max:120',
+                'dni'       => 'nullable|required_if:account_type,person|size:8|unique:users',
+
+                // EMPRESA
+                'company_reason' => 'nullable|required_if:account_type,business|max:150',
+                'ruc'            => 'nullable|required_if:account_type,business|size:11|unique:users',
+
+                'email'    => 'required|string|email|max:120|unique:users',
+                'password' => 'required|string|min:6',
+
+                'phone'    => 'nullable|string|max:9',
+                'locality' => 'nullable|string|max:150',
+            ]);
+
+            $role = Role::where('name', 'advertising_user')->first();
+
+            $user = User::create([
+                'role_id'      => $role->id,
+                'account_type' => $validated['account_type'],
+
+                'full_name'       => $validated['full_name'] ?? null,
+                'dni'             => $validated['dni'] ?? null,
+                'company_reason'  => $validated['company_reason'] ?? null,
+                'ruc'             => $validated['ruc'] ?? null,
+
+                'email'     => $validated['email'],
+                'password'  => Hash::make($validated['password']),
+                'phone'     => $validated['phone'] ?? null,
+                'locality'  => $validated['locality'] ?? null,
+            ]);
+
+            Auth::login($user);
+
+            return redirect()->route('home');
+
+        } catch (\Throwable $e) {
+
+            return back()->withErrors('Error al registrar usuario');
+        }
+    }
 
     /**
      * Login de usuario

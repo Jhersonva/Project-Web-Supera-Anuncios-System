@@ -114,23 +114,8 @@ document.addEventListener("DOMContentLoaded", function () {
             // Usuario autenticado pero con alert adulto
             if (window.ALERTS?.length > 0) {
                 const alertData = window.ALERTS[0];
-                Swal.fire({
-                    title: alertData.title,
-                    html: `
-                        ${alertData.logo ? `<img src="/${alertData.logo}" style="max-width:120px" class="mb-3 rounded">` : ''}
-                        <p>${alertData.description}</p>
-                        <a href="${window.ADULT_TERMS_URL}" target="_blank" class="fw-bold text-primary">Términos y Condiciones</a>
-                    `,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Aceptar y continuar',
-                    cancelButtonText: 'Cancelar',
-                    confirmButtonColor: '#0d6efd',
-                    cancelButtonColor: '#dc3545',
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        filterAdsFull(titleQuery, locationQuery, categoryId, subcategoryId);
-                    }
+                showAdultServicesSearchAlert(() => {
+                    filterAdsFull(titleQuery, locationQuery, categoryId, subcategoryId);
                 });
                 return;
             }
@@ -247,6 +232,96 @@ function showAdultAlert() {
         icon: 'warning',
         confirmButtonText: 'Entendido'
     });
+}
+
+function getMainSearchHtml(alertData) {
+    return `
+        ${alertData.logo ? `
+            <img src="/${alertData.logo}" style="max-width:120px" class="mb-3 rounded">
+        ` : ''}
+        <p>${alertData.description}</p>
+        <button id="openTermsBtn"
+            class="btn btn-link p-0 fw-bold text-primary">
+            Términos y Condiciones
+        </button>
+    `;
+}
+
+function buildTermsHtml(terms) {
+    if (!terms || !terms.length) {
+        return '<p>No hay términos disponibles.</p>';
+    }
+
+    return terms.map(t => `
+        <h6>${t.title}</h6>
+        <p>${t.description}</p>
+        <hr>
+    `).join('');
+}
+
+function openMainAdultAlert(alertData, onAccept) {
+    Swal.fire({
+        title: alertData.title ?? 'Contenido sensible',
+        icon: 'warning',
+        html: getMainSearchHtml(alertData),
+        showCancelButton: true,
+        confirmButtonText: 'Aceptar y continuar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#0d6efd',
+        cancelButtonColor: '#dc3545',
+        reverseButtons: true,
+        allowOutsideClick: false,
+        didOpen: bindTermsButton
+    }).then(result => {
+        if (result.isConfirmed && typeof onAccept === 'function') {
+            onAccept();
+        }
+    });
+}
+
+function openTermsModal(alertData, onAccept) {
+  
+    fetch(window.ADULT_VIEW_TERMS_API)
+        .then(res => res.json())
+        .then(terms => {
+
+            Swal.update({
+                title: 'Términos y Condiciones',
+                icon: undefined,
+                showCancelButton: false,
+                confirmButtonText: 'Volver',
+                html: `
+                    <div style="max-height:420px;overflow-y:auto;text-align:left;">
+                        ${buildTermsHtml(terms)}
+                    </div>
+                `
+            });
+
+            Swal.getConfirmButton().onclick = () => {
+                openMainAdultAlert(alertData, onAccept);
+            };
+        });
+}
+
+function bindTermsButton() {
+    const btn = document.getElementById('openTermsBtn');
+    if (!btn) return;
+
+    btn.onclick = () => {
+        const alertData = window.ALERTS[0];
+        openTermsModal(alertData, window.__adultAcceptCallback);
+    };
+}
+
+function showAdultServicesSearchAlert(onAccept) {
+    if (!window.ALERTS || !window.ALERTS.length) return;
+
+    const alertData = window.ALERTS[0];
+
+    // Guardamos callback para reutilizarlo
+    window.__adultAcceptCallback = onAccept;
+
+    openMainAdultAlert(alertData, onAccept);
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -390,6 +465,7 @@ function createAdCard(ad){
 
     // verificado si el anuncio O el usuario lo está
     const showVerified = userVerified || adVerified;
+    const amountVisible = Number(ad.amount_visible);
 
     return `
     <div class="ad-card-wrapper col-12 col-md-6 col-lg-4 d-flex justify-content-center">
@@ -449,7 +525,8 @@ function createAdCard(ad){
                     <ul class="ad-dynamic-fields mt-2">
                         ${ad.dynamic_fields.map(f => `
                             <li>
-                                <strong>${f.label}:</strong> ${f.value}
+                                <strong>${f.label}:</strong>
+                                <span class="dynamic-value">${f.value}</span>
                             </li>
                         `).join("")}
                     </ul>
@@ -464,9 +541,9 @@ function createAdCard(ad){
                 </div>
 
                 <div class="ad-price-box">
-                    <p class="fw-bold ${ad.amount_visible === 0 ? 'text-secondary' : 'text-success'}">
+                    <p class="fw-bold ${amountVisible === 0 ? 'text-secondary' : 'text-success'}">
                         ${
-                            ad.amount_visible === 1
+                            amountVisible === 1
                                 ? `S/ ${ad.amount}`
                                 : ad.amount_text
                                     ? `S/ ${ad.amount_text}`
@@ -562,6 +639,23 @@ function handleContact(adId) {
     window.location.href = `/contact/${adId}`;
 }
 
+// Copiar el link al portapapeles
+function copiarLink() {
+    const input = document.getElementById("linkCompartir");
+    input.select();
+    input.setSelectionRange(0, 99999);
+
+    navigator.clipboard.writeText(input.value)
+        .then(() => {
+            Swal.fire({
+                icon: "success",
+                title: "Enlace copiado",
+                text: "Ahora puedes compartirlo donde quieras",
+                timer: 1500,
+                showConfirmButton: false
+            });
+        });
+}
 
 // Detecta si es dispositivo móvil
 function isMobileDevice() {
@@ -617,23 +711,4 @@ function shareAd(ad) {
     document.getElementById("shareTwitter").href    = `https://twitter.com/intent/tweet?url=${encodeURIComponent(link)}`;
 
     modal.show();
-}
-
-
-// Copiar el link al portapapeles
-function copiarLink() {
-    const input = document.getElementById("linkCompartir");
-    input.select();
-    input.setSelectionRange(0, 99999);
-
-    navigator.clipboard.writeText(input.value)
-        .then(() => {
-            Swal.fire({
-                icon: "success",
-                title: "Enlace copiado",
-                text: "Ahora puedes compartirlo donde quieras",
-                timer: 1500,
-                showConfirmButton: false
-            });
-        });
 }

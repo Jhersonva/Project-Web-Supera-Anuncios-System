@@ -3,41 +3,41 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Config;  
 use App\Models\SystemSetting;
 use App\Models\PrivacyPolicySetting;
+use App\Models\User;
 use Carbon\Carbon;
-
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot()
     {
         Carbon::setLocale('es');
 
         view()->composer('*', function ($view) {
-            $view->with(
-                'systemSettings',
-                SystemSetting::first()
-            );
-        });
 
-        view()->composer('*', function ($view) {
-            $view->with(
-                'policy',
-                PrivacyPolicySetting::first()
-            );
+            // Configuración del sistema
+            $view->with('systemSettings', SystemSetting::first());
+
+            // Políticas de privacidad
+            $view->with('policy', PrivacyPolicySetting::first());
+
+            // Cumpleaños
+            if (auth()->check()) {
+                $birthdays = User::whereNotNull('birthdate')
+                    ->whereMonth('birthdate', now()->month)
+                    ->whereDay('birthdate', now()->day)
+                    ->get();
+            } else {
+                $birthdays = collect();
+            }
+
+            $view->with('birthdays', $birthdays);
         });
     }
 }

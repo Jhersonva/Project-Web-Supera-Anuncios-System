@@ -1,4 +1,4 @@
-//admin-solicitudes.js
+//admin-ads_request.js
 
 // CARGA DE SOLICITUDES SIMULADAS
 const solicitudes = JSON.parse(localStorage.getItem("solicitudes")) || [];

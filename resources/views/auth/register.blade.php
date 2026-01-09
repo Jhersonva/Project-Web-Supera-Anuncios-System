@@ -39,18 +39,42 @@
       <div id="registerError" class="alert alert-danger d-none py-2 small"></div>
       <div id="registerSuccess" class="alert alert-success d-none py-2 small"></div>
 
-      <!-- Nombres -->
-      <label class="form-label small fw-semibold">Nombres Completos</label>
-      <div class="input-group auth-input mb-3">
-        <span class="input-group-text bg-white"><i class="fa-solid fa-user"></i></span>
-        <input type="text" id="regName" name="full_name" class="form-control" placeholder="Introduce tus nombres completos" required>
+      <label class="form-label small fw-semibold">Tipo de cuenta</label>
+      <div class="mb-3">
+          <select id="accountType" name="account_type" class="form-select" required>
+              <option value="">Selecciona un tipo</option>
+              <option value="person">Usuario normal</option>
+              <option value="business">Empresa / Negocio</option>
+          </select>
       </div>
 
-      <!-- DNI -->
-      <label class="form-label small fw-semibold">DNI</label>
-      <div class="input-group auth-input mb-3">
-        <span class="input-group-text bg-white"><i class="fa-solid fa-id-card"></i></span>
-        <input type="text" id="regDni" name="dni" class="form-control" placeholder="Documento de identidad" required maxlength="8">
+      <!-- Nombres -->
+      <div id="personFields" class="d-none">
+        <label class="form-label small fw-semibold">Nombres Completos</label>
+        <div class="input-group auth-input mb-3">
+          <span class="input-group-text bg-white"><i class="fa-solid fa-user"></i></span>
+          <input type="text" name="full_name" class="form-control">
+        </div>
+
+        <label class="form-label small fw-semibold">DNI</label>
+        <div class="input-group auth-input mb-3">
+          <span class="input-group-text bg-white"><i class="fa-solid fa-id-card"></i></span>
+          <input type="text" name="dni" class="form-control" maxlength="8">
+        </div>
+      </div>
+
+      <div id="businessFields" class="d-none">
+        <label class="form-label small fw-semibold">Razón Social</label>
+        <div class="input-group auth-input mb-3">
+          <span class="input-group-text bg-white"><i class="fa-solid fa-building"></i></span>
+          <input type="text" name="company_reason" class="form-control">
+        </div>
+
+        <label class="form-label small fw-semibold">RUC</label>
+        <div class="input-group auth-input mb-3">
+          <span class="input-group-text bg-white"><i class="fa-solid fa-file-invoice"></i></span>
+          <input type="text" name="ruc" class="form-control" maxlength="11">
+        </div>
       </div>
 
       <!-- Celular -->
@@ -82,6 +106,23 @@
         <span class="input-group-text bg-white toggle-pass"><i class="fa-solid fa-eye"></i></span>
       </div>
 
+      <div class="form-check mt-4">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          id="acceptTerms"
+          name="accept_terms"
+          value="1"
+        >
+
+        <label class="form-check-label small" for="acceptTerms">
+          Acepto los
+          <a href="javascript:void(0)" id="openTerms" class="fw-semibold">
+            términos y condiciones
+          </a>
+        </label>
+      </div>
+
       <button class="btn btn-primary w-100 py-2 fw-bold mt-4">Registrarse</button>
 
       <p class="mt-3 text-center">
@@ -96,20 +137,32 @@
 
 <script src="{{ asset('js/auth.js') }}"></script>
 
-@if(session('showPrivacy'))
-<script>
-    sessionStorage.setItem('showPrivacy', '1');
-</script>
-@endif
-
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+document.getElementById('accountType').addEventListener('change', function () {
+
+    const person = document.getElementById('personFields');
+    const business = document.getElementById('businessFields');
+
+    person.classList.add('d-none');
+    business.classList.add('d-none');
+
+    if (this.value === 'person') {
+        person.classList.remove('d-none');
+    }
+
+    if (this.value === 'business') {
+        business.classList.remove('d-none');
+    }
+});
+
 document.addEventListener('DOMContentLoaded', function () {
 
-    if (sessionStorage.getItem('showPrivacy') === '1') {
-        sessionStorage.removeItem('showPrivacy');
+    const checkbox = document.getElementById('acceptTerms');
+    const openTerms = document.getElementById('openTerms');
 
+    function showTermsModal() {
         Swal.fire({
             title: '<span style="font-size:22px;font-weight:600;">Términos y Condiciones</span>',
             width: 700,
@@ -125,10 +178,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     font-size:14px;
                     color:#333;
                 ">
-                    <div style="margin-bottom:16px;">
-                        {!! nl2br(e($policy->privacy_text)) !!}
-                    </div>
-                    <hr style="margin:16px 0">
+                    {!! nl2br(e($policy->privacy_text)) !!}
                 </div>
             `,
             showCancelButton: true,
@@ -137,32 +187,37 @@ document.addEventListener('DOMContentLoaded', function () {
             confirmButtonColor: '#0d6efd',
             cancelButtonColor: '#dc3545',
             reverseButtons: true,
-            focusConfirm: false,
             allowOutsideClick: false,
-            allowEscapeKey: false,
-            customClass: {
-                popup: 'privacy-modal',
-                confirmButton: 'privacy-btn-confirm',
-                cancelButton: 'privacy-btn-cancel'
-            }
+            allowEscapeKey: false
         }).then((result) => {
             if (result.isConfirmed) {
-                document.getElementById('acceptForm').submit();
+                checkbox.checked = true;
             } else {
-                document.getElementById('rejectForm').submit();
+                checkbox.checked = false;
             }
+        });
+    }
+
+    openTerms.addEventListener('click', showTermsModal);
+
+});
+
+document.getElementById('registerForm').addEventListener('submit', function (e) {
+
+    const checkbox = document.getElementById('acceptTerms');
+
+    if (!checkbox.checked) {
+        e.preventDefault();
+
+        Swal.fire({
+            icon: 'warning',
+            title: 'Acepta los términos',
+            text: 'Debes aceptar los términos y condiciones para crear tu cuenta.',
+            confirmButtonColor: '#0d6efd'
         });
     }
 });
 </script>
-
-<form id="acceptForm" method="POST" action="{{ route('privacy-policy.accept') }}">
-    @csrf
-</form>
-
-<form id="rejectForm" method="POST" action="{{ route('privacy-policy.reject') }}">
-    @csrf
-</form>
 
 </body>
 </html>

@@ -11,16 +11,20 @@ class User extends Authenticatable
     protected $fillable = [
         'role_id',
         'profile_image',
+        'account_type',
         'full_name',
+        'dni',
+        'company_reason',
+        'ruc',
         'password',
         'email',
-        'dni',
         'phone',
         'locality',
         'whatsapp',
         'call_phone',
         'contact_email',
         'address',
+        'birthdate',
         'privacy_policy_accepted',
     ];
 
@@ -30,6 +34,7 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'birthdate' => 'date',
     ];
 
     /* Relaciones */

@@ -12,16 +12,23 @@ return new class extends Migration
             $table->id();
             $table->foreignId('role_id')->constrained('roles')->restrictOnDelete();
             $table->string('profile_image')->nullable();
-            $table->string('full_name');
+            $table->enum('account_type', ['person', 'business']);
+            // PERSONA
+            $table->string('full_name')->nullable();
+            $table->string('dni', 8)->nullable()->unique();
+            // EMPRESA
+            $table->string('company_reason')->nullable();
+            $table->string('ruc', 11)->nullable()->unique();
+
             $table->string('email', 120)->unique();
             $table->string('password', 255);
-            $table->string('dni', 8)->unique();
             $table->string('phone', 9)->nullable();
             $table->string('locality', 150)->nullable();
             $table->string('whatsapp', 20)->nullable();       
             $table->string('call_phone', 20)->nullable();     
             $table->string('contact_email', 150)->nullable(); 
             $table->string('address', 200)->nullable();  
+            $table->date('birthdate')->nullable();
             $table->decimal('virtual_wallet', 10, 2)->default(0);   
             $table->boolean('is_active')->default(true);
             $table->boolean('privacy_policy_accepted')->default(false);

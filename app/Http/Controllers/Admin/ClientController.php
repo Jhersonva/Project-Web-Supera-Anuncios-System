@@ -10,37 +10,56 @@ use Illuminate\Support\Facades\File;
 
 class ClientController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $clients = User::where('role_id', 2)->get();
+        $accountType = $request->get('account_type'); 
 
-        return view('admin.config.clients.index', compact('clients'));
+        $clients = User::where('role_id', 2)
+            ->when($accountType, function ($query) use ($accountType) {
+                $query->where('account_type', $accountType);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view(
+            'admin.config.clients.index',
+            compact('clients', 'accountType')
+        );
     }
 
-     public function edit(User $client)
+    public function edit(User $client)
     {
         return view('admin.config.clients.edit', compact('client'));
     }
 
     public function update(Request $request, User $client)
     {
-        $request->validate([
-            'full_name'      => 'required|string|max:255',
+        $rules = [
             'email'          => 'required|email|unique:users,email,' . $client->id,
-            'dni'            => 'nullable',
-            'phone'          => 'nullable',
-            'locality'       => 'nullable',
-            'whatsapp'       => 'nullable',
-            'call_phone'     => 'nullable',
-            'contact_email'  => 'nullable|email',
-            'address'        => 'nullable',
-            'profile_image'  => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048'
-        ]);
+            'phone'          => 'nullable|string|max:20',
+            'locality'       => 'nullable|string|max:150',
+            'whatsapp'       => 'nullable|string|max:20',
+            'call_phone'     => 'nullable|string|max:20',
+            'contact_email'  => 'nullable|email|max:150',
+            'address'        => 'nullable|string|max:200',
+            'profile_image'  => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ];
+
+        if ($client->account_type === 'person') {
+            $rules['full_name'] = 'required|string|max:255';
+            $rules['dni']       = 'required|digits:8|unique:users,dni,' . $client->id;
+            $rules['birthdate']  = 'nullable|date|before_or_equal:today';
+        }
+
+        if ($client->account_type === 'business') {
+            $rules['company_reason'] = 'required|string|max:255';
+            $rules['ruc']            = 'required|digits:11|unique:users,ruc,' . $client->id;
+        }
+
+        $request->validate($rules);
 
         $data = $request->only([
-            'full_name',
             'email',
-            'dni',
             'phone',
             'locality',
             'whatsapp',
@@ -48,6 +67,27 @@ class ClientController extends Controller
             'contact_email',
             'address',
         ]);
+
+        if ($client->account_type === 'person') {
+
+            $data['full_name'] = $request->full_name;
+            $data['dni'] = $request->dni;
+            $data['birthdate']  = $request->birthdate;
+
+            // Limpiar campos de empresa
+            $data['company_reason'] = null;
+            $data['ruc'] = null;
+        }
+
+        if ($client->account_type === 'business') {
+
+            $data['company_reason'] = $request->company_reason;
+            $data['ruc'] = $request->ruc;
+
+            // Limpiar campos de persona
+            $data['full_name'] = null;
+            $data['dni'] = null;
+        }
 
         if ($request->hasFile('profile_image')) {
 
