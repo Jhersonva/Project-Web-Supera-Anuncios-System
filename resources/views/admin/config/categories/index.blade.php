@@ -146,22 +146,6 @@
                     </div>
 
                     <div>
-                        <button class="btn btn-sm btn-outline-warning"
-                            data-bs-toggle="modal"
-                            data-bs-target="#modalEditCategory"
-                            data-id="{{ $category->id }}"
-                            data-name="{{ $category->name }}"
-                            data-icon="{{ $category->icon }}"
-                            data-is_urgent="{{ $category->is_urgent }}"
-                            data-is_premiere="{{ $category->is_premiere }}"
-                            data-is_featured="{{ $category->is_featured }}"
-                            data-is_semi_new="{{ $category->is_semi_new }}"
-                            data-is_new="{{ $category->is_new }}"
-                            data-is_available="{{ $category->is_available }}"
-                            data-is_top="{{ $category->is_top }}"
-                        >
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
 
                         <button class="btn btn-sm btn-outline-danger"
                                 data-bs-toggle="modal"
@@ -200,9 +184,18 @@
                                         data-bs-target="#modalEditSubcategory"
                                         data-id="{{ $sub->id }}"
                                         data-name="{{ $sub->name }}"
-                                        data-price="{{ $sub->price }}">
+                                        data-price="{{ $sub->price }}"
+                                        data-is_urgent="{{ $sub->is_urgent }}"
+                                        data-is_premiere="{{ $sub->is_premiere }}"
+                                        data-is_featured="{{ $sub->is_featured }}"
+                                        data-is_semi_new="{{ $sub->is_semi_new }}"
+                                        data-is_new="{{ $sub->is_new }}"
+                                        data-is_available="{{ $sub->is_available }}"
+                                        data-is_top="{{ $sub->is_top }}">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
+
+
 
                                 <button class="btn btn-sm btn-outline-danger"
                                         data-bs-toggle="modal"
@@ -568,20 +561,6 @@ document.addEventListener("DOMContentLoaded", () => {
         $('#editCategoryName').val(btn.data('name'));
         $('#editCategoryIcon').val(btn.data('icon'));
 
-        const flags = [
-            'is_urgent',
-            'is_premiere',
-            'is_featured',
-            'is_semi_new',
-            'is_new',
-            'is_available',
-            'is_top'
-        ];
-
-        flags.forEach(flag => {
-            $('#edit_' + flag).prop('checked', btn.data(flag) == 1);
-        });
-
         $('#formEditCategory').attr(
             'action',
             `/admin/config/categorias/update/${btn.data('id')}`
@@ -597,11 +576,27 @@ document.addEventListener("DOMContentLoaded", () => {
     // Editar Subcategoría
     $('#modalEditSubcategory').on('show.bs.modal', function(e){
         const btn = $(e.relatedTarget);
+
         $('#editSubId').val(btn.data('id'));
         $('#editSubName').val(btn.data('name'));
         $('#editSubPrice').val(btn.data('price'));
 
-        $('#formEditSubcategory').attr('action',
+        const flags = [
+            'is_urgent',
+            'is_premiere',
+            'is_featured',
+            'is_semi_new',
+            'is_new',
+            'is_available',
+            'is_top'
+        ];
+
+        flags.forEach(flag => {
+            $('#edit_sub_' + flag).prop('checked', btn.data(flag) == 1);
+        });
+
+        $('#formEditSubcategory').attr(
+            'action',
             `/admin/config/sub/update/${btn.data('id')}`
         );
     });

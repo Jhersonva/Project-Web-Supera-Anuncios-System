@@ -1,4 +1,18 @@
 <!-- views/admin/categories/admin.blade.php -->
+
+@php
+    $labels = [
+        'is_urgent'    => 'URGENTE',
+        'is_premiere'  => 'ESTRENO',
+        'is_featured'  => 'DESTACADO',
+        'is_semi_new'  => 'SEMINUEVO',
+        'is_new'       => 'NUEVO',
+        'is_available' => 'DISPONIBLE',
+        'is_top'       => 'TOP',
+    ];
+@endphp
+
+
 <!-- MODALES DE CATEGORÍAS -->
 <div class="modal fade" id="modalAddCategory" tabindex="-1">
     <div class="modal-dialog">
@@ -16,6 +30,7 @@
                 <input type="text" name="icon" class="form-control" required>
                 <small class="text-muted">Ejemplo: fa-car, fa-house</small>
                 <hr>
+                {{--  
                 <h6 class="fw-bold">Etiquetas de la categoría</h6>
 
                 <div class="row">
@@ -48,6 +63,7 @@
                     @endforeach
 
                 </div>
+                --}}
 
             </div>
             <div class="modal-footer">
@@ -141,6 +157,26 @@
                 <label class="mt-3">Precio (S/.)</label>
                 <input type="number" name="price" step="0.01" class="form-control">
 
+                <hr>
+                <h6 class="fw-bold">Etiquetas de la subcategoría</h6>
+
+                <div class="row">
+                    @foreach ($labels as $field => $label)
+                        <div class="col-6 col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                    type="checkbox"
+                                    name="{{ $field }}"
+                                    value="1"
+                                    id="add_sub_{{ $field }}">
+                                <label class="form-check-label" for="add_sub_{{ $field }}">
+                                    {{ $label }}
+                                </label>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
             </div>
             <div class="modal-footer">
                 <button class="btn btn-danger">Guardar</button>
@@ -165,6 +201,26 @@
 
                 <label class="mt-3">Precio</label>
                 <input type="number" id="editSubPrice" name="price" step="0.01" class="form-control">
+
+                <hr>
+                <h6 class="fw-bold">Etiquetas de la subcategoría</h6>
+
+                <div class="row">
+                    @foreach ($labels as $field => $label)
+                        <div class="col-6 col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                    type="checkbox"
+                                    name="{{ $field }}"
+                                    value="1"
+                                    id="edit_sub_{{ $field }}">
+                                <label class="form-check-label" for="edit_sub_{{ $field }}">
+                                    {{ $label }}
+                                </label>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
 
             </div>
             <div class="modal-footer">

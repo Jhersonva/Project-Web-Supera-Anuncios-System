@@ -11,6 +11,13 @@ return new class extends Migration {
             $table->foreignId('ad_categories_id')->constrained('ad_categories')->onDelete('cascade');
             $table->string('name');
             $table->decimal('price', 12, 2)->nullable();
+            $table->boolean('is_urgent')->default(false);
+            $table->boolean('is_premiere')->default(false);
+            $table->boolean('is_featured')->default(false);
+            $table->boolean('is_semi_new')->default(false);
+            $table->boolean('is_new')->default(false);
+            $table->boolean('is_available')->default(false);
+            $table->boolean('is_top')->default(false);
             $table->timestamps();
         });
     }

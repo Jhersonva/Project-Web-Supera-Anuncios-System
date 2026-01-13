@@ -35,7 +35,6 @@
             <form id="adForm" action="{{ route('my-ads.storeAdRequest') }}" method="POST" enctype="multipart/form-data">
                 @csrf
 
-                <!-- AQUÍ VA TODO TU FORMULARIO TAL COMO LO TIENES -->
                 {{-- CATEGORÍA --}}
                 <div class="field-card">
                     <label class="fw-semibold mb-2">Selecciona una Categoría</label>
@@ -979,7 +978,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const confirmBtn       = document.getElementById('confirmImage');
     const previewList = document.getElementById('selectedPreviewList');
 
-
     let currentSubcategory = null;
     let tempSelectedImages = [];
     //const MAX_IMAGES = 5;
@@ -1042,7 +1040,6 @@ document.addEventListener("DOMContentLoaded", () => {
         previewList.innerHTML = '';
         referenceImages = [];
         updatePreview();
-
     }
 
     // RESET TAGS
@@ -1119,11 +1116,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 // SUBCATEGORÍA
                 subcatSelect.onchange = function () {
 
-                    // Seguridad extra: si cambia subcategoría, no forzar verificación
-                    if (verifiedContainer.classList.contains('d-none')) {
-                        verifiedInput.checked = false;
-                    }
-
                     resetTags();
                     resetImages();
 
@@ -1135,23 +1127,25 @@ document.addEventListener("DOMContentLoaded", () => {
                     updateVerifiedVisibility(categoryId, subId);
                     currentSubcategory = subId;
 
-                    // ALERTA SERVICIOS PRIVADOS
-                    if (
-                        parseInt(categoryId) === window.SERVICIOS_CATEGORY_ID &&
-                        parseInt(subId) === window.PRIVADOS_SUBCATEGORY_ID
-                    ) {
-                        showAdultServicesAlert();
-                    }
+                    // buscar subcategoría seleccionada
+                    const selectedSub = data.subcategories.find(s => s.id == subId);
 
-                    // Mostrar tags permitidos
+                    if (!selectedSub) return;
+
+                    // PRECIO BASE
+                    subcatPrice = parseFloat(selectedSub.price) || 0;
+
+                    // MOSTRAR SOLO TAGS PERMITIDOS POR SUBCATEGORÍA
                     Object.entries(tagMap).forEach(([flag, tag]) => {
-                        if (data.category[flag]) {
+                        if (selectedSub[flag]) {
                             const container = document.getElementById(tag.container);
                             if (container) container.classList.remove('d-none');
                         }
                     });
 
                     imagesContainer.classList.remove('d-none');
+
+                    calculateDatesAndCosts();
                 };
 
                 calculateDatesAndCosts();

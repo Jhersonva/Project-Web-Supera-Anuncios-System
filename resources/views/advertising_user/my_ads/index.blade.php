@@ -32,7 +32,7 @@
 
         <div class="col-md-2">
             <button class="btn btn-primary w-100">
-                <i class="fa-solid fa-filter me-1"></i> Filtrar
+                <i class="fa-solid fa-magnifying-glass"></i> Filtrar
             </button>
         </div>
     </form>

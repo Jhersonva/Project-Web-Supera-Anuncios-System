@@ -841,95 +841,39 @@ document.addEventListener("DOMContentLoaded", () => {
     recalculateEditTotal();
 });
 
-/*
 document.addEventListener("DOMContentLoaded", () => {
 
-    const imagesContainer  = document.getElementById('imagesContainer');
-    const imagesGrid       = document.getElementById('modalImagesGrid');
-    const previewBox       = document.getElementById('selectedPreview');
-    const previewList      = document.getElementById('selectedPreviewList');
-    const openImagesBtn    = document.getElementById('openImagesModal');
-    const confirmBtn       = document.getElementById('confirmImage');
-
-    let tempSelectedImages = [];
-
-    if (!currentSubcategory || !imagesContainer) return;
-
-    imagesContainer.classList.remove('d-none');
-
-    const modal = new bootstrap.Modal(
-        document.getElementById('modalSubcategoryImages')
+    const subcategory = @json(
+        $subcategories->firstWhere('id', $ad->ad_subcategories_id)
     );
 
-    // ABRIR MODAL (MISMO COMPORTAMIENTO QUE CREATE)
-    openImagesBtn?.addEventListener('click', () => {
+    if (!subcategory) return;
 
-        imagesGrid.innerHTML = `<small class="text-muted">Cargando imágenes...</small>`;
-        tempSelectedImages = [];
+    const tagMap = {
+        is_urgent:    'urgentContainer',
+        is_featured:  'featuredContainer',
+        is_premiere:  'premiereContainer',
+        is_semi_new:  'semiNewContainer',
+        is_new:       'newContainer',
+        is_available: 'availableContainer',
+        is_top:       'topContainer',
+    };
 
-        fetch(`/advertising/subcategories/${currentSubcategory}/images`)
-            .then(r => r.json())
-            .then(images => {
-
-                imagesGrid.innerHTML = '';
-
-                images.forEach(img => {
-
-                    const card = document.createElement('div');
-                    card.className = 'image-card';
-                    card.innerHTML = `<img src="/${img.image}">`;
-
-                    card.addEventListener('click', () => {
-
-                        if (tempSelectedImages.find(i => i.id === img.id)) return;
-
-                        tempSelectedImages.push(img);
-
-                        const preview = document.createElement('div');
-                        preview.className = 'image-card position-relative';
-                        preview.innerHTML = `
-                            <img src="/${img.image}">
-                            <button class="delete-img-btn">×</button>
-                        `;
-
-                        preview.querySelector('button').onclick = () => {
-                            preview.remove();
-                            tempSelectedImages =
-                                tempSelectedImages.filter(i => i.id !== img.id);
-                        };
-
-                        previewList.appendChild(preview);
-                    });
-
-                    imagesGrid.appendChild(card);
-                });
-            });
-
-        modal.show();
+    // ocultar todos primero
+    Object.values(tagMap).forEach(id => {
+        document.getElementById(id)?.classList.add('d-none');
     });
 
-    // CONFIRMAR
-    confirmBtn?.addEventListener('click', () => {
-
-        if (!tempSelectedImages.length) return;
-
-        selectedInput.value = tempSelectedImages[0].id;
-
-        // limpiar eliminaciones previas
-        document.getElementById('remove_images').value = '';
-
-        previewList.innerHTML = `
-            <div class="image-card border border-dark" style="max-width:120px">
-                <img src="/${tempSelectedImages[0].image}">
-            </div>
-        `;
-
-        previewBox.classList.remove('d-none');
-        modal.hide();
+    // mostrar SOLO los permitidos por la subcategoría
+    Object.entries(tagMap).forEach(([flag, containerId]) => {
+        if (subcategory[flag]) {
+            document.getElementById(containerId)
+                ?.classList.remove('d-none');
+        }
     });
 
 });
-*/
+
 function deleteImage(id){
     if(!confirm("¿Eliminar esta imagen?")) return;
 
