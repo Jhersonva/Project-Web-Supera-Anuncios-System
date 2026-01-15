@@ -2,7 +2,19 @@
 
     {{-- IZQUIERDA --}}
     <div class="d-flex align-items-center gap-2">
-        <strong>{{ system_company_name() }}</strong>
+
+        {{-- LOGO --}}
+        <img
+            src="{{ system_logo() }}"
+            alt="{{ system_company_name() }}"
+            style="width:40px; height:auto; border-radius:8px;"
+        >
+
+        {{-- NOMBRE --}}
+        <strong class="mb-0">
+            {{ system_company_name() }}
+        </strong>
+
     </div>
 
     {{-- DERECHA --}}

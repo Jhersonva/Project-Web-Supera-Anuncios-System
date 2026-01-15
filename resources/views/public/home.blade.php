@@ -5,12 +5,6 @@
 @section('content')
 
 <div class="container mt-4 body-public">
-
-    {{-- IMAGEN CENTRADA --}}
-    <div class="text-center mb-3">
-        <img src="{{ system_logo() }}" alt="{{ system_company_name() }}" style="width:200px; max-width:100%; border-radius:12px;">
-    </div>
-
     {{-- TEXTO CENTRADO --}}
     <h5 class="text-center fw-bold mb-3">
         Lo que buscas, Aquí lo encuentras

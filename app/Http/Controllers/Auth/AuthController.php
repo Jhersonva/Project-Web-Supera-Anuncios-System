@@ -18,7 +18,6 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
-
         try {
 
             $validated = $request->validate([
@@ -26,45 +25,56 @@ class AuthController extends Controller
 
                 'account_type' => 'required|in:person,business',
 
-                // PERSONA
                 'full_name' => 'required_if:account_type,person|max:120',
-                'dni'       => 'nullable|required_if:account_type,person|size:8|unique:users',
+                'dni'       => 'nullable|required_if:account_type,person|size:8|unique:users,dni',
 
-                // EMPRESA
                 'company_reason' => 'nullable|required_if:account_type,business|max:150',
-                'ruc'            => 'nullable|required_if:account_type,business|size:11|unique:users',
+                'ruc'            => 'nullable|required_if:account_type,business|size:11|unique:users,ruc',
 
-                'email'    => 'required|string|email|max:120|unique:users',
-                'password' => 'required|string|min:6',
+                'email'    => 'required|email|max:120|unique:users,email',
+                'password' => 'required|string|min:8',
 
-                'phone'    => 'nullable|string|max:9',
+                'phone'    => 'nullable|string|max:9|unique:users,phone',
                 'locality' => 'nullable|string|max:150',
             ]);
 
-            $role = Role::where('name', 'advertising_user')->first();
+            $role = Role::where('name', 'advertising_user')->firstOrFail();
 
             $user = User::create([
-                'role_id'      => $role->id,
+                'role_id' => $role->id,
                 'account_type' => $validated['account_type'],
 
-                'full_name'       => $validated['full_name'] ?? null,
-                'dni'             => $validated['dni'] ?? null,
-                'company_reason'  => $validated['company_reason'] ?? null,
-                'ruc'             => $validated['ruc'] ?? null,
+                'full_name'      => $validated['full_name'] ?? null,
+                'dni'            => $validated['dni'] ?? null,
+                'company_reason' => $validated['company_reason'] ?? null,
+                'ruc'            => $validated['ruc'] ?? null,
 
-                'email'     => $validated['email'],
-                'password'  => Hash::make($validated['password']),
-                'phone'     => $validated['phone'] ?? null,
-                'locality'  => $validated['locality'] ?? null,
+                'email'    => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'phone'    => $validated['phone'] ?? null,
+                'locality' => $validated['locality'] ?? null,
             ]);
 
             Auth::login($user);
 
-            return redirect()->route('home');
+            return response()->json([
+                'message' => 'Usuario creado correctamente',
+                'redirect' => route('home')
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+
+            return response()->json([
+                'errors' => $e->errors()
+            ], 422);
 
         } catch (\Throwable $e) {
 
-            return back()->withErrors('Error al registrar usuario');
+            Log::error($e);
+
+            return response()->json([
+                'message' => 'Error al crear la cuenta'
+            ], 500);
         }
     }
 

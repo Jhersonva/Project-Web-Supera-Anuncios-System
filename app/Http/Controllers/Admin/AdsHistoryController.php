@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Advertisement;
+use App\Models\SystemSetting;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 
@@ -56,39 +57,37 @@ class AdsHistoryController extends Controller
     {
         $ad = Advertisement::with('user')->findOrFail($id);
 
-        if (!$ad->user->phone) {
+        $settings = SystemSetting::first();
+
+        if (!$settings || !$settings->whatsapp_number) {
             return response()->json([
-                'error' => 'El usuario no tiene número de WhatsApp registrado.'
+                'error' => 'El número de WhatsApp del sistema no está configurado.'
             ], 400);
         }
 
-        $phone = $ad->user->phone;
+        $phone = preg_replace('/\D/', '', $settings->whatsapp_number); // limpia caracteres
 
         $receiptLink = $ad->receipt_file 
             ? asset($ad->receipt_file) 
             : null;
 
-
         $messages = [
-            'pendiente' => 
-                "Hola {$ad->user->full_name}, \n\n".
+            'pendiente' =>
+                "Hola {$ad->user->full_name},\n\n".
                 "Tu anuncio *{$ad->title}* está en revisión.",
 
-            'publicado' => 
-                "*¡Anuncio aprobado!* \n\n".
+            'publicado' =>
+                "*¡Anuncio aprobado!*\n\n".
                 "Hola {$ad->user->full_name}, tu anuncio *{$ad->title}* ya está publicado.\n\n".
-                ($receiptLink 
-                    ? "*Comprobante de pago:*\n{$receiptLink}\n\n"
-                    : ""
-                ).
-                "Gracias por confiar en nosotros ",
+                ($receiptLink ? "*Comprobante de pago:*\n{$receiptLink}\n\n" : "").
+                "Gracias por confiar en nosotros.",
 
-            'rechazado' => 
-                "Hola {$ad->user->full_name}, \n\n".
+            'rechazado' =>
+                "Hola {$ad->user->full_name},\n\n".
                 "Tu anuncio *{$ad->title}* ha sido rechazado.",
 
-            'expirado' => 
-                "Hola {$ad->user->full_name}, \n\n".
+            'expirado' =>
+                "Hola {$ad->user->full_name},\n\n".
                 "Tu anuncio *{$ad->title}* ha expirado."
         ];
 

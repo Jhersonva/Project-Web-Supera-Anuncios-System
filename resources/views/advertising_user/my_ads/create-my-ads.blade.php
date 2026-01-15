@@ -82,12 +82,12 @@
                 {{-- UBICACIÓN DEL ANUNCIO --}}
                 <div class="field-card d-none" id="locationAdContainer">
 
-                    <label class="fw-semibold">Departamento</label>
+                    <label class="fw-semibold mt-2">Distrito</label>
                     <input
                         type="text"
-                        name="department"
+                        name="district"
                         class="form-control"
-                        placeholder="Ej: Lima"
+                        placeholder="Ej: San Juan de Miraflores"
                     >
 
                     <label class="fw-semibold mt-2">Provincia</label>
@@ -98,14 +98,14 @@
                         placeholder="Ej: Lima"
                     >
 
-                    <label class="fw-semibold mt-2">Distrito</label>
+                    <label class="fw-semibold">Departamento</label>
                     <input
                         type="text"
-                        name="district"
+                        name="department"
                         class="form-control"
-                        placeholder="Ej: San Juan de Miraflores"
+                        placeholder="Ej: Lima"
                     >
-
+                
                 </div>
 
                 <div class="field-card d-none" id="contactLocationContainer">
@@ -524,6 +524,29 @@ window.ALERTS = @json($alertsPrepared);
 
 <script>
 
+document.addEventListener('DOMContentLoaded', () => {
+
+    const categorySelect    = document.getElementById('categorySelect');
+    const subcategorySelect = document.getElementById('subcategorySelect');
+
+    if (!categorySelect || !subcategorySelect) return;
+
+    subcategorySelect.addEventListener('change', () => {
+
+        const categoryId    = parseInt(categorySelect.value);
+        const subcategoryId = parseInt(subcategorySelect.value);
+
+        if (
+            categoryId === window.SERVICIOS_CATEGORY_ID &&
+            subcategoryId === window.PRIVADOS_SUBCATEGORY_ID
+        ) {
+            showAdultServicesAlert();
+        }
+
+    });
+
+});
+
 //Title personalizado para cada categoria
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -679,7 +702,7 @@ let adPreview = {
     title: "Título del anuncio",
     description: "Escribe una descripción...",
     subcategory: { name: "Subcategoría" },
-    department: "",
+    district: "",
     province: "",
     amount: "",
     amount_visible: 1,   
@@ -716,6 +739,16 @@ function getPreviewDynamicFields(limit = 4) {
 
     return fields;
 }
+
+const districtInput  = document.querySelector('input[name="district"]');
+const provinceInput  = document.querySelector('input[name="province"]');
+
+[districtInput, provinceInput].forEach(input => {
+    input?.addEventListener('input', () => {
+        updatePreview(); 
+    });
+});
+
 
 // CREA LA CARD DE PREVISUALIZACIÓN
 //<!--<span class="ad-location"><i class="fa-solid fa-location-dot"></i> ${ad.contact_location ?? "Sin ubicación"}</span>-->
@@ -782,7 +815,7 @@ function createAdCard(ad) {
 
                 <div class="ad-tags">
                     <span class="ad-badge"><i class="fa-solid fa-tag"></i> ${ad.subcategory.name}</span>
-                    <span class="ad-location"><i class="fa-solid fa-location-dot"></i> ${ad.department && ad.province ? `${ad.department} - ${ad.province}` : 'Sin ubicación'}</span>
+                    <span class="ad-location"><i class="fa-solid fa-location-dot"></i> ${ad.district && ad.province ? `${ad.district} - ${ad.province}` : 'Sin ubicación'}</span>
                 </div>
 
                 <div class="ad-price-box">
@@ -838,7 +871,7 @@ function updatePreview() {
         description: document.querySelector("textarea[name='description']")?.value || "Descripción del anuncio...",
         dynamic_fields: dynamicPreviewFields,
         //contact_location: document.querySelector("input[name='contact_location']")?.value || "Ubicación",
-        department: document.querySelector("input[name='department']")?.value || "",
+        district: document.querySelector("input[name='district']")?.value || "",
         province: document.querySelector("input[name='province']")?.value || "",
 
         amount: amountInput.value || null,

@@ -460,11 +460,18 @@ function createAdCard(ad){
     // Usuario
     const userImg = ad.user_info.profile_image;
     const userName = ad.user_info.full_name;
-    const userVerified = ad.user_info.is_verified;
-    const adVerified   = ad.is_verified;
+    const userVerified = Number(ad.user_info.is_verified) === 1;
+    const adVerified   = Number(ad.is_verified) === 1;
+
+    console.log('DEBUG VERIFIED:', {
+        ad_id: ad.id,
+        ad_is_verified_raw: ad.is_verified,
+        ad_is_verified_casted: adVerified,
+        user_is_verified_raw: ad.user_info.is_verified,
+        user_is_verified_casted: userVerified
+    });
 
     // verificado si el anuncio O el usuario lo está
-    const showVerified = userVerified || adVerified;
     const amountVisible = Number(ad.amount_visible);
 
     return `
@@ -510,11 +517,18 @@ function createAdCard(ad){
                             <i class="fa-solid fa-share-nodes"></i>
                         </button>
 
-                        <!-- Verificado -->
-                        ${showVerified ? `
+                        <!-- SELLO USUARIO -->
+                        ${userVerified ? `
                             <img src="/assets/img/verified-icon/verified.png"
                                 class="verified-icon-below"
-                                title="${adVerified ? 'Anuncio verificado' : 'Usuario verificado'}">
+                                title="Usuario verificado">
+                        ` : ''}
+
+                        <!-- SELLO ANUNCIO -->
+                        ${adVerified ? `
+                            <img src="/assets/img/verified-icon/verified.png"
+                                class="verified-icon-below ad-verified"
+                                title="Anuncio verificado">
                         ` : ''}
                     </div>
                 </h3>
@@ -523,12 +537,20 @@ function createAdCard(ad){
 
                 ${ad.dynamic_fields?.length ? `
                     <ul class="ad-dynamic-fields mt-2">
-                        ${ad.dynamic_fields.map(f => `
-                            <li>
-                                <strong>${f.label}:</strong>
-                                <span class="dynamic-value">${f.value}</span>
-                            </li>
-                        `).join("")}
+                        ${ad.dynamic_fields.map(f => {
+                            const value = String(f.value ?? '');
+                            const truncated =
+                                value.length > 70
+                                    ? value.slice(0, 70) + '...'
+                                    : value;
+
+                            return `
+                                <li>
+                                    <strong>${f.label}:</strong>
+                                    <span class="dynamic-value">${truncated}</span>
+                                </li>
+                            `;
+                        }).join("")}
                     </ul>
                 ` : ''}
 
@@ -536,7 +558,7 @@ function createAdCard(ad){
                     <span class="ad-badge"><i class="fa-solid fa-tag"></i> ${subcategory}</span>
                     <span class="ad-location">
                         <i class="fa-solid fa-location-dot"></i>
-                        ${ad.department && ad.province ? `${ad.department} - ${ad.province}` : 'Sin ubicación'}
+                        ${ad.district && ad.province ? `${ad.district} - ${ad.province}` : 'Sin ubicación'}
                     </span>
                 </div>
 

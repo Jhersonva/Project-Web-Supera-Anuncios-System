@@ -43,38 +43,68 @@
       <div class="mb-3">
           <select id="accountType" name="account_type" class="form-select" required>
               <option value="">Selecciona un tipo</option>
-              <option value="person">Usuario normal</option>
+              <option value="person">Persona Natural</option>
               <option value="business">Empresa / Negocio</option>
           </select>
       </div>
 
       <!-- Nombres -->
       <div id="personFields" class="d-none">
-        <label class="form-label small fw-semibold">Nombres Completos</label>
-        <div class="input-group auth-input mb-3">
-          <span class="input-group-text bg-white"><i class="fa-solid fa-user"></i></span>
-          <input type="text" name="full_name" class="form-control">
-        </div>
+          <label class="form-label small fw-semibold">Nombres Completos</label>
+          <div class="input-group auth-input mb-3">
+              <span class="input-group-text bg-white">
+                  <i class="fa-solid fa-user"></i>
+              </span>
+              <input
+                  type="text"
+                  name="full_name"
+                  class="form-control"
+                  placeholder="Ej. Juan Carlos Pérez"
+              >
+          </div>
 
-        <label class="form-label small fw-semibold">DNI</label>
-        <div class="input-group auth-input mb-3">
-          <span class="input-group-text bg-white"><i class="fa-solid fa-id-card"></i></span>
-          <input type="text" name="dni" class="form-control" maxlength="8">
-        </div>
+          <label class="form-label small fw-semibold">DNI</label>
+          <div class="input-group auth-input mb-3">
+              <span class="input-group-text bg-white">
+                  <i class="fa-solid fa-id-card"></i>
+              </span>
+              <input
+                  type="text"
+                  name="dni"
+                  class="form-control"
+                  maxlength="8"
+                  placeholder="Ingrese su DNI"
+              >
+          </div>
       </div>
 
       <div id="businessFields" class="d-none">
-        <label class="form-label small fw-semibold">Razón Social</label>
-        <div class="input-group auth-input mb-3">
-          <span class="input-group-text bg-white"><i class="fa-solid fa-building"></i></span>
-          <input type="text" name="company_reason" class="form-control">
-        </div>
+          <label class="form-label small fw-semibold">Razón Social</label>
+          <div class="input-group auth-input mb-3">
+              <span class="input-group-text bg-white">
+                  <i class="fa-solid fa-building"></i>
+              </span>
+              <input
+                  type="text"
+                  name="company_reason"
+                  class="form-control"
+                  placeholder="Ej. Comercial ABC S.A.C."
+              >
+          </div>
 
-        <label class="form-label small fw-semibold">RUC</label>
-        <div class="input-group auth-input mb-3">
-          <span class="input-group-text bg-white"><i class="fa-solid fa-file-invoice"></i></span>
-          <input type="text" name="ruc" class="form-control" maxlength="11">
-        </div>
+          <label class="form-label small fw-semibold">RUC</label>
+          <div class="input-group auth-input mb-3">
+              <span class="input-group-text bg-white">
+                  <i class="fa-solid fa-file-invoice"></i>
+              </span>
+              <input
+                  type="text"
+                  name="ruc"
+                  class="form-control"
+                  maxlength="11"
+                  placeholder="Ingrese su RUC"
+              >
+          </div>
       </div>
 
       <!-- Celular -->
@@ -203,19 +233,73 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 document.getElementById('registerForm').addEventListener('submit', function (e) {
+    e.preventDefault();
 
-    const checkbox = document.getElementById('acceptTerms');
+    const form = this;
+    const formData = new FormData(form);
 
-    if (!checkbox.checked) {
-        e.preventDefault();
-
+    // Validación rápida frontend
+    if (!document.getElementById('acceptTerms').checked) {
         Swal.fire({
             icon: 'warning',
             title: 'Acepta los términos',
-            text: 'Debes aceptar los términos y condiciones para crear tu cuenta.',
+            text: 'Debes aceptar los términos y condiciones.',
             confirmButtonColor: '#0d6efd'
         });
+        return;
     }
+
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(async response => {
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw data;
+        }
+
+        // ✅ REGISTRO EXITOSO
+        Swal.fire({
+            icon: 'success',
+            title: 'Cuenta creada',
+            text: 'Tu cuenta fue creada correctamente.',
+            confirmButtonColor: '#0d6efd'
+        }).then(() => {
+            window.location.href = data.redirect ?? '/';
+        });
+
+    })
+    .catch(error => {
+
+        // ❌ ERRORES DE VALIDACIÓN
+        if (error.errors) {
+
+            const messages = Object.values(error.errors)
+                .flat()
+                .join('<br>');
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Revisa los datos',
+                html: messages,
+                confirmButtonColor: '#dc3545'
+            });
+
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message ?? 'Error inesperado',
+                confirmButtonColor: '#dc3545'
+            });
+        }
+    });
 });
 </script>
 

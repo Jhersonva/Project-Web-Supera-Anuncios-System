@@ -34,6 +34,14 @@
                     <input type="email" name="email" class="form-control" value="{{ $employee->email }}" required>
                 </div>
 
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                        Nueva Contraseña
+                        <small class="text-muted">(opcional)</small>
+                    </label>
+                    <input type="password" name="password" class="form-control">
+                </div>
+
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">DNI</label>
                     <input type="text" name="dni" maxlength="8" class="form-control" value="{{ $employee->dni }}" required>

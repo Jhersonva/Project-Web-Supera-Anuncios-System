@@ -14,10 +14,18 @@ class EmployeeController extends Controller
      */
     public function index()
     {
-        // Solo empleados
-        $employees = User::where('role_id', 3)->orderBy('full_name', 'asc')->get();
+        // ADMIN (asumimos role_id = 1)
+        $admin = User::where('role_id', 1)->first();
 
-        return view('admin.config.employee.index', compact('employees'));
+        // EMPLEADOS
+        $employees = User::where('role_id', 3)
+            ->orderBy('full_name', 'asc')
+            ->get();
+
+        return view(
+            'admin.config.employee.index',
+            compact('admin', 'employees')
+        );
     }
 
     public function create()
@@ -72,6 +80,10 @@ class EmployeeController extends Controller
 
     public function edit(User $employee)
     {
+        if ($employee->role_id === 1 && auth()->user()->role_id !== 1) {
+            abort(403);
+        }
+
         return view('admin.config.employee.edit', compact('employee'));
     }
 
@@ -81,6 +93,7 @@ class EmployeeController extends Controller
             'full_name' => 'required',
             'email'     => 'required|email|unique:users,email,' . $employee->id,
             'dni'       => 'required|digits:8|unique:users,dni,' . $employee->id,
+            'password'  => 'nullable|min:6',
         ], [
             'full_name.required' => 'El nombre completo es obligatorio.',
 
@@ -91,12 +104,33 @@ class EmployeeController extends Controller
             'dni.required' => 'El DNI es obligatorio.',
             'dni.digits'   => 'El DNI debe tener exactamente 8 dígitos.',
             'dni.unique'   => 'Otro usuario ya está usando este DNI.',
+
+            'password.min' => 'La contraseña debe tener al menos 6 caracteres.',
         ]);
 
-        $employee->update($request->all());
+        // Datos base (SIN password)
+        $data = $request->only([
+            'full_name',
+            'email',
+            'dni',
+            'phone',
+            'locality',
+            'whatsapp',
+            'call_phone',
+            'contact_email',
+            'address',
+        ]);
 
-        return redirect()->route('admin.config.employees')
-            ->with('success', 'Empleado actualizado.');
+        // Si se escribió una nueva contraseña → la actualizamos
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        $employee->update($data);
+
+        return redirect()
+            ->route('admin.config.employees')
+            ->with('success', 'Empleado actualizado correctamente.');
     }
 
     public function toggle(User $employee)

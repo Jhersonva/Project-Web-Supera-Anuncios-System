@@ -59,6 +59,8 @@ class Advertisement extends Model
     protected $casts = [
         'amount' => 'decimal:2',
         'published' => 'boolean',
+        'verification_requested' => 'boolean',
+        'is_verified' => 'boolean',
 
         'urgent_publication' => 'boolean',
         'urgent_price' => 'decimal:2',
