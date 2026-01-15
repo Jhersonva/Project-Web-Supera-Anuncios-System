@@ -73,6 +73,16 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnSearch = document.getElementById('btnSearch');
     const btnClear = document.getElementById('btnClear');
 
+    // ENTER dispara búsqueda
+    [inputSearch, inputLocation, selectCategory, selectSubcategory].forEach(el => {
+        el.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                btnSearch.click();
+            }
+        });
+    });
+
     // Llenar subcategorías según categoría
     selectCategory.addEventListener('change', function () {
         const categoryId = this.value;
