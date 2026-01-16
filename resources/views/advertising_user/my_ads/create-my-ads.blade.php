@@ -749,9 +749,22 @@ const provinceInput  = document.querySelector('input[name="province"]');
     });
 });
 
+function truncateText(text, limit = 70) {
+    if (!text) return '';
+
+    const normalized = text.toLowerCase().trim();
+
+    if (normalized.length <= limit) {
+        return normalized;
+    }
+
+    const truncated = normalized.slice(0, limit);
+    const lastSpace = truncated.lastIndexOf(' ');
+
+    return (lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated) + '…';
+}
 
 // CREA LA CARD DE PREVISUALIZACIÓN
-//<!--<span class="ad-location"><i class="fa-solid fa-location-dot"></i> ${ad.contact_location ?? "Sin ubicación"}</span>-->
 function createAdCard(ad) {
 
     const img = ad.images.length > 0
@@ -805,11 +818,15 @@ function createAdCard(ad) {
 
                 ${ad.dynamic_fields?.length ? `
                     <ul class="ad-dynamic-fields mt-2">
-                        ${ad.dynamic_fields.map(f => `
-                            <li>
-                                <strong>${f.label}:</strong> ${f.value}
-                            </li>
-                        `).join("")}
+                        ${ad.dynamic_fields.map(f => {
+                            const truncated = truncateText(f.value, 70);
+                            return `
+                                <li>
+                                    <strong>${f.label}:</strong>
+                                    <span class="dynamic-value">${truncated}</span>
+                                </li>
+                            `;
+                        }).join("")}
                     </ul>
                 ` : ''}
 
@@ -1370,16 +1387,25 @@ document.addEventListener("DOMContentLoaded", () => {
                     let input = '';
 
                     switch (field.type) {
+
                         case 'number':
                             input = `<input type="number" class="form-control" name="dynamic[${field.id}]">`;
                             break;
 
                         case 'textarea':
-                            input = `<textarea class="form-control" name="dynamic[${field.id}]" rows="3"></textarea>`;
+                            input = `
+                                <textarea 
+                                    class="form-control dynamic-lowercase"
+                                    name="dynamic[${field.id}]" 
+                                    rows="3"></textarea>`;
                             break;
 
                         default:
-                            input = `<input type="text" class="form-control" name="dynamic[${field.id}]">`;
+                            input = `
+                                <input 
+                                    type="text" 
+                                    class="form-control dynamic-lowercase"
+                                    name="dynamic[${field.id}]">`;
                     }
 
                     fieldsContainer.innerHTML += `
@@ -1445,6 +1471,28 @@ document.addEventListener("DOMContentLoaded", () => {
             amountInput.value = this.value;
             amountTextInput.value = this.value;
             updatePreview();
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const titleInput = document.getElementById('titleInput');
+        const charCount = document.getElementById('charCount');
+
+        if (titleInput) {
+            titleInput.addEventListener('input', () => {
+                titleInput.value = titleInput.value.toUpperCase();
+                charCount.textContent = titleInput.value.length;
+            });
+        }
+
+    });
+
+    document.addEventListener('input', function (e) {
+        if (e.target.classList.contains('dynamic-lowercase')) {
+            const cursorPos = e.target.selectionStart;
+            e.target.value = e.target.value.toLowerCase();
+            e.target.setSelectionRange(cursorPos, cursorPos);
         }
     });
 
@@ -1763,6 +1811,7 @@ function updateReceiptPreview() {
         gap: 6px;
         font-weight: 600;
         margin-bottom: 6px;
+        text-transform: uppercase;
     }
 
     /* Estrella destacada */
@@ -1828,23 +1877,29 @@ function updateReceiptPreview() {
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
-        font-size: 0.75rem;
-        color: #555555;
+        font-size: 0.8rem;
+        color: #555;
     }
 
     .ad-dynamic-fields li {
         background: #eef4ff;
         border: 1px solid #d6e4ff;
         border-radius: 6px;
-        padding: 3px 8px;
-        white-space: nowrap;
-        display: flex;
-        gap: 4px;
+        padding: 4px 8px;
+        max-width: 100%;
+        line-height: 1.35;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        white-space: normal; 
     }
 
-    .ad-dynamic-fields li strong {
+    .ad-dynamic-fields strong {
         font-weight: 600;
         color: #333;
+    }
+
+    .dynamic-value {
+        display: inline;
     }
 
     /* === CARD HORIZONTAL PREMIUM === */
@@ -1893,6 +1948,10 @@ function updateReceiptPreview() {
         font-weight: 800;
         color: #202020;
         line-height: 1.3;
+    }
+
+    #titleInput {
+        text-transform: uppercase;
     }
 
     /*Solo una linea en la card de descripcion*/

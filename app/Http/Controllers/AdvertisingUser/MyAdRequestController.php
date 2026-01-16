@@ -243,6 +243,10 @@ class MyAdRequestController extends Controller
             $receiptCode = $this->generateNotaVentaCode();
         }
 
+        $request->merge([
+            'title' => mb_strtoupper($request->title, 'UTF-8'),
+        ]);
+
         // Crear ANUNCIO *PUBLICADO AUTOMÁTICAMENTE*
         $ad = Advertisement::create([
             'ad_categories_id'      => $request->category_id,
@@ -360,10 +364,13 @@ class MyAdRequestController extends Controller
         // CAMPOS DINÁMICOS
         if ($request->has('dynamic')) {
             foreach ($request->dynamic as $fieldId => $value) {
+
                 ValueFieldAd::create([
                     'advertisementss_id' => $ad->id,
                     'fields_subcategory_ads_id' => $fieldId,
-                    'value' => $value
+                    'value' => is_string($value)
+                    ? mb_strtolower(trim($value), 'UTF-8')
+                    : $value
                 ]);
             }
         }
