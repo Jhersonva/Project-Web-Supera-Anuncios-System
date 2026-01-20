@@ -7,7 +7,7 @@
         <img
             src="{{ system_logo() }}"
             alt="{{ system_company_name() }}"
-            style="width:40px; height:auto; border-radius:8px;"
+            style="width:40px; height:40px; border-radius:8px;"
         >
 
         {{-- NOMBRE --}}

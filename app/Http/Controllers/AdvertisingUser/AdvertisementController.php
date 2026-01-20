@@ -30,11 +30,17 @@ class AdvertisementController extends Controller
 
                 if ($request->status === 'expirado') {
                     $q->where('expires_at', '<', now());
+
+                } elseif ($request->status === 'draft') {
+                    $q->where('status', 'draft');
+
                 } else {
                     $q->where('status', $request->status)
-                    ->where('expires_at', '>=', now());
+                    ->where(function ($q2) {
+                        $q2->whereNull('expires_at')
+                            ->orWhere('expires_at', '>=', now());
+                    });
                 }
-
             })
 
             ->orderByDesc('created_at')

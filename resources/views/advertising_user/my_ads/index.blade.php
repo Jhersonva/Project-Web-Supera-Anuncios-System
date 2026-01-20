@@ -24,6 +24,7 @@
         <div class="col-md-3">
             <select name="status" class="form-select">
                 <option value="">-- Estado --</option>
+                <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Borradores</option>
                 <option value="publicado" {{ request('status') == 'publicado' ? 'selected' : '' }}>Publicado</option>
                 <option value="pendiente" {{ request('status') == 'pendiente' ? 'selected' : '' }}>Pendiente</option>
                 <option value="expirado"  {{ request('status') == 'expirado'  ? 'selected' : '' }}>Expirado</option>
@@ -98,14 +99,23 @@
 
                             {{-- Estado --}}
                             <td>
-                                @if($ad->expires_at < now())
+                                @if($ad->expires_at && $ad->expires_at < now())
                                     <span class="badge bg-secondary">Expirado</span>
-                                @elseif($ad->status == 'pendiente')
+
+                                @elseif($ad->status === 'draft')
+                                    <span class="badge bg-dark">
+                                        Borrador
+                                    </span>
+
+                                @elseif($ad->status === 'pendiente')
                                     <span class="badge bg-warning text-dark">Pendiente</span>
-                                @elseif($ad->status == 'rechazado')
+
+                                @elseif($ad->status === 'rechazado')
                                     <span class="badge bg-danger">Rechazado</span>
-                                @elseif($ad->status == 'publicado')
+
+                                @elseif($ad->status === 'publicado')
                                     <span class="badge bg-success">Publicado</span>
+
                                 @else
                                     <span class="badge bg-secondary">Desconocido</span>
                                 @endif
@@ -116,6 +126,15 @@
                             {{-- ACCIONES --}}
                             <td>
                                 <div class="d-flex gap-2">
+
+                                    {{-- CONTINUAR BORRADOR --}}
+                                    @if($ad->status === 'draft')
+                                        <a href="{{ route('my-ads.editDraft', $ad->id) }}"
+                                            class="btn btn-sm btn-outline-primary"
+                                            title="Continuar edición">
+                                            <i class="fa-solid fa-play"></i>
+                                        </a>
+                                    @endif
 
                                     @if($ad->published)
                                         <button type="button"
@@ -145,10 +164,13 @@
                                         <i class="fa-solid fa-eye"></i>
                                     </a>
 
-                                    <a href="{{ route('my-ads.editAd', $ad->id) }}"
-                                        class="btn btn-sm btn-outline-warning">
-                                        <i class="fa-solid fa-pen"></i>
-                                    </a>
+                                    @if($ad->status !== 'draft')
+                                        <a href="{{ route('my-ads.editAd', $ad->id) }}"
+                                            class="btn btn-sm btn-outline-warning"
+                                            title="Editar anuncio">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </a>
+                                    @endif
 
                                     <button type="button" 
                                             class="btn btn-sm btn-outline-danger"
@@ -199,18 +221,26 @@
 
                             <div class="mt-2">
                                 <strong>Estado:</strong>
-                                @if($ad->expires_at < now())
-                                    <span class="badge bg-danger">Expirado</span>
 
-                                @elseif($ad->status == 'pendiente')
+                                @if($ad->expires_at && $ad->expires_at < now())
+                                    <span class="badge bg-secondary">Expirado</span>
+
+                                @elseif($ad->status === 'draft')
+                                    <span class="badge bg-dark">
+                                        Borrador
+                                    </span>
+
+                                @elseif($ad->status === 'pendiente')
                                     <span class="badge bg-warning text-dark">Pendiente</span>
 
-                                @elseif($ad->status == 'rechazado')
+                                @elseif($ad->status === 'rechazado')
                                     <span class="badge bg-danger">Rechazado</span>
 
-                                @elseif($ad->status == 'publicado')
+                                @elseif($ad->status === 'publicado')
                                     <span class="badge bg-success">Publicado</span>
 
+                                @else
+                                    <span class="badge bg-secondary">Desconocido</span>
                                 @endif
                             </div>
                         </div>
@@ -243,9 +273,11 @@
                                 <i class="fa-solid fa-eye"></i>
                             </a>
 
-                            <a href="{{ route('my-ads.editAd', $ad->id) }}" class="btn btn-sm btn-warning">
-                                <i class="fa-solid fa-pen"></i>
-                            </a>
+                            @if($ad->status !== 'draft')
+                                <a href="{{ route('my-ads.editAd', $ad->id) }}" class="btn btn-sm btn-warning">
+                                    <i class="fa-solid fa-pen"></i>
+                                </a>
+                            @endif
 
                             <form action="{{ route('my-ads.deleteAd', $ad->id) }}" method="POST"
                                 onsubmit="return confirm('¿Eliminar anuncio?');">

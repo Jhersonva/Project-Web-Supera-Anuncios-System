@@ -283,6 +283,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/my-ads', [AdvertisementController::class, 'index'])->name('my-ads.index');
         Route::get('/my-ads/create', [MyAdRequestController::class, 'create'])->name('my-ads.createAd');
         Route::post('/my-ads/create', [MyAdRequestController::class, 'store'])->name('my-ads.storeAdRequest');
+        Route::get('/my-ads/{ad}/edit-draft', [MyAdRequestController::class, 'editDraft'])->name('my-ads.editDraft');
+        Route::post('/my-ads/{ad}/publish-draft',[MyAdRequestController::class, 'publishDraft'])->name('my-ads.publishDraft');
+        Route::post('/my-ads/{ad}/update-draft',[MyAdRequestController::class, 'updateDraft'])->name('my-ads.updateDraft');
         Route::get('/my-ads/subcategories/{id}', [MyAdRequestController::class, 'loadSubcategories']);
         Route::get('/my-ads/category-info/{id}', [MyAdRequestController::class, 'categoryInfo']);
         Route::get('/my-ads/subcategories-with-category/{id}', [SubcategoryController::class, 'subcategoriesWithCategory']);

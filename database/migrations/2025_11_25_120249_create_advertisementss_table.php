@@ -42,7 +42,7 @@ return new class extends Migration {
             $table->boolean('verification_requested')->default(false);
             $table->boolean('is_verified')->default(false);
             $table->timestamp('verified_at')->nullable();
-            $table->enum('status', ['pendiente', 'publicado', 'rechazado', 'expirado'])->default('pendiente');
+            $table->enum('status', ['draft', 'pendiente', 'publicado', 'rechazado', 'expirado'])->default('pendiente');
             $table->enum('receipt_type', ['boleta', 'factura', 'nota_venta'])->nullable();
             $table->string('dni')->nullable();
             $table->string('full_name')->nullable();

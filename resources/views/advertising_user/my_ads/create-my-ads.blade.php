@@ -32,7 +32,7 @@
 
         <!-- FORMULARIO IZQUIERDA -->
         <div class="col-lg-8 col-md-7">
-            <form id="adForm" action="{{ route('my-ads.storeAdRequest') }}" method="POST" enctype="multipart/form-data">
+            <form id="adForm" action="{{ isset($ad) ? route('my-ads.updateDraft', $ad->id) : route('my-ads.storeAdRequest') }}" method="POST" enctype="multipart/form-data">
                 @csrf
 
                 {{-- CATEGORÍA --}}
@@ -41,24 +41,37 @@
                     <select id="categorySelect" name="category_id" class="form-select">
                         <option value="">-- Selecciona --</option>
                         @foreach($categories as $cat)
-                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                            <option value="{{ $cat->id }}"
+                                {{ old('category_id', $ad->ad_categories_id ?? '') == $cat->id ? 'selected' : '' }}>
+                                {{ $cat->name }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
 
                 {{-- SUBCATEGORÍA --}}
-                <div id="subcatContainer" class="field-card d-none">
+                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="subcatContainer">
                     <label class="fw-semibold mb-2">Selecciona una Subcategoría</label>
-                    <select id="subcategorySelect" name="subcategory_id" class="form-select"></select>
+                    <select id="subcategorySelect" name="subcategory_id" class="form-select">
+                        <option value="">-- Selecciona --</option>
+
+                        @foreach($subcategories as $sub)
+                            <option value="{{ $sub->id }}"
+                                {{ old('subcategory_id', $ad->ad_subcategories_id ?? '') == $sub->id ? 'selected' : '' }}>
+                                {{ $sub->name }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
 
                 {{-- Título --}}
-                <div class="field-card d-none" id="titleContainer">
+                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="titleContainer">
                     <label class="fw-semibold">Título del Anuncio</label>
 
                     <input type="text"
                         class="form-control"
                         name="title"
+                        value="{{ old('title', $ad->title ?? '') }}"
                         id="titleInput"
                         placeholder="Se busca Perforista / Ayudante de Cocina / Pintor"
                         minlength="3"
@@ -71,58 +84,70 @@
                 </div>
 
                 {{-- Descripción --}}
-                <div class="field-card d-none" id="descriptionContainer">
+                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="descriptionContainer">
                     <label class="fw-semibold">Descripción</label>
-                    <textarea name="description" class="form-control" rows="4" placeholder="Describe tu anuncio"></textarea>
+                    <textarea name="description" class="form-control" rows="4" placeholder="Describe tu anuncio">
+                        {{ old('description', $ad->description ?? '') }}
+                    </textarea>
                 </div>
 
                 {{-- LISTA DE CAMPOS DINÁMICOS --}}
                 <div id="fieldsContainer"></div>
 
                 {{-- UBICACIÓN DEL ANUNCIO --}}
-                <div class="field-card d-none" id="locationAdContainer">
+                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="locationAdContainer">
 
                     <label class="fw-semibold mt-2">Distrito</label>
                     <input
                         type="text"
                         name="district"
-                        class="form-control"
+                        class="form-control uppercase-input"
                         placeholder="Ej: San Juan de Miraflores"
+                        value="{{ old('district', $ad->district ?? '') }}"
                     >
 
                     <label class="fw-semibold mt-2">Provincia</label>
                     <input
                         type="text"
                         name="province"
-                        class="form-control"
+                        class="form-control uppercase-input"
                         placeholder="Ej: Lima"
+                        value="{{ old('province', $ad->province ?? '') }}"
                     >
 
                     <label class="fw-semibold">Departamento</label>
                     <input
                         type="text"
                         name="department"
-                        class="form-control"
+                        class="form-control uppercase-input"
                         placeholder="Ej: Lima"
+                        value="{{ old('department', $ad->department ?? '') }}"
                     >
-                
+
                 </div>
 
-                <div class="field-card d-none" id="contactLocationContainer">
+                {{-- DIRECCIO DEL ANUNCIO --}}
+                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="contactLocationContainer">
                     <label class="fw-semibold">Dirección</label>
-                    <input type="text" name="contact_location" class="form-control" placeholder="Ej: Av. Mantaro 123">
+                    <input
+                        type="text"
+                        name="contact_location"
+                        class="form-control"
+                        placeholder="Ej: Av. Mantaro 123"
+                        value="{{ old('contact_location', $ad->contact_location ?? '') }}"
+                    >
                 </div>
 
                 {{-- DATOS DE CONTACTO DEL USUARIO --}}
-                <div class="field-card d-none" id="contactDataContainer">
+                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="contactDataContainer">
 
                     <label class="fw-semibold">Contacto vía WhatsApp</label>
                     <input
                         type="text"
                         name="whatsapp"
                         class="form-control"
-                        value="{{ $user->whatsapp }}"
                         placeholder="Ej: +51 999 888 777"
+                        value="{{ old('whatsapp', $ad->whatsapp ?? $user->whatsapp ?? '') }}"
                     >
 
                     <label class="fw-semibold mt-2">Contacto vía Llamada</label>
@@ -130,70 +155,145 @@
                         type="text"
                         name="call_phone"
                         class="form-control"
-                        value="{{ $user->call_phone }}"
                         placeholder="Ej: 01 555 4444"
+                        value="{{ old('call_phone', $ad->call_phone ?? $user->call_phone ?? '') }}"
                     >
 
                 </div>
 
                 <!-- MONTO -->
-                <div class="field-card d-none" id="amountContainer">
+                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="amountContainer">
                     <div class="d-flex justify-content-between align-items-start gap-3">
                         <div style="flex:1">
                             <label class="fw-semibold">Monto / Precio / Sueldo *</label>
 
-                            <!-- Input -->
-                            <input type="number" step="0.01" min="0" name="amount" id="amountInput" class="form-control" required>
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                name="amount"
+                                id="amountInput"
+                                class="form-control"
+                                value="{{ old('amount', $ad->amount ?? '') }}"
+                                {{ isset($ad) && !$ad->amount_visible ? 'disabled' : '' }}
+                            >
 
-                            <!-- Opciones de texto por defecto -->
-                            <select id="amountTextSelect" class="form-select mt-2 d-none">
+                            <select id="amountTextSelect" class="form-select mt-2 {{ isset($ad) && !$ad->amount_visible ? '' : 'd-none' }}">
                                 <option value="">Selecciona texto por defecto...</option>
-                                <option value="Sueldo a tratar">(Sueldo a tratar)</option>
-                                <option value="Monto a tratar">(Monto a tratar)</option>
-                                <option value="Sueldo por comisiones">(Sueldo por comisiones)</option>
-                                <option value="No especificado">(No especificado)</option>
+                                @foreach([
+                                    'Sueldo a tratar',
+                                    'Monto a tratar',
+                                    'Sueldo por comisiones',
+                                    'No especificado'
+                                ] as $text)
+                                    <option
+                                        value="{{ $text }}"
+                                        {{ old('amount_text', $ad->amount_text ?? '') === $text ? 'selected' : '' }}
+                                    >
+                                        ({{ $text }})
+                                    </option>
+                                @endforeach
                             </select>
 
-                            <small id="amountHelp" class="text-muted">
+                            <small class="text-muted">
                                 Si marcas "Ocultar monto", el público verá el texto seleccionado o "No especificado".
                             </small>
                         </div>
 
                         <div style="min-width:170px; display:flex; align-items:center; justify-content:center;">
-                            <div class="form-check form-switch" style="transform:scale(0.98);">
-                                <input class="form-check-input" type="checkbox" id="amountVisibleCheckbox" checked>
-                                <label class="form-check-label" for="amountVisibleCheckbox">Mostrar monto</label>
+                            <div class="form-check form-switch">
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    id="amountVisibleCheckbox"
+                                    {{ old('amount_visible', $ad->amount_visible ?? 1) ? 'checked' : '' }}
+                                >
+                                <label class="form-check-label">Mostrar monto</label>
                             </div>
                         </div>
                     </div>
 
-                    <!-- hidden field para enviar al backend -->
-                    <input type="hidden" name="amount_visible" id="amountVisibleInput" value="1">
-                    <input type="hidden" name="amount_text" id="amountTextInput">
+                    <!-- hidden fields -->
+                    <input
+                        type="hidden"
+                        name="amount_visible"
+                        id="amountVisibleInput"
+                        value="{{ old('amount_visible', $ad->amount_visible ?? 1) }}"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="amount_text"
+                        id="amountTextInput"
+                        value="{{ old('amount_text', $ad->amount_text ?? '') }}"
+                    >
                 </div>
 
-                <div class="field-card d-none" id="costContainer">
+                <!-- DIAS PUBLICACION / COSTOS -->
+                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="costContainer">
+
                     <label class="fw-semibold">Días de publicación *</label>
-                    <input type="number" min="2" step="1" value="2" name="days_active" id="days_active" class="form-control" required>
-                    <small class="text-muted">Indica cuántos días deseas que tu anuncio esté activo.</small>
+                    <input
+                        type="number"
+                        min="2"
+                        step="1"
+                        name="days_active"
+                        id="days_active"
+                        class="form-control"
+                        value="{{ old('days_active', $ad->days_active ?? 2) }}"
+                        required
+                    >
+
+                    <small class="text-muted">
+                        Indica cuántos días deseas que tu anuncio esté activo.
+                    </small>
 
                     <br>
-                    <label class="fw-semibold">Costo por día</label>
-                    <input type="text" id="pricePerDay" class="form-control mb-2" readonly>
 
-                    <label class="fw-semibold mt-2">Costo total: Dia x Precio SubCategoria</label>
-                    <input type="text" id="totalCost" class="form-control mb-2" readonly>
+                    <label class="fw-semibold">Costo por día</label>
+                    <input
+                        type="text"
+                        id="pricePerDay"
+                        class="form-control mb-2"
+                        value="{{ isset($ad) ? 'S/. ' . number_format($subcategories->first()->price ?? 0, 2) : '' }}"
+                        readonly
+                    >
+
+                    <label class="fw-semibold mt-2">Costo total</label>
+                    <input
+                        type="text"
+                        id="totalCost"
+                        class="form-control mb-2"
+                        value="{{ isset($ad) && isset($subcategories->first()->price)
+                            ? 'S/. ' . number_format($ad->days_active * $subcategories->first()->price, 2)
+                            : '' }}"
+                        readonly
+                    >
 
                     <label class="fw-semibold mt-2">Fecha de expiración</label>
-                    <input type="text" id="expiresAt" class="form-control" readonly>
+                    <input
+                        type="text"
+                        id="expiresAt"
+                        class="form-control"
+                        value="{{ isset($ad) && $ad->expires_at
+                            ? $ad->expires_at->format('d/m/Y')
+                            : '' }}"
+                        readonly
+                    >
                 </div>
 
                 <!-- PUBLICACIÓN URGENTE -->
-                <div class="field-card d-none" id="urgentContainer">
+                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="urgentContainer">
+
                     <label class="fw-semibold">¿Publicación urgente?</label>
 
                     <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="urgent_publication" name="urgent_publication" value="1">
+                        <input class="form-check-input"
+                            type="checkbox"
+                            id="urgent_publication"
+                            name="urgent_publication"
+                            value="1"
+                            {{ isset($ad) && $ad->urgent_publication ? 'checked' : '' }}>
                         <label class="form-check-label" for="urgent_publication">
                             Activar publicación como urgente
                         </label>
@@ -205,23 +305,31 @@
                 </div>
 
                 <!-- PUBLICACIÓN DESTACADA -->
-                <div class="field-card d-none" id="featuredContainer">
+                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="featuredContainer">
+
                     <label class="fw-semibold">¿Publicación destacada?</label>
 
                     <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="featured_publication" name="featured_publication" value="1">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="featured_publication"
+                            name="featured_publication"
+                            value="1"
+                            {{ isset($ad) && $ad->featured_publication ? 'checked' : '' }}
+                        >
                         <label class="form-check-label" for="featured_publication">
                             Activar publicación como destacada
                         </label>
                     </div>
-                    
+
                     <small class="text-danger fw-bold">
                         Precio por publicación destacada: S/. {{ number_format($featuredPrice, 2) }}
                     </small>
                 </div>
 
                 <!-- PUBLICACIÓN ESTRENO -->
-                <div class="field-card d-none" id="premiereContainer">
+                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="premiereContainer">
                     <label class="fw-semibold">¿Publicación en estreno?</label>
 
                     <div class="form-check form-switch">
@@ -235,7 +343,7 @@
                             type="hidden" 
                             name="premiere_publication" 
                             id="premiere_publication" 
-                            value="0"
+                            value="{{ isset($ad) && $ad->premiere_publication ? 1 : 0 }}"
                         >
 
                         <label class="form-check-label" for="premiere_publication">
@@ -249,14 +357,14 @@
                 </div>
 
                 <!-- PUBLICACIÓN SEMI-NUEVO -->
-                <div class="field-card d-none" id="semiNewContainer">
+                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="semiNewContainer">
                     <label class="fw-semibold">¿Publicación seminuevo?</label>
 
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox"
                             id="semi_new_publication"
                             name="semi_new_publication"
-                            value="1">
+                            value="1" {{ isset($ad) && $ad->semi_new_publication ? 'checked' : '' }}>
                         <label class="form-check-label" for="semi_new_publication">
                             Activar publicación como seminuevo
                         </label>
@@ -268,14 +376,14 @@
                 </div>
 
                 <!-- PUBLICACIÓN NUEVA -->
-                <div class="field-card d-none" id="newContainer">
+                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="newContainer">
                     <label class="fw-semibold">¿Publicación nueva?</label>
 
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox"
                             id="new_publication"
                             name="new_publication"
-                            value="1">
+                            value="1" {{ isset($ad) && $ad->new_publication ? 'checked' : '' }}>
                         <label class="form-check-label" for="new_publication">
                             Activar publicación como nuevo
                         </label>
@@ -287,14 +395,15 @@
                 </div>
 
                 <!-- PUBLICACIÓN DISPONIBLE -->
-                <div class="field-card d-none" id="availableContainer">
+                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="availableContainer">
                     <label class="fw-semibold">¿Publicación disponible?</label>
 
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox"
                             id="available_publication"
                             name="available_publication"
-                            value="1">
+                            value="1"
+                            {{ isset($ad) && $ad->available_publication ? 'checked' : '' }}>
                         <label class="form-check-label" for="available_publication">
                             Activar publicación como disponible
                         </label>
@@ -306,14 +415,14 @@
                 </div>
 
                 <!-- PUBLICACIÓN TOP -->
-                <div class="field-card d-none" id="topContainer">
+                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="topContainer">
                     <label class="fw-semibold">¿Publicación TOP?</label>
 
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox"
                             id="top_publication"
                             name="top_publication"
-                            value="1">
+                            value="1" {{ isset($ad) && $ad->top_publication ? 'checked' : '' }}>
                         <label class="form-check-label" for="top_publication">
                              Activar publicación como TOP
                         </label>
@@ -325,19 +434,24 @@
                 </div>
 
                 <!-- ANUNCIO VERIFICADO -->
-                <div class="field-card d-none" id="verifiedContainer">
+                @php
+                    $showVerified = isset($ad) && $ad->ad_categories_id != 1;
+                @endphp
+
+                <div class="field-card {{ $showVerified ? '' : 'd-none' }}" id="verifiedContainer">
 
                     <label class="fw-semibold">¿Deseas verificar tu anuncio?</label>
 
                     {{-- SWITCH --}}
                     <div class="form-check form-switch mb-2">
-                        <input class="form-check-input"
+                        <input
+                            class="form-check-input"
                             type="checkbox"
                             id="verification_requested"
                             name="verification_requested"
-                            value="1">
-
-
+                            value="1"
+                            {{ isset($ad) && $ad->verification_requested ? 'checked' : '' }}
+                        >
                         <label class="form-check-label" for="verification_requested">
                             Marcar anuncio como verificado
                         </label>
@@ -349,7 +463,7 @@
                         mostrarse como <strong>ANUNCIO VERIFICADO</strong>.
                     </p>
 
-                    {{-- BOTÓN DE CONFIRMACIÓN (UX, NO backend) --}}
+                    {{-- BOTÓN UX (NO backend) --}}
                     <button type="button"
                             id="confirmVerifiedBtn"
                             class="btn btn-outline-danger btn-sm w-100">
@@ -363,54 +477,92 @@
                 </div>
 
                 {{-- RESUMEN DE COSTO Y SALDO --}}
-                <div class="field-card d-none" id="summaryContainer">
+                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="summaryContainer">
                     <h5 class="fw-bold mb-3">Resumen de Pago</h5>
 
                     <div class="d-flex justify-content-between">
                         <span class="fw-semibold">Costo total:</span>
-                        <span id="summaryTotalCost" class="fw-bold text-danger">S/. 0.00</span>
+
+                        <span class="fw-bold text-danger" id="summaryTotalCost">
+                            S/. {{ isset($summaryTotalCost) ? number_format($summaryTotalCost, 2) : '0.00' }}
+                        </span>
                     </div>
 
                     <div class="d-flex justify-content-between mt-2">
                         <span class="fw-semibold">Tu saldo:</span>
-                        <span class="fw-bold text-success">S/. {{ number_format(auth()->user()->virtual_wallet, 2) }}</span>
+                        <span class="fw-bold text-success">
+                            S/. {{ number_format($virtualWallet, 2) }}
+                        </span>
                     </div>
 
-                    <small class="text-muted d-block mt-2">
-                        El costo se actualiza según los días y si activas la publicación urgente.
-                    </small>
+                    @if(isset($summaryTotalCost) && $summaryTotalCost > $virtualWallet)
+                        <small class="text-danger d-block mt-2 fw-semibold">
+                            ⚠ Saldo insuficiente para publicar este anuncio
+                        </small>
+                    @else
+                        <small class="text-muted d-block mt-2">
+                            El costo se calcula según los días y las opciones seleccionadas.
+                        </small>
+                    @endif
                 </div>
 
-                <!-- IMÁGENES DE GALERIA-->
-                <div class="field-card d-none" id="imagesContainer">
-                    <label class="fw-semibold mb-2">Imagen de referencia</label>
-                    <!-- BOTÓN -->
-                    <button type="button"
-                            class="btn btn-sm btn-outline-info mb-3"
-                            id="openImagesModal">
-                        <i class="fa-solid fa-images"></i> Elegir imagen
-                    </button>
-                    <!-- PREVIEW SELECCIONADA -->
-                    <div id="selectedPreview" class="d-none mb-3">
-                        <div id="selectedPreviewList" class="d-flex flex-wrap gap-2"></div>
-                        <small class="text-muted d-block mt-1">
-                            Imágenes seleccionadas
+                <!-- IMÁGENES DE GALERIA -->
+                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="imagesContainer">
+
+                    <label class="fw-semibold mb-2">Imágenes del anuncio</label>
+
+                    {{-- IMÁGENES PROPIAS EXISTENTES --}}
+                    @if(isset($images) && $images->count())
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+
+                            @foreach($images as $image)
+                                <div class="position-relative">
+                                    <img
+                                        src="{{ asset($image->image) }}"
+                                        class="rounded border"
+                                        style="width:120px;height:120px;object-fit:cover;"
+                                        alt="Imagen anuncio"
+                                    >
+
+                                    @if($image->is_main)
+                                        <span class="badge bg-primary position-absolute top-0 start-0">
+                                            Principal
+                                        </span>
+                                    @endif
+                                </div>
+                            @endforeach
+
+                        </div>
+
+                        <small class="text-muted d-block mb-3">
+                            Estas son las imágenes que ya subiste para este anuncio.
                         </small>
-                    </div>
-                    <input type="hidden" name="selected_subcategory_image" id="selectedImage">
+                    @else
+                        <small class="text-muted d-block mb-3">
+                            Aún no has subido imágenes propias.
+                        </small>
+                    @endif
+
                     <hr>
-                    <label class="fw-semibold mt-3">O subir imágenes propias</label>
+
+                    {{-- SUBIR NUEVAS IMÁGENES --}}
+                    <label class="fw-semibold mt-3">Agregar o reemplazar imágenes</label>
+
                     <input type="file"
                         name="images[]"
                         class="form-control"
                         id="ownImagesInput"
-                        accept="image/*">
-                    <small class="text-muted" id="ownImagesHelp">Máx. 5 imágenes</small>
+                        accept="image/*"
+                        multiple>
+
+                    <small class="text-muted d-block">
+                        Máximo 5 imágenes. Si subes nuevas, se agregarán al anuncio.
+                    </small>
 
                 </div>
 
                 <!-- COMPROBANTE -->
-                <div class="field-card d-none" id="receiptContainer">
+                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="receiptContainer">
 
                     <h5 class="fw-bold mb-3">Datos para Comprobante de Pago</h5>
 
@@ -418,36 +570,64 @@
                     <label class="fw-semibold mb-2">Tipo de comprobante</label>
                     <select class="form-select" name="receipt_type" id="receipt_type">
                         <option value="">-- Sin comprobante --</option>
-                        <option value="boleta">Boleta</option>
-                        <option value="factura">Factura</option>
-                        <option value="nota_venta">Nota de Venta</option>
+                        <option value="boleta" {{ ($ad->receipt_type ?? '') === 'boleta' ? 'selected' : '' }}>
+                            Boleta
+                        </option>
+                        <option value="factura" {{ ($ad->receipt_type ?? '') === 'factura' ? 'selected' : '' }}>
+                            Factura
+                        </option>
+                        <option value="nota_venta" {{ ($ad->receipt_type ?? '') === 'nota_venta' ? 'selected' : '' }}>
+                            Nota de Venta
+                        </option>
                     </select>
 
                     <!-- BOLETA -->
                     <div id="boletaFields" class="mt-3 d-none">
                         <label class="fw-semibold">DNI</label>
-                        <input type="text" name="dni" class="form-control" maxlength="8">
+                        <input type="text"
+                            name="dni"
+                            class="form-control"
+                            maxlength="8"
+                            value="{{ old('dni', $ad->dni ?? '') }}">
 
                         <label class="fw-semibold mt-2">Nombre Completo</label>
-                        <input type="text" name="boleta_full_name" id="boleta_full_name" class="form-control">
+                        <input type="text"
+                            name="boleta_full_name"
+                            id="boleta_full_name"
+                            class="form-control"
+                            value="{{ old('boleta_full_name', $ad->full_name ?? '') }}">
                     </div>
 
                     <!-- FACTURA -->
                     <div id="facturaFields" class="mt-3 d-none">
                         <label class="fw-semibold">RUC</label>
-                        <input type="text" name="ruc" class="form-control" maxlength="11">
+                        <input type="text"
+                            name="ruc"
+                            class="form-control"
+                            maxlength="11"
+                            value="{{ old('ruc', $ad->ruc ?? '') }}">
 
                         <label class="fw-semibold mt-2">Razón Social</label>
-                        <input type="text" name="company_name" class="form-control">
+                        <input type="text"
+                            name="company_name"
+                            class="form-control"
+                            value="{{ old('company_name', $ad->company_name ?? '') }}">
 
                         <label class="fw-semibold mt-2">Dirección</label>
-                        <input type="text" name="address" class="form-control">
+                        <input type="text"
+                            name="address"
+                            class="form-control"
+                            value="{{ old('address', $ad->address ?? '') }}">
                     </div>
 
                     <!-- NOTA DE VENTA -->
                     <div id="notaVentaFields" class="mt-3 d-none">
                         <label class="fw-semibold mt-2">Nombre Completo</label>
-                        <input type="text" name="nota_full_name" id="nota_full_name" class="form-control">
+                        <input type="text"
+                            name="nota_full_name"
+                            id="nota_full_name"
+                            class="form-control"
+                            value="{{ old('nota_full_name', $ad->full_name ?? '') }}">
                     </div>
 
                     <hr class="my-4">
@@ -457,10 +637,26 @@
                         <small class="text-muted">Completa los datos para ver la previsualización.</small>
                     </div>
 
-                    <button type="button" id="confirmReceiptBtn"
-                        class="btn btn-danger w-100 mt-3 d-none">
+                    <input type="hidden" name="save_as_draft" id="save_as_draft" value="0">
+
+                    @php
+                        $hasEnoughBalance = $virtualWallet >= $summaryTotalCost;
+                    @endphp
+
+                    <button
+                        type="submit"
+                        class="btn btn-danger w-100"
+                        id="submitAdBtn"
+                        {{ isset($ad) && !$hasEnoughBalance ? 'disabled' : '' }}
+                    >
                         Enviar Solicitud de Anuncio
                     </button>
+
+                    @if(isset($ad) && !$hasEnoughBalance)
+                        <small class="text-danger d-block mt-2 text-center">
+                            Saldo insuficiente para publicar este anuncio
+                        </small>
+                    @endif
 
                 </div>
             </form>
@@ -519,11 +715,300 @@ window.PRIVADOS_SUBCATEGORY_ID = 21;
 window.ALERTS = @json($alertsPrepared);
 </script>
 
+<script>
+    // Campos permitidos para la subcategoría (solo tags activos)
+    const fieldsFromServer = @json($fields ?? []);
+
+    // Datos del anuncio (para marcar checkboxes en borrador)
+    const adDataFromServer = @json($ad ?? null);
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-
 <script>
+document.addEventListener("DOMContentLoaded", () => {
+    const categorySelect = document.getElementById('categorySelect');
+    const subcatSelect = document.getElementById('subcategorySelect');
+    const subcatContainer = document.getElementById('subcatContainer');
+    const fieldsContainer = document.getElementById('fieldsContainer');
 
+    const imagesContainer = document.getElementById('imagesContainer');
+
+    const tagMap = {
+        is_urgent:     { container: 'urgentContainer',     input: 'urgent_publication' },
+        is_featured:   { container: 'featuredContainer',   input: 'featured_publication' },
+        is_premiere:   { container: 'premiereContainer',   input: 'premiere_publication' },
+        is_semi_new:   { container: 'semiNewContainer',    input: 'semi_new_publication' },
+        is_new:        { container: 'newContainer',        input: 'new_publication' },
+        is_available:  { container: 'availableContainer',  input: 'available_publication' },
+        is_top:        { container: 'topContainer',        input: 'top_publication' }
+    };
+
+    function resetTags() {
+        Object.values(tagMap).forEach(tag => {
+            const c = document.getElementById(tag.container);
+            const i = document.getElementById(tag.input);
+            if (c) c.classList.add('d-none');
+            if (i) i.checked = false;
+        });
+    }
+
+    function showTagsForSubcategory(selectedSub) {
+        resetTags();
+        Object.entries(tagMap).forEach(([flag, tag]) => {
+            if (selectedSub[flag]) {
+                const container = document.getElementById(tag.container);
+                if (container) container.classList.remove('d-none');
+
+                if (adDataFromServer && adDataFromServer[tag.input]) {
+                    const input = document.getElementById(tag.input);
+                    if (input) input.checked = true;
+                }
+            }
+        });
+    }
+
+    function generateDynamicFields(selectedSubId) {
+        fieldsContainer.innerHTML = ''; // limpiar antes
+
+        const allowedFields = fieldsFromServer.filter(f => f.ad_subcategories_id == selectedSubId);
+
+        allowedFields.forEach(f => {
+            const value = adDataFromServer?.values?.[f.id]?.value || ''; // <-- importante
+            const div = document.createElement('div');
+            div.className = 'field-card';
+            div.innerHTML = `<label class="fw-semibold">${f.name}</label>`;
+
+            let fieldHtml = '';
+            switch(f.type) {
+                case 'number':
+                    fieldHtml = `<input type="number" class="form-control" name="dynamic[${f.id}]" value="${value}">`;
+                    break;
+                case 'textarea':
+                    fieldHtml = `<textarea class="form-control" name="dynamic[${f.id}]" rows="3">${value}</textarea>`;
+                    break;
+                default:
+                    fieldHtml = `<input type="text" class="form-control" name="dynamic[${f.id}]" value="${value}">`;
+            }
+
+            div.innerHTML += fieldHtml;
+            fieldsContainer.appendChild(div);
+        });
+    }
+
+    categorySelect.addEventListener('change', function() {
+        const categoryId = this.value;
+        subcatSelect.innerHTML = '';
+        subcatContainer.classList.add('d-none');
+        resetTags();
+
+        if (!categoryId) return;
+
+        fetch(`/advertising/my-ads/subcategories-with-category/${categoryId}`)
+            .then(res => res.json())
+            .then(data => {
+                let html = `<option value="">-- Selecciona --</option>`;
+                data.subcategories.forEach(sub => {
+                    html += `<option value="${sub.id}">${sub.name}</option>`;
+                });
+                subcatSelect.innerHTML = html;
+                subcatContainer.classList.remove('d-none');
+
+                subcatSelect.onchange = function() {
+                    const subId = this.value;
+                    if (!subId) return;
+                    const selectedSub = data.subcategories.find(s => s.id == subId);
+                    if (!selectedSub) return;
+
+                    showTagsForSubcategory(selectedSub);
+                    generateDynamicFields(subId);
+                    imagesContainer?.classList.remove('d-none');
+                };
+
+                // Si hay borrador
+                @if(isset($ad))
+                    subcatSelect.value = "{{ $ad->ad_subcategories_id }}";
+                    subcatSelect.dispatchEvent(new Event('change'));
+                @endif
+            });
+    });
+
+    // Para nuevos anuncios, si ya hay categoría seleccionada (ej. old input)
+    if (categorySelect.value) categorySelect.dispatchEvent(new Event('change'));
+});
+    
+document.addEventListener('DOMContentLoaded', () => {
+
+    const subSelect = document.getElementById('subcategorySelect');
+
+    if (subSelect) {
+        subSelect.addEventListener('change', function () {
+            if (!this.value) return;
+
+            document.getElementById('titleContainer')?.classList.remove('d-none');
+            document.getElementById('descriptionContainer')?.classList.remove('d-none');
+
+            loadDynamicFields(this.value);
+        });
+    }
+
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    const receiptType = document.getElementById('receipt_type');
+    const boleta      = document.getElementById('boletaFields');
+    const factura     = document.getElementById('facturaFields');
+    const notaVenta   = document.getElementById('notaVentaFields');
+    const preview     = document.getElementById('receiptPreview');
+
+    function hideAll() {
+        boleta?.classList.add('d-none');
+        factura?.classList.add('d-none');
+        notaVenta?.classList.add('d-none');
+    }
+
+    function updateReceipt(type) {
+
+        hideAll();
+
+        if (!type) {
+            preview.innerHTML = `<small class="text-muted">Sin comprobante.</small>`;
+            return;
+        }
+
+        if (type === 'boleta') {
+            boleta.classList.remove('d-none');
+            preview.innerHTML = `<strong>Boleta</strong>`;
+        }
+
+        if (type === 'factura') {
+            factura.classList.remove('d-none');
+            preview.innerHTML = `<strong>Factura</strong>`;
+        }
+
+        if (type === 'nota_venta') {
+            notaVenta.classList.remove('d-none');
+            preview.innerHTML = `<strong>Nota de Venta</strong>`;
+        }
+    }
+
+    // Cambio manual
+    receiptType?.addEventListener('change', function () {
+        updateReceipt(this.value);
+    });
+
+    // CARGA AUTOMÁTICA EN BORRADOR
+    if (receiptType?.value) {
+        updateReceipt(receiptType.value);
+    }
+});
+
+// script para enviar el formulario
+document.addEventListener('DOMContentLoaded', () => {
+
+    const form = document.getElementById('adForm');
+
+    form.addEventListener('submit', function (e) {
+
+        // obtener el total REAL desde el resumen
+        const totalText = document
+            .getElementById('summaryTotalCost')
+            ?.textContent
+            ?.replace('S/.', '')
+            ?.trim();
+
+        const finalPrice = parseFloat(totalText || 0);
+
+        // SI NO PASA LA VALIDACIÓN → BLOQUEAMOS SUBMIT
+        if (!checkBalanceBeforeSubmit(finalPrice)) {
+            e.preventDefault();
+            return false;
+        }
+    });
+});
+
+function checkBalanceBeforeSubmit(finalPrice) {
+
+    const userBalance = {{ auth()->user()->virtual_wallet }};
+
+    if (userBalance < finalPrice) {
+
+        Swal.fire({
+            icon: 'warning',
+            title: 'Saldo insuficiente',
+            html: `
+                <p>Tu saldo actual es <strong>S/. ${userBalance.toFixed(2)}</strong></p>
+                <p>El costo del anuncio es <strong>S/. ${finalPrice.toFixed(2)}</strong></p>
+                <p class="text-danger fw-bold">Necesitas recargar saldo</p>
+            `,
+            showCancelButton: true,
+            confirmButtonText: '💳 Ir a Recargar',
+            cancelButtonText: '🗑️ Borrar anuncio',
+            reverseButtons: true,
+        }).then(result => {
+
+            // IR A RECARGAR → GUARDAR COMO DRAFT
+            if (result.isConfirmed) {
+                document.getElementById('save_as_draft').value = 1;
+                document.getElementById('adForm').submit();
+            }
+
+            // (el form nunca se envía)
+        });
+
+        return false;
+    }
+
+    return true;
+}
+    
+/*Logica de cuando el usuario ingresa a la vista de create con saldo 0*/
+document.addEventListener('DOMContentLoaded', function () {
+
+    const virtualWallet = {{ (int) $virtualWallet }};
+
+    if (virtualWallet <= 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Saldo insuficiente',
+            html: `
+                <p class="mb-1">No tienes saldo disponible para crear un anuncio.</p>
+                <strong>Necesitas realizar una recarga.</strong>
+            `,
+            showCancelButton: true,
+            confirmButtonText: '💳 Ir a Recargar',
+            cancelButtonText: '👀 Solo ver',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            reverseButtons: true,
+        }).then((result) => {
+
+            if (result.isConfirmed) {
+                window.location.href = "{{ route('recharges.index') }}";
+            }
+
+            if (result.dismiss === Swal.DismissReason.cancel) {
+                disableAdForm();
+            }
+        });
+    }
+
+    function disableAdForm() {
+
+        // Mensaje visual
+        const info = document.createElement('div');
+        info.className = 'alert alert-info mt-3';
+        info.innerHTML = `
+            <i class="fa-solid fa-circle-info me-1"></i>
+            Estás en modo solo visual. Recarga saldo para publicar anuncios.
+        `;
+
+        form.prepend(info);
+    }
+});
+
+/*Que muestre el alert al querer crear un servicio privado*/
 document.addEventListener('DOMContentLoaded', () => {
 
     const categorySelect    = document.getElementById('categorySelect');
@@ -684,6 +1169,10 @@ const PREVIEW_INTERVAL = 2500;
 // CONTADOR DE CARACTERES EN TÍTULO
 const titleInput = document.getElementById('titleInput');
 const charCount = document.getElementById('charCount');
+
+if (charCount) {
+    charCount.textContent = 0;
+}
 
 titleInput.addEventListener('input', () => {
     charCount.textContent = titleInput.value.length;
@@ -888,8 +1377,8 @@ function updatePreview() {
         description: document.querySelector("textarea[name='description']")?.value || "Descripción del anuncio...",
         dynamic_fields: dynamicPreviewFields,
         //contact_location: document.querySelector("input[name='contact_location']")?.value || "Ubicación",
-        district: document.querySelector("input[name='district']")?.value || "",
-        province: document.querySelector("input[name='province']")?.value || "",
+        district: document.querySelector("input[name='district']")?.value.toUpperCase() || "",
+        province: document.querySelector("input[name='province']")?.value.toUpperCase() || "",
 
         amount: amountInput.value || null,
         amount_text: amountTextInput.value || null,
@@ -1082,15 +1571,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // RESET IMÁGENES
     function resetImages() {
-        imagesGrid.innerHTML = '';
-        selectedInput.value = '';
+
+        if (imagesGrid) imagesGrid.innerHTML = '';
+        if (selectedInput) selectedInput.value = '';
+
         previewBox?.classList.add('d-none');
-        imagesContainer.classList.add('d-none');
+        imagesContainer?.classList.add('d-none');
+
         tempSelectedImages = [];
-        previewList.innerHTML = '';
+
+        if (previewList) previewList.innerHTML = '';
+
         referenceImages = [];
+
         updatePreview();
     }
+
 
     // RESET TAGS
     function resetTags() {
@@ -1135,12 +1631,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const ownImagesInput = document.getElementById('ownImagesInput');
         const ownImagesHelp  = document.getElementById('ownImagesHelp');
 
-        if (isEmpleosCategory) {
-            ownImagesInput.removeAttribute('multiple');
-            ownImagesHelp.textContent = 'Solo 1 imagen permitida';
-        } else {
-            ownImagesInput.setAttribute('multiple', 'multiple');
-            ownImagesHelp.textContent = 'Máx. 5 imágenes';
+        if (ownImagesInput && ownImagesHelp) {
+            if (isEmpleosCategory) {
+                ownImagesInput.removeAttribute('multiple');
+                ownImagesHelp.textContent = 'Solo 1 imagen permitida';
+            } else {
+                ownImagesInput.setAttribute('multiple', 'multiple');
+                ownImagesHelp.textContent = 'Máx. 5 imágenes';
+            }
         }
 
         subcatSelect.innerHTML = '';
@@ -1317,33 +1815,49 @@ function calculateDatesAndCosts() {
 
     if (!subcatPrice || subcatPrice <= 0) return;
 
-        const daysInput = document.getElementById("days_active");
-        let days = parseInt(daysInput.value);
+    const daysInput = document.getElementById("days_active");
+    if (!daysInput) return;
 
-        if (!days || days < 2) {
-            days = 2;
-            daysInput.value = 2;
-        }
+    let days = parseInt(daysInput.value);
 
-        let total = subcatPrice * days;
+    if (!days || days < 2) {
+        days = 2;
+        daysInput.value = 2;
+    }
 
-        if (document.getElementById("urgent_publication")?.checked) total += urgentPrice;
-        if (document.getElementById("featured_publication")?.checked) total += featuredPrice;
-        if (document.getElementById("premiere_publication_switch")?.checked) total += premierePrice;
-        if (document.getElementById("semi_new_publication")?.checked) total += semiNewPrice;
-        if (document.getElementById("new_publication")?.checked) total += newPrice;
-        if (document.getElementById("available_publication")?.checked) total += availablePrice;
-        if (document.getElementById("top_publication")?.checked) total += topPrice;
+    let total = subcatPrice * days;
 
-        document.getElementById("pricePerDay").value = `S/. ${subcatPrice.toFixed(2)}`;
-        document.getElementById("totalCost").value = `S/. ${total.toFixed(2)}`;
-        document.getElementById("summaryTotalCost").textContent = `S/. ${total.toFixed(2)}`;
+    if (document.getElementById("urgent_publication")?.checked) total += urgentPrice;
+    if (document.getElementById("featured_publication")?.checked) total += featuredPrice;
+    if (document.getElementById("premiere_publication_switch")?.checked) total += premierePrice;
+    if (document.getElementById("semi_new_publication")?.checked) total += semiNewPrice;
+    if (document.getElementById("new_publication")?.checked) total += newPrice;
+    if (document.getElementById("available_publication")?.checked) total += availablePrice;
+    if (document.getElementById("top_publication")?.checked) total += topPrice;
 
-            const today = new Date();
-            today.setDate(today.getDate() + days);
+    // ELEMENTOS VISUALES (PROTEGIDOS)
+    const pricePerDayEl = document.getElementById("pricePerDay");
+    const totalCostEl = document.getElementById("totalCost");
+    const summaryTotalCostEl = document.getElementById("summaryTotalCost");
+    const expiresAtEl = document.getElementById("expiresAt");
 
-            document.getElementById("expiresAt").value =
-                today.toISOString().split("T")[0];
+    if (pricePerDayEl) {
+        pricePerDayEl.value = `S/. ${subcatPrice.toFixed(2)}`;
+    }
+
+    if (totalCostEl) {
+        totalCostEl.value = `S/. ${total.toFixed(2)}`;
+    }
+
+    if (summaryTotalCostEl) {
+        summaryTotalCostEl.textContent = `S/. ${total.toFixed(2)}`;
+    }
+
+    if (expiresAtEl) {
+        const today = new Date();
+        today.setDate(today.getDate() + days);
+        expiresAtEl.value = today.toISOString().split("T")[0];
+    }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -1526,7 +2040,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('costContainer').classList.remove('d-none');
         document.getElementById('urgentContainer').classList.remove('d-none');
         document.getElementById('featuredContainer').classList.remove('d-none');
-        document.getElementById('summaryContainer').classList.remove('d-none');
+        document.getElementById('summaryContainer')?.classList.remove('d-none');
         document.getElementById('receiptContainer').classList.remove('d-none');
     }
 
@@ -1867,8 +2381,6 @@ function updateReceiptPreview() {
         background: #0288d1;
     }
 
-
-
     /* CAMPOS DINÁMICOS EN PREVIEW */
     .ad-dynamic-fields {
         list-style: none;
@@ -1989,6 +2501,10 @@ function updateReceiptPreview() {
     .ad-location {
         font-size: 12px;
         color: #888;
+    }
+
+    .uppercase-input {
+        text-transform: uppercase;
     }
 
     /* Precio */

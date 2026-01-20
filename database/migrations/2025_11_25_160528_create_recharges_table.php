@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('operation_number')->nullable();
             $table->text('reject_message')->nullable();
             $table->enum('status', ['pendiente', 'aceptado', 'rechazado'])->default('pendiente');
+            $table->timestamp('notified_at')->nullable();
             $table->timestamps();
         });
     }
