@@ -294,6 +294,7 @@
                             name="urgent_publication"
                             value="1"
                             {{ isset($ad) && $ad->urgent_publication ? 'checked' : '' }}>
+                            
                         <label class="form-check-label" for="urgent_publication">
                             Activar publicación como urgente
                         </label>
@@ -333,10 +334,11 @@
                     <label class="fw-semibold">¿Publicación en estreno?</label>
 
                     <div class="form-check form-switch">
-                        <input 
-                            class="form-check-input" 
-                            type="checkbox" 
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
                             id="premiere_publication_switch"
+                            {{ isset($ad) && $ad->premiere_publication ? 'checked' : '' }}
                         >
 
                         <input 
@@ -362,10 +364,15 @@
 
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox"
-                            id="semi_new_publication"
+                            id="semi_new_publication_switch"
+                            {{ isset($ad) && $ad->semi_new_publication ? 'checked' : '' }}>
+                        
+                        <input type="hidden"
                             name="semi_new_publication"
-                            value="1" {{ isset($ad) && $ad->semi_new_publication ? 'checked' : '' }}>
-                        <label class="form-check-label" for="semi_new_publication">
+                            id="semi_new_publication"
+                            value="{{ isset($ad) && $ad->semi_new_publication ? 1 : 0 }}">
+                        
+                        <label class="form-check-label" for="semi_new_publication_switch">
                             Activar publicación como seminuevo
                         </label>
                     </div>
@@ -569,14 +576,18 @@
                     <!-- Tipo de comprobante -->
                     <label class="fw-semibold mb-2">Tipo de comprobante</label>
                     <select class="form-select" name="receipt_type" id="receipt_type">
-                        <option value="">-- Sin comprobante --</option>
-                        <option value="boleta" {{ ($ad->receipt_type ?? '') === 'boleta' ? 'selected' : '' }}>
+                        <option value="boleta"
+                            {{ ($ad->receipt_type ?? '') === 'boleta' ? 'selected' : '' }}>
                             Boleta
                         </option>
-                        <option value="factura" {{ ($ad->receipt_type ?? '') === 'factura' ? 'selected' : '' }}>
+
+                        <option value="factura"
+                            {{ ($ad->receipt_type ?? '') === 'factura' ? 'selected' : '' }}>
                             Factura
                         </option>
-                        <option value="nota_venta" {{ ($ad->receipt_type ?? '') === 'nota_venta' ? 'selected' : '' }}>
+
+                        <option value="nota_venta"
+                            {{ !isset($ad) || ($ad->receipt_type ?? '') === 'nota_venta' ? 'selected' : '' }}>
                             Nota de Venta
                         </option>
                     </select>
@@ -643,6 +654,7 @@
                         $hasEnoughBalance = $virtualWallet >= $summaryTotalCost;
                     @endphp
 
+                    <input type="hidden" name="publish" id="publishInput" value="0">
                     <button
                         type="submit"
                         class="btn btn-danger w-100"
@@ -652,11 +664,12 @@
                         Enviar Solicitud de Anuncio
                     </button>
 
-                    @if(isset($ad) && !$hasEnoughBalance)
-                        <small class="text-danger d-block mt-2 text-center">
-                            Saldo insuficiente para publicar este anuncio
-                        </small>
-                    @endif
+                    <small
+                        id="balanceWarning"
+                        class="text-danger d-none mt-2 text-center"
+                    >
+                        Saldo insuficiente para publicar este anuncio
+                    </small>
 
                 </div>
             </form>
@@ -716,143 +729,79 @@ window.ALERTS = @json($alertsPrepared);
 </script>
 
 <script>
-    // Campos permitidos para la subcategoría (solo tags activos)
+    const FORM_MODE = "{{ isset($ad) ? 'edit' : 'create' }}";
     const fieldsFromServer = @json($fields ?? []);
-
-    // Datos del anuncio (para marcar checkboxes en borrador)
     const adDataFromServer = @json($ad ?? null);
+    const valuesFromServer = @json($values ?? []);
+    const VIRTUAL_WALLET = {{ (float) $virtualWallet }};
+
+    const PRICES = {
+        urgent: {{ $urgentPrice }},
+        featured: {{ $featuredPrice }},
+        premiere: {{ $premierePrice }},
+        semi_new: {{ $semiNewPrice }},
+        new: {{ $newPrice }},
+        available: {{ $availablePrice }},
+        top: {{ $topPrice }},
+    };
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    const categorySelect = document.getElementById('categorySelect');
-    const subcatSelect = document.getElementById('subcategorySelect');
-    const subcatContainer = document.getElementById('subcatContainer');
-    const fieldsContainer = document.getElementById('fieldsContainer');
 
-    const imagesContainer = document.getElementById('imagesContainer');
+let subcatPrice = {{ isset($ad) && isset($subcategories->first()->price)
+    ? $subcategories->first()->price
+    : 0 }};
 
-    const tagMap = {
-        is_urgent:     { container: 'urgentContainer',     input: 'urgent_publication' },
-        is_featured:   { container: 'featuredContainer',   input: 'featured_publication' },
-        is_premiere:   { container: 'premiereContainer',   input: 'premiere_publication' },
-        is_semi_new:   { container: 'semiNewContainer',    input: 'semi_new_publication' },
-        is_new:        { container: 'newContainer',        input: 'new_publication' },
-        is_available:  { container: 'availableContainer',  input: 'available_publication' },
-        is_top:        { container: 'topContainer',        input: 'top_publication' }
-    };
+function updatePublishButton(totalCost) {
+    const btn = document.getElementById("submitAdBtn");
+    const warning = document.getElementById("balanceWarning");
 
-    function resetTags() {
-        Object.values(tagMap).forEach(tag => {
-            const c = document.getElementById(tag.container);
-            const i = document.getElementById(tag.input);
-            if (c) c.classList.add('d-none');
-            if (i) i.checked = false;
-        });
+    if (!btn) return;
+
+    if (totalCost <= VIRTUAL_WALLET) {
+        btn.disabled = false;
+        warning?.classList.add("d-none");
+    } else {
+        btn.disabled = true;
+        warning?.classList.remove("d-none");
     }
+}
 
-    function showTagsForSubcategory(selectedSub) {
-        resetTags();
-        Object.entries(tagMap).forEach(([flag, tag]) => {
-            if (selectedSub[flag]) {
-                const container = document.getElementById(tag.container);
-                if (container) container.classList.remove('d-none');
 
-                if (adDataFromServer && adDataFromServer[tag.input]) {
-                    const input = document.getElementById(tag.input);
-                    if (input) input.checked = true;
-                }
-            }
-        });
-    }
+document.getElementById('submitAdBtn').addEventListener('click', function () {
+    document.getElementById('publishInput').value = 1;
+});
 
-    function generateDynamicFields(selectedSubId) {
-        fieldsContainer.innerHTML = ''; // limpiar antes
+const premiereSwitch = document.getElementById('premiere_publication_switch');
+const premiereInput  = document.getElementById('premiere_publication');
 
-        const allowedFields = fieldsFromServer.filter(f => f.ad_subcategories_id == selectedSubId);
-
-        allowedFields.forEach(f => {
-            const value = adDataFromServer?.values?.[f.id]?.value || ''; // <-- importante
-            const div = document.createElement('div');
-            div.className = 'field-card';
-            div.innerHTML = `<label class="fw-semibold">${f.name}</label>`;
-
-            let fieldHtml = '';
-            switch(f.type) {
-                case 'number':
-                    fieldHtml = `<input type="number" class="form-control" name="dynamic[${f.id}]" value="${value}">`;
-                    break;
-                case 'textarea':
-                    fieldHtml = `<textarea class="form-control" name="dynamic[${f.id}]" rows="3">${value}</textarea>`;
-                    break;
-                default:
-                    fieldHtml = `<input type="text" class="form-control" name="dynamic[${f.id}]" value="${value}">`;
-            }
-
-            div.innerHTML += fieldHtml;
-            fieldsContainer.appendChild(div);
-        });
-    }
-
-    categorySelect.addEventListener('change', function() {
-        const categoryId = this.value;
-        subcatSelect.innerHTML = '';
-        subcatContainer.classList.add('d-none');
-        resetTags();
-
-        if (!categoryId) return;
-
-        fetch(`/advertising/my-ads/subcategories-with-category/${categoryId}`)
-            .then(res => res.json())
-            .then(data => {
-                let html = `<option value="">-- Selecciona --</option>`;
-                data.subcategories.forEach(sub => {
-                    html += `<option value="${sub.id}">${sub.name}</option>`;
-                });
-                subcatSelect.innerHTML = html;
-                subcatContainer.classList.remove('d-none');
-
-                subcatSelect.onchange = function() {
-                    const subId = this.value;
-                    if (!subId) return;
-                    const selectedSub = data.subcategories.find(s => s.id == subId);
-                    if (!selectedSub) return;
-
-                    showTagsForSubcategory(selectedSub);
-                    generateDynamicFields(subId);
-                    imagesContainer?.classList.remove('d-none');
-                };
-
-                // Si hay borrador
-                @if(isset($ad))
-                    subcatSelect.value = "{{ $ad->ad_subcategories_id }}";
-                    subcatSelect.dispatchEvent(new Event('change'));
-                @endif
-            });
+if (premiereSwitch && premiereInput) {
+    premiereSwitch.addEventListener('change', () => {
+        premiereInput.value = premiereSwitch.checked ? 1 : 0;
     });
+}
 
-    // Para nuevos anuncios, si ya hay categoría seleccionada (ej. old input)
-    if (categorySelect.value) categorySelect.dispatchEvent(new Event('change'));
-});
-    
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
+    const semiNewSwitch = document.getElementById("semi_new_publication_switch");
+    const semiNewInput = document.getElementById("semi_new_publication");
 
-    const subSelect = document.getElementById('subcategorySelect');
+    if (semiNewSwitch && semiNewInput) {
+        // Inicializar hidden al cargar
+        semiNewInput.value = semiNewSwitch.checked ? 1 : 0;
 
-    if (subSelect) {
-        subSelect.addEventListener('change', function () {
-            if (!this.value) return;
-
-            document.getElementById('titleContainer')?.classList.remove('d-none');
-            document.getElementById('descriptionContainer')?.classList.remove('d-none');
-
-            loadDynamicFields(this.value);
+        // Recalcular total al cambiar switch
+        semiNewSwitch.addEventListener("change", () => {
+            semiNewInput.value = semiNewSwitch.checked ? 1 : 0;
+            calculateDatesAndCosts();
         });
-    }
 
+        // Recalcular total al cargar por si está marcado por defecto
+        calculateDatesAndCosts();
+    }
 });
+
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -1010,27 +959,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
 /*Que muestre el alert al querer crear un servicio privado*/
 document.addEventListener('DOMContentLoaded', () => {
+    const categorySelect = document.getElementById('categorySelect');
+    const subcatContainer = document.getElementById('subcatContainer');
 
-    const categorySelect    = document.getElementById('categorySelect');
-    const subcategorySelect = document.getElementById('subcategorySelect');
+    if (!categorySelect || !subcatContainer) return;
 
-    if (!categorySelect || !subcategorySelect) return;
-
-    subcategorySelect.addEventListener('change', () => {
-
-        const categoryId    = parseInt(categorySelect.value);
-        const subcategoryId = parseInt(subcategorySelect.value);
-
+    function checkAdultServicesAlert(categoryId, subcategoryId) {
         if (
-            categoryId === window.SERVICIOS_CATEGORY_ID &&
-            subcategoryId === window.PRIVADOS_SUBCATEGORY_ID
+            parseInt(categoryId) === window.SERVICIOS_CATEGORY_ID &&
+            parseInt(subcategoryId) === window.PRIVADOS_SUBCATEGORY_ID
         ) {
             showAdultServicesAlert();
         }
+    }
 
+    // Delegación: escucha cualquier cambio en un select dentro de subcatContainer
+    subcatContainer.addEventListener('change', (e) => {
+        if (e.target && e.target.tagName === 'SELECT') {
+            const subcategoryId = e.target.value;
+            const categoryId = categorySelect.value;
+
+            checkAdultServicesAlert(categoryId, subcategoryId);
+        }
     });
 
+    // Al cargar la página, revisa si ya están seleccionados Servicios → Privados
+    const subcategorySelect = document.getElementById('subcategorySelect');
+    if (subcategorySelect) {
+        checkAdultServicesAlert(categorySelect.value, subcategorySelect.value);
+    }
 });
+
 
 //Title personalizado para cada categoria
 document.addEventListener("DOMContentLoaded", () => {
@@ -1096,15 +1055,21 @@ function getMainHtml(alertData) {
     `;
 }
 
-
 let openingTerms = false;
 
 // Alerta de categoria servicios y privados
 function showAdultServicesAlert() {
-
-    if (!window.ALERTS || window.ALERTS.length === 0) return;
+    if (!window.ALERTS || !window.ALERTS.length) {
+        console.warn("No hay alertas configuradas para Servicios Privados");
+        return;
+    }
 
     const alertData = window.ALERTS[0];
+    
+    if (!alertData || !alertData.title) {
+        console.warn("ALERTA inválida:", alertData);
+        return;
+    }
 
     Swal.fire({
         title: alertData.title ?? 'Contenido sensible',
@@ -1118,25 +1083,19 @@ function showAdultServicesAlert() {
         reverseButtons: true,
         allowOutsideClick: false,
         didOpen: () => {
-
             document
                 .getElementById('openTermsBtn')
                 .addEventListener('click', () => {
-
-                    // ACTUALIZAMOS EL MISMO MODAL
                     Swal.update({
                         title: 'Términos y Condiciones',
                         icon: undefined,
                         showCancelButton: false,
                         confirmButtonText: 'Volver',
-                        html: `
-                            <div style="max-height:420px;overflow-y:auto;text-align:left;">
-                                ${buildTermsHtml(alertData.terms)}
-                            </div>
-                        `
+                        html: `<div style="max-height:420px;overflow-y:auto;text-align:left;">
+                            ${buildTermsHtml(alertData.terms ?? [])}
+                        </div>`
                     });
 
-                    // BOTÓN VOLVER
                     Swal.getConfirmButton().onclick = () => {
                         Swal.update({
                             title: alertData.title,
@@ -1146,13 +1105,10 @@ function showAdultServicesAlert() {
                             cancelButtonText: 'Rechazar',
                             html: getMainHtml(alertData)
                         });
-
-                        // volver a bindear
                         setTimeout(() => showAdultServicesAlert(), 0);
                     };
                 });
         }
-
     }).then(result => {
         if (result.dismiss === Swal.DismissReason.cancel) {
             location.reload();
@@ -1799,7 +1755,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-let subcatPrice = 0;
+//let subcatPrice = 0;
 
 // PRECIO URGENTE 
 let urgentPrice = {{ $urgentPrice }};
@@ -1819,7 +1775,6 @@ function calculateDatesAndCosts() {
     if (!daysInput) return;
 
     let days = parseInt(daysInput.value);
-
     if (!days || days < 2) {
         days = 2;
         daysInput.value = 2;
@@ -1827,108 +1782,145 @@ function calculateDatesAndCosts() {
 
     let total = subcatPrice * days;
 
+    // Chequear si cada extra está seleccionado
+    const semiNewSelected = document.getElementById("semi_new_publication_switch")?.checked ?? false;
+
     if (document.getElementById("urgent_publication")?.checked) total += urgentPrice;
     if (document.getElementById("featured_publication")?.checked) total += featuredPrice;
     if (document.getElementById("premiere_publication_switch")?.checked) total += premierePrice;
-    if (document.getElementById("semi_new_publication")?.checked) total += semiNewPrice;
+    if (semiNewSelected) total += semiNewPrice; // ahora usa variable definida
     if (document.getElementById("new_publication")?.checked) total += newPrice;
     if (document.getElementById("available_publication")?.checked) total += availablePrice;
     if (document.getElementById("top_publication")?.checked) total += topPrice;
 
-    // ELEMENTOS VISUALES (PROTEGIDOS)
+    // ELEMENTOS VISUALES
     const pricePerDayEl = document.getElementById("pricePerDay");
     const totalCostEl = document.getElementById("totalCost");
     const summaryTotalCostEl = document.getElementById("summaryTotalCost");
-    const expiresAtEl = document.getElementById("expiresAt");
+    const expiresInput = document.getElementById("expiresAt");
 
-    if (pricePerDayEl) {
-        pricePerDayEl.value = `S/. ${subcatPrice.toFixed(2)}`;
-    }
+    if (pricePerDayEl) pricePerDayEl.value = `S/. ${subcatPrice.toFixed(2)}`;
+    if (totalCostEl) totalCostEl.value = `S/. ${total.toFixed(2)}`;
+    if (summaryTotalCostEl) summaryTotalCostEl.textContent = `S/. ${total.toFixed(2)}`;
 
-    if (totalCostEl) {
-        totalCostEl.value = `S/. ${total.toFixed(2)}`;
-    }
-
-    if (summaryTotalCostEl) {
-        summaryTotalCostEl.textContent = `S/. ${total.toFixed(2)}`;
-    }
-
-    if (expiresAtEl) {
-        const today = new Date();
-        today.setDate(today.getDate() + days);
-        expiresAtEl.value = today.toISOString().split("T")[0];
-    }
+    // ===== FECHA EXPIRACIÓN =====
+    const today = new Date();
+    today.setDate(today.getDate() + days);
+    expiresInput.value = today.toLocaleDateString("es-PE", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+    });
 }
 
+
+function initDynamicPreviewFromServer() {
+
+    if (FORM_MODE !== 'edit') return;
+
+    ad.dynamic_fields = [];
+
+    fieldsFromServer.forEach(f => {
+
+        const value = valuesFromServer?.[f.id]?.value;
+
+        if (!value) return;
+
+        ad.dynamic_fields.push({
+            id: f.id,
+            label: f.name,
+            value: value
+        });
+    });
+
+    updatePreview();
+}
+
+//Script para crear anuncio nuevo / y editar borrador
 document.addEventListener("DOMContentLoaded", () => {
+
+    // OBTENER CAMPOS DINÁMICOS (ESTO FALTABA)
+    function renderDynamicFields(subcatId) {
+
+        const fieldsContainer = document.getElementById('fieldsContainer');
+        fieldsContainer.innerHTML = "";
+
+        if (FORM_MODE === 'edit') {
+
+            const allowedFields = fieldsFromServer.filter(
+                f => Number(f.ad_subcategories_id) === Number(subcatId)
+            );
+
+            allowedFields.forEach(f => {
+
+                const value = valuesFromServer?.[f.id]?.value ?? '';
+
+                let input = '';
+
+                switch (f.type) {
+                    case 'number':
+                        input = `<input type="number" class="form-control"
+                                name="dynamic[${f.id}]" value="${value}">`;
+                        break;
+
+                    case 'textarea':
+                        input = `<textarea class="form-control dynamic-lowercase"
+                                name="dynamic[${f.id}]">${value}</textarea>`;
+                        break;
+
+                    default:
+                        input = `<input type="text" class="form-control dynamic-lowercase"
+                                name="dynamic[${f.id}]" value="${value}">`;
+                }
+
+                fieldsContainer.innerHTML += `
+                    <div class="field-card">
+                        <label class="fw-semibold">${f.name}</label>
+                        ${input}
+                    </div>
+                `;
+            });
+
+        } else {
+
+            fetch(`/advertising/fields/${subcatId}`)
+                .then(res => res.json())
+                .then(fields => {
+                    fields.forEach(f => {
+                        fieldsContainer.innerHTML += `
+                            <div class="field-card">
+                                <label class="fw-semibold">${f.name}</label>
+                                <input type="text"
+                                    class="form-control dynamic-lowercase"
+                                    name="dynamic[${f.id}]">
+                            </div>
+                        `;
+                    });
+                });
+        }
+    }
 
     // CARGAR CAMPOS + PRECIO 
     document.getElementById('subcategorySelect').addEventListener('change', function () {
 
         const subcatId = this.value;
         const categoryId = document.getElementById('categorySelect').value;
-        const fieldsContainer = document.getElementById('fieldsContainer');
-
-        fieldsContainer.innerHTML = "";
-        showMainFields();
 
         if (!subcatId) return;
 
-        // OBTENER PRECIO DE SUBCATEGORÍA
+        showMainFields();
+        renderDynamicFields(subcatId);
+
         fetch(`/advertising/my-ads/subcategories/${categoryId}`)
             .then(res => res.json())
             .then(subcategories => {
-
                 const selected = subcategories.find(s => s.id == subcatId);
-
                 if (!selected) return;
 
                 subcatPrice = parseFloat(selected.price ?? 0);
                 document.getElementById("pricePerDay").value = `S/. ${subcatPrice.toFixed(2)}`;
                 document.getElementById("costContainer").classList.remove("d-none");
                 calculateDatesAndCosts();
-            });
-
-        // OBTENER CAMPOS DINÁMICOS (ESTO FALTABA)
-        fetch(`/advertising/fields/${subcatId}`)
-            .then(res => res.json())
-            .then(fields => {
-
-                if (!fields.length) return;
-
-                fields.forEach(field => {
-
-                    let input = '';
-
-                    switch (field.type) {
-
-                        case 'number':
-                            input = `<input type="number" class="form-control" name="dynamic[${field.id}]">`;
-                            break;
-
-                        case 'textarea':
-                            input = `
-                                <textarea 
-                                    class="form-control dynamic-lowercase"
-                                    name="dynamic[${field.id}]" 
-                                    rows="3"></textarea>`;
-                            break;
-
-                        default:
-                            input = `
-                                <input 
-                                    type="text" 
-                                    class="form-control dynamic-lowercase"
-                                    name="dynamic[${field.id}]">`;
-                    }
-
-                    fieldsContainer.innerHTML += `
-                        <div class="field-card">
-                            <label class="fw-semibold">${field.name}</label>
-                            ${input}
-                        </div>
-                    `;
-                });
             });
     });
 
@@ -2013,7 +2005,12 @@ document.addEventListener("DOMContentLoaded", () => {
         // escucha el cambio del switch de urgente
         safeListener("urgent_publication", "change", calculateDatesAndCosts);
         safeListener("featured_publication", "change", calculateDatesAndCosts);
-        safeListener("premiere_publication_switch", "change", calculateDatesAndCosts);
+        safeListener("premiere_publication_switch", "change", () => {
+            const hidden = document.getElementById("premiere_publication");
+            hidden.value = document.getElementById("premiere_publication_switch").checked ? 1 : 0;
+            calculateDatesAndCosts();
+        });
+
         safeListener("semi_new_publication", "change", calculateDatesAndCosts);
         safeListener("new_publication", "change", calculateDatesAndCosts);
         safeListener("available_publication", "change", calculateDatesAndCosts);
@@ -2044,6 +2041,39 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('receiptContainer').classList.remove('d-none');
     }
 
+    // Cargar campos automáticamente al editar
+    if (FORM_MODE === 'edit' && adDataFromServer) {
+
+        const subcatId = adDataFromServer.ad_subcategories_id;
+
+        showMainFields();
+        renderDynamicFields(subcatId);
+
+        document.getElementById("days_active").value =
+            adDataFromServer.days_active;
+
+        document.getElementById("urgent_publication").checked =
+            !!adDataFromServer.urgent_publication;
+
+        document.getElementById("featured_publication").checked =
+            !!adDataFromServer.featured_publication;
+
+        document.getElementById("premiere_publication_switch").checked =
+            !!adDataFromServer.premiere_publication;
+
+        document.getElementById("premiere_publication").value =
+            adDataFromServer.premiere_publication ? 1 : 0;
+
+        document.getElementById("semi_new_publication").checked =
+            !!adDataFromServer.semi_new_publication;
+
+        // recalcular costos iniciales
+        setTimeout(() => {
+            calculateDatesAndCosts();
+            updatePreview(); 
+        }, 0);
+    }
+
 });
 
 // COMPROBANTE: BOLETA - FACTURA - NOTA DE VENTA - PREVIEW - DESCARGA
@@ -2065,8 +2095,7 @@ const confirmReceiptBtn = document.getElementById("confirmReceiptBtn");
 // Mostrar campos según tipo seleccionado
 document.addEventListener("DOMContentLoaded", () => {
 
-    receiptType.addEventListener("change", function () {
-        const type = this.value;
+    function applyReceiptType(type) {
 
         boletaFields.classList.add("d-none");
         facturaFields.classList.add("d-none");
@@ -2074,8 +2103,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (type === "boleta") {
             boletaFields.classList.remove("d-none");
-            document.getElementById("boleta_full_name").value = authUser.full_name;
-            document.querySelector("[name='dni']").value = authUser.dni;
+            document.getElementById("boleta_full_name").value ||= authUser.full_name;
+            document.querySelector("[name='dni']").value ||= authUser.dni;
         }
 
         if (type === "factura") {
@@ -2084,13 +2113,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (type === "nota_venta") {
             notaVentaFields.classList.remove("d-none");
-            document.getElementById("nota_full_name").value = authUser.full_name;
+
+            const input = document.getElementById("nota_full_name");
+            if (!input.value) {
+                input.value = authUser.full_name;
+            }
         }
 
         confirmReceiptBtn.classList.remove("d-none");
         updateReceiptPreview();
+        
+    }
+
+    // cambio manual
+    receiptType.addEventListener("change", function () {
+        applyReceiptType(this.value);
     });
 
+    // EJECUCIÓN AUTOMÁTICA AL CARGAR
+    if (receiptType.value) {
+        applyReceiptType(receiptType.value);
+    }
 });
 
 confirmReceiptBtn.classList.remove("d-none");

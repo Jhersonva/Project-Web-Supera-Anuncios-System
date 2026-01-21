@@ -71,15 +71,15 @@ class MyAdRequestController extends Controller
             'values' => collect(),
             'images' => collect(),
 
-            'urgentPrice' => Setting::get('urgent_publication_price', 7),
-            'featuredPrice' => Setting::get('featured_publication_price', 6),
-            'premierePrice' => Setting::get('premiere_publication_price', 5),
-            'semiNewPrice' => Setting::get('semi_new_publication_price', 4),
-            'newPrice' => Setting::get('new_publication_price', 3),
+            'urgentPrice'    => Setting::get('urgent_publication_price', 7),
+            'featuredPrice'  => Setting::get('featured_publication_price', 6),
+            'premierePrice'  => Setting::get('premiere_publication_price', 5),
+            'semiNewPrice'   => Setting::get('semi_new_publication_price', 4),
+            'newPrice'       => Setting::get('new_publication_price', 3),
             'availablePrice' => Setting::get('available_publication_price', 2),
-            'topPrice' => Setting::get('top_publication_price', 1),
+            'topPrice'       => Setting::get('top_publication_price', 1),
 
-            'alertsPrepared' => [],
+            'alertsPrepared' => $alertsPrepared,
             'isEmployment' => false,
         ]);
     }
@@ -180,19 +180,57 @@ class MyAdRequestController extends Controller
         $days = (int) $request->days_active;
         $expiresAt = now()->addDays($days);
 
+
+        Log::info('PUBLICACIONES RECIBIDAS', [
+            'urgent'    => $request->input('urgent_publication'),
+            'featured'  => $request->input('featured_publication'),
+            'premiere'  => $request->input('premiere_publication'),
+            'semi_new'  => $request->input('semi_new_publication'),
+            'new'       => $request->input('new_publication'),
+            'available' => $request->input('available_publication'),
+            'top'       => $request->input('top_publication'),
+        ]);
+
+        Log::info('SETTINGS DEBUG1', [
+            'urgent_price'    => Setting::get('urgent_publication_price'),
+            'featured_price'  => Setting::get('featured_publication_price'),
+            'premiere_price'  => Setting::get('premiere_publication_price'),
+        ]);
+
+
         // Subcategoría para calcular precio
         $subcategory = AdSubcategory::findOrFail($request->subcategory_id);
+
         $basePrice = (float) $subcategory->price;
 
-        $prices = collect(AdPrices::all())->keyBy('key');
+        $urgentPrice = $request->boolean('urgent_publication')
+            ? (float) Setting::get('urgent_publication_price', 0)
+            : 0;
 
-        $urgentPrice    = $request->boolean('urgent_publication')    ? ($prices['urgent']->price ?? 0) : 0;
-        $featuredPrice  = $request->boolean('featured_publication')  ? ($prices['featured']->price ?? 0) : 0;
-        $premierePrice  = $request->boolean('premiere_publication')  ? ($prices['premiere']->price ?? 0) : 0;
-        $semiNewPrice   = $request->boolean('semi_new_publication')   ? ($prices['semi_new']->price ?? 0) : 0;
-        $newPrice       = $request->boolean('new_publication')        ? ($prices['new']->price ?? 0) : 0;
-        $availablePrice = $request->boolean('available_publication')  ? ($prices['available']->price ?? 0) : 0;
-        $topPrice       = $request->boolean('top_publication')        ? ($prices['top']->price ?? 0) : 0;
+        $featuredPrice = $request->boolean('featured_publication')
+            ? (float) Setting::get('featured_publication_price', 0)
+            : 0;
+
+        $premierePrice = $request->boolean('premiere_publication')
+            ? (float) Setting::get('premiere_publication_price', 0)
+            : 0;
+
+        $semiNewPrice = $request->boolean('semi_new_publication')
+            ? (float) Setting::get('semi_new_publication_price', 0)
+            : 0;
+
+        $newPrice = $request->boolean('new_publication')
+            ? (float) Setting::get('new_publication_price', 0)
+            : 0;
+
+        $availablePrice = $request->boolean('available_publication')
+            ? (float) Setting::get('available_publication_price', 0)
+            : 0;
+
+        $topPrice = $request->boolean('top_publication')
+            ? (float) Setting::get('top_publication_price', 0)
+            : 0;
+
 
         $saveAsDraft = $request->boolean('save_as_draft');
 
@@ -207,6 +245,8 @@ class MyAdRequestController extends Controller
             + $newPrice
             + $availablePrice
             + $topPrice;
+        
+        
 
         // Validación de saldo
         if ($user->virtual_wallet < $finalPrice && !$saveAsDraft) {
@@ -219,7 +259,27 @@ class MyAdRequestController extends Controller
             $user->save();
         }
 
+        Log::info('SALDO FINAL', [
+            'wallet_after' => $user->virtual_wallet
+        ]);
+
         $amount = $request->amount_visible == 1 ? $request->amount : 0;
+
+  
+        Log::info('COSTOS CALCULADOS', [
+            'base_price' => $basePrice,
+            'days'       => $days,
+            'urgent'     => $urgentPrice,
+            'featured'   => $featuredPrice,
+            'premiere'   => $premierePrice,
+            'semi_new'   => $semiNewPrice,
+            'new'        => $newPrice,
+            'available' => $availablePrice,
+            'top'        => $topPrice,
+            'final'      => $finalPrice,
+            'wallet_before' => $user->virtual_wallet,
+        ]);
+
 
         $receiptType = $request->filled('receipt_type') ? $request->receipt_type : 'nota_venta';
 
@@ -276,6 +336,19 @@ class MyAdRequestController extends Controller
 
         $status = $saveAsDraft ? 'draft' : 'pendiente';
 
+        Log::info('CREATE FINAL PRICE', [
+            'days' => $days,
+            'base' => $basePrice,
+            'extras' => [
+                'urgent' => $urgentPrice,
+                'featured' => $featuredPrice,
+                'premiere' => $premierePrice,
+            ],
+            'final' => $finalPrice,
+            'wallet_before' => $user->virtual_wallet,
+        ]);
+
+
         // Crear ANUNCIO *PUBLICADO AUTOMÁTICAMENTE*
         $ad = Advertisement::create([
             'ad_categories_id'      => $request->category_id,
@@ -294,7 +367,7 @@ class MyAdRequestController extends Controller
             //'expires_at'            => $expiresAt,
             'published'             => false,
             'status'     => $status,
-            'expires_at' => $saveAsDraft ? null : $expiresAt,
+            'expires_at' => $expiresAt,
 
             // ===== PUBLICACIONES =====
             'urgent_publication'    => $request->boolean('urgent_publication'),
@@ -331,6 +404,8 @@ class MyAdRequestController extends Controller
             'company_name' => $receiptData['company_name'],
             'address'      => $receiptData['address'],
         ]);
+
+        
 
         $user->update([
             'whatsapp'   => $request->whatsapp,
@@ -642,54 +717,6 @@ class MyAdRequestController extends Controller
         ]);
     }
 
-    public function publishDraft(Request $request, Advertisement $ad)
-    {
-        if ($ad->user_id !== auth()->id()) {
-            abort(403);
-        }
-
-        if ($ad->status !== 'draft') {
-            return redirect()->route('my-ads.index');
-        }
-
-        $user = auth()->user();
-
-        // recalcular costo REAL
-        $days = (int) $ad->days_active;
-
-        $subcategory = AdSubcategory::find($ad->ad_subcategories_id);
-        $basePrice = $subcategory ? (float) $subcategory->price : 0;
-
-        $finalPrice =
-            ($basePrice * $days)
-            + ($ad->urgent_publication ? $ad->urgent_price : 0)
-            + ($ad->featured_publication ? $ad->featured_price : 0)
-            + ($ad->premiere_publication ? $ad->premiere_price : 0)
-            + ($ad->semi_new_publication ? $ad->semi_new_price : 0)
-            + ($ad->new_publication ? $ad->new_price : 0)
-            + ($ad->available_publication ? $ad->available_price : 0)
-            + ($ad->top_publication ? $ad->top_price : 0);
-
-        // saldo insuficiente → NO PUBLICA
-        if ($user->virtual_wallet < $finalPrice) {
-            return back()->with('error', 'Saldo insuficiente para publicar el anuncio.');
-        }
-
-        // descontar saldo
-        $user->decrement('virtual_wallet', $finalPrice);
-
-        // publicar
-        $ad->update([
-            'status'     => 'pendiente',
-            'published'  => false,
-            'expires_at' => now()->addDays($days),
-        ]);
-
-        return redirect()
-            ->route('my-ads.index')
-            ->with('success', 'Tu anuncio fue enviado para revisión.');
-    }
-
     public function updateDraft(Request $request, Advertisement $ad)
     {
         if ($ad->user_id !== auth()->id()) abort(403);
@@ -704,45 +731,96 @@ class MyAdRequestController extends Controller
         ]);
 
         $user = auth()->user();
+        $isPublishing = $request->boolean('publish'); 
         $days = (int) $request->days_active;
-        $expiresAt = now()->addDays($days);
 
-        // SUBCATEGORÍA / PRECIO BASE
+        // =======================
+        // PRECIO BASE
+        // =======================
         $subcategory = AdSubcategory::findOrFail($ad->ad_subcategories_id);
         $basePrice = (float) $subcategory->price;
 
-        $prices = collect(AdPrices::all())->keyBy('key');
+        $urgentPrice = $request->boolean('urgent_publication')
+            ? (float) Setting::get('urgent_publication_price', 0)
+            : 0;
 
-        $urgentPrice    = $request->boolean('urgent_publication')    ? ($prices['urgent']->price ?? 0) : 0;
-        $featuredPrice  = $request->boolean('featured_publication')  ? ($prices['featured']->price ?? 0) : 0;
-        $premierePrice  = $request->boolean('premiere_publication')  ? ($prices['premiere']->price ?? 0) : 0;
-        $semiNewPrice   = $request->boolean('semi_new_publication')  ? ($prices['semi_new']->price ?? 0) : 0;
-        $newPrice       = $request->boolean('new_publication')       ? ($prices['new']->price ?? 0) : 0;
-        $availablePrice = $request->boolean('available_publication') ? ($prices['available']->price ?? 0) : 0;
-        $topPrice       = $request->boolean('top_publication')       ? ($prices['top']->price ?? 0) : 0;
+        $featuredPrice = $request->boolean('featured_publication')
+            ? (float) Setting::get('featured_publication_price', 0)
+            : 0;
 
-        $saveAsDraft = $request->boolean('save_as_draft');
+        $premierePrice = $request->boolean('premiere_publication')
+            ? (float) Setting::get('premiere_publication_price', 0)
+            : 0;
 
-        $finalPrice = $saveAsDraft
-            ? 0
-            : ($basePrice * $days)
-                + $urgentPrice
-                + $featuredPrice
-                + $premierePrice
-                + $semiNewPrice
-                + $newPrice
-                + $availablePrice
-                + $topPrice;
+        $semiNewSelected = $request->boolean('semi_new_publication');
+        $semiNewPrice = $semiNewSelected
+            ? (float) Setting::get('semi_new_publication_price', 0)
+            : 0;
 
-        // VALIDAR SALDO
-        if (!$saveAsDraft && $user->virtual_wallet < $finalPrice) {
-            return back()->with('error', 'Saldo insuficiente.');
-        }
+        $newPrice = $request->boolean('new_publication')
+            ? (float) Setting::get('new_publication_price', 0)
+            : 0;
 
-        // DESCONTAR SALDO
-        if (!$saveAsDraft) {
+        $availablePrice = $request->boolean('available_publication')
+            ? (float) Setting::get('available_publication_price', 0)
+            : 0;
+
+        $topPrice = $request->boolean('top_publication')
+            ? (float) Setting::get('top_publication_price', 0)
+            : 0;
+
+        // =======================
+        // PRECIO FINAL (SIEMPRE REAL)
+        // =======================
+        $finalPrice =
+            ($basePrice * $days)
+            + $urgentPrice
+            + $featuredPrice
+            + $premierePrice
+            + $semiNewPrice
+            + $newPrice
+            + $availablePrice
+            + $topPrice;
+        
+        Log::info('BORRADOR ACTUALIZADO', [
+    'ad_id' => $ad->id,
+    'days_active' => $request->days_active,
+    'base_price' => $basePrice,
+    'semi_new_selected' => $semiNewSelected,
+    'semi_new_price' => $semiNewPrice,
+    'total_price' => ($basePrice * $request->days_active) + $semiNewPrice
+]);
+
+        // =======================
+        // COBRO SOLO SI PUBLICA
+        // =======================
+        if ($isPublishing) {
+            if ($user->virtual_wallet < $finalPrice) {
+                return back()->with('error', 'Saldo insuficiente para publicar el anuncio.');
+            }
+
+            Log::info('PUBLICANDO BORRADOR', [
+                'ad_id' => $ad->id,
+                'wallet_before' => $user->virtual_wallet,
+                'final_price' => $finalPrice,
+            ]);
+
             $user->decrement('virtual_wallet', $finalPrice);
+
+            Log::info('BORRADOR PUBLICADO', [
+                'wallet_after' => $user->virtual_wallet,
+            ]);
         }
+
+        // =======================
+        // NORMALIZAR TEXTO
+        // =======================
+        $request->merge([
+            'title'      => mb_strtoupper(trim($request->title), 'UTF-8'),
+            'department' => $request->department ? mb_strtoupper(trim($request->department), 'UTF-8') : null,
+            'province'   => $request->province   ? mb_strtoupper(trim($request->province), 'UTF-8') : null,
+            'district'   => $request->district   ? mb_strtoupper(trim($request->district), 'UTF-8') : null,
+        ]);
 
         $amount = $request->amount_visible == 1 ? $request->amount : 0;
 
@@ -751,15 +829,9 @@ class MyAdRequestController extends Controller
             $verificationRequested = $request->boolean('verification_requested');
         }
 
-        // NORMALIZAR TEXTO
-        $request->merge([
-            'title'      => mb_strtoupper(trim($request->title), 'UTF-8'),
-            'department' => $request->department ? mb_strtoupper(trim($request->department), 'UTF-8') : null,
-            'province'   => $request->province   ? mb_strtoupper(trim($request->province), 'UTF-8') : null,
-            'district'   => $request->district   ? mb_strtoupper(trim($request->district), 'UTF-8') : null,
-        ]);
-
+        // =======================
         // ACTUALIZAR ANUNCIO
+        // =======================
         $ad->update([
             'title'       => $request->title,
             'description' => $request->description,
@@ -767,13 +839,15 @@ class MyAdRequestController extends Controller
             'province'    => $request->province,
             'district'    => $request->district,
             'contact_location' => $request->contact_location,
-            'amount'      => $amount,
+
+            'amount' => $amount,
             'amount_visible' => $request->amount_visible,
             'amount_text' => $request->amount_text,
             'days_active' => $days,
 
-            'status'     => $saveAsDraft ? 'draft' : 'pendiente',
-            'expires_at' => $saveAsDraft ? null : $expiresAt,
+            'status'     => $isPublishing ? 'pendiente' : 'draft',
+            'published'  => false,
+            'expires_at' => $isPublishing ? now()->addDays($days) : null,
 
             // PUBLICACIONES
             'urgent_publication'    => $request->boolean('urgent_publication'),
@@ -785,8 +859,8 @@ class MyAdRequestController extends Controller
             'premiere_publication'  => $request->boolean('premiere_publication'),
             'premiere_price'        => $premierePrice,
 
-            'semi_new_publication'  => $request->boolean('semi_new_publication'),
-            'semi_new_price'        => $semiNewPrice,
+            'semi_new_publication' => $semiNewSelected,
+            'semi_new_price'       => $semiNewPrice,
 
             'new_publication'       => $request->boolean('new_publication'),
             'new_price'             => $newPrice,
@@ -800,44 +874,63 @@ class MyAdRequestController extends Controller
             'verification_requested' => $verificationRequested,
         ]);
 
+        Log::info('DRAFT FINAL PRICE', [
+            'ad_id' => $ad->id,
+            'days' => $days,
+            'base' => $basePrice,
+            'extras' => [
+                'urgent' => $urgentPrice,
+                'featured' => $featuredPrice,
+                'premiere' => $premierePrice,
+            ],
+            'final' => $finalPrice,
+            'wallet_before' => $user->virtual_wallet,
+        ]);
+
+
+        // =======================
+        // DATOS DE CONTACTO
+        // =======================
         $user->update([
             'whatsapp'   => $request->whatsapp,
             'call_phone' => $request->call_phone,
         ]);
 
-        // Tomar el tipo de comprobante seleccionado por el usuario
-        $receiptType = $request->filled('receipt_type') ? $request->receipt_type : $ad->receipt_type ?? 'nota_venta';
+        // =======================
+        // PDF SOLO SI PUBLICA
+        // =======================
+        if ($isPublishing) {
 
-        // Generar código solo si es nota de venta
-        $receiptCode = $receiptType === 'nota_venta' ? $this->generateNotaVentaCode() : $ad->receipt_code;
+            $receiptType = $request->receipt_type ?? 'nota_venta';
+            $receiptCode = $receiptType === 'nota_venta'
+                ? $this->generateNotaVentaCode()
+                : null;
 
-        // Actualizar anuncio con el tipo correcto
-        $ad->update([
-            'receipt_type' => $receiptType,
-            'receipt_code' => $receiptCode,
-        ]);
+            $ad->update([
+                'receipt_type' => $receiptType,
+                'receipt_code' => $receiptCode,
+            ]);
 
-        $folder = public_path('proof_payment');
-        if (!file_exists($folder)) {
-            mkdir($folder, 0755, true);
+            $folder = public_path('proof_payment');
+            if (!file_exists($folder)) mkdir($folder, 0755, true);
+
+            $pdf = Pdf::loadView('public.pdf.receipt', [
+                'ad' => $ad,
+                'user' => $user,
+                'finalPrice' => $finalPrice
+            ]);
+
+            $filename = "receipt_{$ad->id}.pdf";
+            file_put_contents($folder.'/'.$filename, $pdf->output());
+
+            $ad->update([
+                'receipt_file' => "proof_payment/{$filename}"
+            ]);
         }
 
-        $receiptFile = "receipt_{$ad->id}.pdf";
-        $receiptPath = $folder . DIRECTORY_SEPARATOR . $receiptFile;
-
-        $pdf = Pdf::loadView('public.pdf.receipt', [
-            'ad' => $ad,
-            'user' => $user,
-            'finalPrice' => $finalPrice
-        ]);
-
-        file_put_contents($receiptPath, $pdf->output());
-
-        $ad->update([
-            'receipt_file' => "proof_payment/{$receiptFile}"
-        ]);
-
+        // =======================
         // CAMPOS DINÁMICOS
+        // =======================
         if ($request->has('dynamic')) {
             ValueFieldAd::where('advertisementss_id', $ad->id)->delete();
 
@@ -852,7 +945,9 @@ class MyAdRequestController extends Controller
             }
         }
 
+        // =======================
         // IMÁGENES
+        // =======================
         if ($request->hasFile('images')) {
             $path = public_path('images/advertisementss');
             if (!file_exists($path)) mkdir($path, 0777, true);
@@ -869,11 +964,23 @@ class MyAdRequestController extends Controller
             }
         }
 
+        Log::info('PUBLISH FLAG', [
+            'publish' => $request->publish,
+            'isPublishing' => $isPublishing
+        ]);
+
+        Log::info('WALLET CHECK', [
+            'wallet' => $user->virtual_wallet,
+            'required' => $finalPrice,
+            'can_publish' => $user->virtual_wallet >= $finalPrice
+        ]);
+
+
         return back()->with(
             'success',
-            $saveAsDraft
-                ? 'Borrador actualizado correctamente.'
-                : 'Tu anuncio fue enviado a revisión.'
+            $isPublishing
+                ? 'Tu anuncio fue enviado a revisión.'
+                : 'Borrador actualizado correctamente.'
         );
     }
 
