@@ -180,24 +180,6 @@ class MyAdRequestController extends Controller
         $days = (int) $request->days_active;
         $expiresAt = now()->addDays($days);
 
-
-        Log::info('PUBLICACIONES RECIBIDAS', [
-            'urgent'    => $request->input('urgent_publication'),
-            'featured'  => $request->input('featured_publication'),
-            'premiere'  => $request->input('premiere_publication'),
-            'semi_new'  => $request->input('semi_new_publication'),
-            'new'       => $request->input('new_publication'),
-            'available' => $request->input('available_publication'),
-            'top'       => $request->input('top_publication'),
-        ]);
-
-        Log::info('SETTINGS DEBUG1', [
-            'urgent_price'    => Setting::get('urgent_publication_price'),
-            'featured_price'  => Setting::get('featured_publication_price'),
-            'premiere_price'  => Setting::get('premiere_publication_price'),
-        ]);
-
-
         // Subcategoría para calcular precio
         $subcategory = AdSubcategory::findOrFail($request->subcategory_id);
 
@@ -259,27 +241,7 @@ class MyAdRequestController extends Controller
             $user->save();
         }
 
-        Log::info('SALDO FINAL', [
-            'wallet_after' => $user->virtual_wallet
-        ]);
-
         $amount = $request->amount_visible == 1 ? $request->amount : 0;
-
-  
-        Log::info('COSTOS CALCULADOS', [
-            'base_price' => $basePrice,
-            'days'       => $days,
-            'urgent'     => $urgentPrice,
-            'featured'   => $featuredPrice,
-            'premiere'   => $premierePrice,
-            'semi_new'   => $semiNewPrice,
-            'new'        => $newPrice,
-            'available' => $availablePrice,
-            'top'        => $topPrice,
-            'final'      => $finalPrice,
-            'wallet_before' => $user->virtual_wallet,
-        ]);
-
 
         $receiptType = $request->filled('receipt_type') ? $request->receipt_type : 'nota_venta';
 
@@ -335,19 +297,6 @@ class MyAdRequestController extends Controller
         ]);
 
         $status = $saveAsDraft ? 'draft' : 'pendiente';
-
-        Log::info('CREATE FINAL PRICE', [
-            'days' => $days,
-            'base' => $basePrice,
-            'extras' => [
-                'urgent' => $urgentPrice,
-                'featured' => $featuredPrice,
-                'premiere' => $premierePrice,
-            ],
-            'final' => $finalPrice,
-            'wallet_before' => $user->virtual_wallet,
-        ]);
-
 
         // Crear ANUNCIO *PUBLICADO AUTOMÁTICAMENTE*
         $ad = Advertisement::create([
@@ -781,15 +730,6 @@ class MyAdRequestController extends Controller
             + $newPrice
             + $availablePrice
             + $topPrice;
-        
-        Log::info('BORRADOR ACTUALIZADO', [
-    'ad_id' => $ad->id,
-    'days_active' => $request->days_active,
-    'base_price' => $basePrice,
-    'semi_new_selected' => $semiNewSelected,
-    'semi_new_price' => $semiNewPrice,
-    'total_price' => ($basePrice * $request->days_active) + $semiNewPrice
-]);
 
         // =======================
         // COBRO SOLO SI PUBLICA
@@ -799,17 +739,7 @@ class MyAdRequestController extends Controller
                 return back()->with('error', 'Saldo insuficiente para publicar el anuncio.');
             }
 
-            Log::info('PUBLICANDO BORRADOR', [
-                'ad_id' => $ad->id,
-                'wallet_before' => $user->virtual_wallet,
-                'final_price' => $finalPrice,
-            ]);
-
             $user->decrement('virtual_wallet', $finalPrice);
-
-            Log::info('BORRADOR PUBLICADO', [
-                'wallet_after' => $user->virtual_wallet,
-            ]);
         }
 
         // =======================
@@ -872,19 +802,6 @@ class MyAdRequestController extends Controller
             'top_price'             => $topPrice,
 
             'verification_requested' => $verificationRequested,
-        ]);
-
-        Log::info('DRAFT FINAL PRICE', [
-            'ad_id' => $ad->id,
-            'days' => $days,
-            'base' => $basePrice,
-            'extras' => [
-                'urgent' => $urgentPrice,
-                'featured' => $featuredPrice,
-                'premiere' => $premierePrice,
-            ],
-            'final' => $finalPrice,
-            'wallet_before' => $user->virtual_wallet,
         ]);
 
 
@@ -963,18 +880,6 @@ class MyAdRequestController extends Controller
                 ]);
             }
         }
-
-        Log::info('PUBLISH FLAG', [
-            'publish' => $request->publish,
-            'isPublishing' => $isPublishing
-        ]);
-
-        Log::info('WALLET CHECK', [
-            'wallet' => $user->virtual_wallet,
-            'required' => $finalPrice,
-            'can_publish' => $user->virtual_wallet >= $finalPrice
-        ]);
-
 
         return back()->with(
             'success',
