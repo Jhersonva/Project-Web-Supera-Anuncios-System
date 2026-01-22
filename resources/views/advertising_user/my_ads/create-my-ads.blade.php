@@ -327,7 +327,8 @@
                 </div>
 
                 <!-- PUBLICACIÓN URGENTE -->
-                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="urgentContainer">
+                <div class="field-card d-none" id="urgentContainer">
+
 
                     <label class="fw-semibold">¿Publicación urgente?</label>
 
@@ -350,7 +351,8 @@
                 </div>
 
                 <!-- PUBLICACIÓN DESTACADA -->
-                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="featuredContainer">
+                <div class="field-card d-none" id="featuredContainer">
+
 
                     <label class="fw-semibold">¿Publicación destacada?</label>
 
@@ -374,7 +376,8 @@
                 </div>
 
                 <!-- PUBLICACIÓN ESTRENO -->
-                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="premiereContainer">
+                <div class="field-card d-none" id="premiereContainer">
+
                     <label class="fw-semibold">¿Publicación en estreno?</label>
 
                     <div class="form-check form-switch">
@@ -403,7 +406,8 @@
                 </div>
 
                 <!-- PUBLICACIÓN SEMI-NUEVO -->
-                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="semiNewContainer">
+                <div class="field-card d-none" id="semiNewContainer">
+
                     <label class="fw-semibold">¿Publicación seminuevo?</label>
 
                     <div class="form-check form-switch">
@@ -427,7 +431,8 @@
                 </div>
 
                 <!-- PUBLICACIÓN NUEVA -->
-                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="newContainer">
+                <div class="field-card d-none" id="newContainer">
+
                     <label class="fw-semibold">¿Publicación nueva?</label>
 
                     <div class="form-check form-switch">
@@ -446,7 +451,8 @@
                 </div>
 
                 <!-- PUBLICACIÓN DISPONIBLE -->
-                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="availableContainer">
+                <div class="field-card d-none" id="availableContainer">
+
                     <label class="fw-semibold">¿Publicación disponible?</label>
 
                     <div class="form-check form-switch">
@@ -466,7 +472,8 @@
                 </div>
 
                 <!-- PUBLICACIÓN TOP -->
-                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="topContainer">
+                <div class="field-card d-none" id="topContainer">
+
                     <label class="fw-semibold">¿Publicación TOP?</label>
 
                     <div class="form-check form-switch">
@@ -1379,7 +1386,6 @@ function updatePreview() {
 
     const dynamicPreviewFields = getPreviewDynamicFields();
 
-
     const ad = {
         title: document.querySelector("input[name='title']")?.value || "Título del anuncio",
         description: document.querySelector("textarea[name='description']")?.value || "Descripción del anuncio...",
@@ -1396,7 +1402,7 @@ function updatePreview() {
         featured_publication: document.querySelector("#featured_publication")?.checked ? 1 : 0,
         urgent_publication: document.querySelector("#urgent_publication")?.checked ? 1 : 0,
         premiere_publication: document.querySelector("#premiere_publication_switch")?.checked ? 1 : 0,
-        semi_new_publication: document.querySelector("#semi_new_publication")?.checked ? 1 : 0,
+        semi_new_publication: document.querySelector("#semi_new_publication_switch")?.checked ? 1 : 0,
         new_publication: document.querySelector("#new_publication")?.checked ? 1 : 0,
         available_publication: document.querySelector("#available_publication")?.checked ? 1 : 0,
         top_publication: document.querySelector("#top_publication")?.checked ? 1 : 0,
@@ -1886,6 +1892,31 @@ function initDynamicPreviewFromServer() {
     updatePreview();
 }
 
+function applyExtrasFromAd(ad) {
+    if (!ad) return;
+
+    if (ad.urgent_publication)
+        document.getElementById('urgentContainer')?.classList.remove('d-none');
+
+    if (ad.featured_publication)
+        document.getElementById('featuredContainer')?.classList.remove('d-none');
+
+    if (ad.premiere_publication)
+        document.getElementById('premiereContainer')?.classList.remove('d-none');
+
+    if (ad.semi_new_publication)
+        document.getElementById('semiNewContainer')?.classList.remove('d-none');
+
+    if (ad.new_publication)
+        document.getElementById('newContainer')?.classList.remove('d-none');
+
+    if (ad.available_publication)
+        document.getElementById('availableContainer')?.classList.remove('d-none');
+
+    if (ad.top_publication)
+        document.getElementById('topContainer')?.classList.remove('d-none');
+}
+
 //Script para crear anuncio nuevo / y editar borrador
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -2081,18 +2112,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // MOSTRAR CAMPOS OBLIGATORIOS 
     function showMainFields() {
-        document.getElementById('titleContainer').classList.remove('d-none');
-        document.getElementById('descriptionContainer').classList.remove('d-none');
-        document.getElementById('locationAdContainer').classList.remove('d-none');
-        document.getElementById('contactLocationContainer').classList.remove('d-none');
-        document.getElementById('contactDataContainer').classList.remove('d-none');
-        document.getElementById('amountContainer').classList.remove('d-none');
-        document.getElementById('imagesContainer').classList.remove('d-none');
-        document.getElementById('costContainer').classList.remove('d-none');
-        document.getElementById('urgentContainer').classList.remove('d-none');
-        document.getElementById('featuredContainer').classList.remove('d-none');
-        document.getElementById('summaryContainer')?.classList.remove('d-none');
-        document.getElementById('receiptContainer').classList.remove('d-none');
+        [
+            'titleContainer',
+            'descriptionContainer',
+            'locationAdContainer',
+            'contactLocationContainer',
+            'contactDataContainer',
+            'amountContainer',
+            'imagesContainer',
+            'costContainer',
+            'summaryContainer',
+            'receiptContainer'
+        ].forEach(id => {
+            document.getElementById(id)?.classList.remove('d-none');
+        });
     }
 
     // Cargar campos automáticamente al editar
@@ -2102,6 +2135,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         showMainFields();
         renderDynamicFields(subcatId);
+        applyExtrasFromAd(adDataFromServer);
 
         document.getElementById("days_active").value =
             adDataFromServer.days_active;
@@ -2118,13 +2152,21 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("premiere_publication").value =
             adDataFromServer.premiere_publication ? 1 : 0;
 
-        document.getElementById("semi_new_publication").checked =
+        document.getElementById("semi_new_publication_switch").checked =
             !!adDataFromServer.semi_new_publication;
 
-        // recalcular costos iniciales
+        document.getElementById("new_publication").checked =
+            !!adDataFromServer.new_publication;
+
+        document.getElementById("available_publication").checked =
+            !!adDataFromServer.available_publication;
+
+        document.getElementById("top_publication").checked =
+            !!adDataFromServer.top_publication;
+
         setTimeout(() => {
             calculateDatesAndCosts();
-            updatePreview(); 
+            updatePreview();
         }, 0);
     }
 
@@ -2626,116 +2668,116 @@ function updateReceiptPreview() {
     }
 
 
-/* GRID */
-.image-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 16px;
-}
+    /* GRID */
+    .image-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 16px;
+    }
 
-/* SCROLL CONTAINER */
-.image-scroll {
-    max-height: 360px; 
-    overflow-y: auto;
-    padding-right: 6px;
-}
+    /* SCROLL CONTAINER */
+    .image-scroll {
+        max-height: 360px; 
+        overflow-y: auto;
+        padding-right: 6px;
+    }
 
-/* SCROLL BAR (sutil) */
-.image-scroll::-webkit-scrollbar {
-    width: 6px;
-}
-.image-scroll::-webkit-scrollbar-thumb {
-    background: #ced4da;
-    border-radius: 4px;
-}
+    /* SCROLL BAR (sutil) */
+    .image-scroll::-webkit-scrollbar {
+        width: 6px;
+    }
+    .image-scroll::-webkit-scrollbar-thumb {
+        background: #ced4da;
+        border-radius: 4px;
+    }
 
-/* CARD */
-.image-card {
-    background: #fff;
-    border-radius: 10px;
-    border: 1px solid #e5e7eb;
-    overflow: hidden;
-    aspect-ratio: 1 / 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+    /* CARD */
+    .image-card {
+        background: #fff;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+        aspect-ratio: 1 / 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 
-/* IMAGE */
-.image-card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
+    /* IMAGE */
+    .image-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
 
-/* DROPZONE */
-.upload-zone {
-    border: 2px dashed #ced4da;
-    border-radius: 12px;
-    padding: 30px;
-    text-align: center;
-    background: #f8f9fa;
-    cursor: pointer;
-    transition: .2s;
-}
+    /* DROPZONE */
+    .upload-zone {
+        border: 2px dashed #ced4da;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        background: #f8f9fa;
+        cursor: pointer;
+        transition: .2s;
+    }
 
-.upload-zone:hover {
-    background: #eef2f7;
-    border-color: #0d6efd;
-}
+    .upload-zone:hover {
+        background: #eef2f7;
+        border-color: #0d6efd;
+    }
 
-.upload-zone i {
-    font-size: 32px;
-    color: #6c757d;
-}
+    .upload-zone i {
+        font-size: 32px;
+        color: #6c757d;
+    }
 
-/* TITLES */
-.section-title {
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    color: #6c757d;
-    margin-bottom: 6px;
-}
+    /* TITLES */
+    .section-title {
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #6c757d;
+        margin-bottom: 6px;
+    }
 
-/* COUNTER */
-.image-counter {
-    font-size: 12px;
-    color: #6c757d;
-    margin-bottom: 8px;
-}
+    /* COUNTER */
+    .image-counter {
+        font-size: 12px;
+        color: #6c757d;
+        margin-bottom: 8px;
+    }
 
-/* DELETE BUTTON */
-.image-delete {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: rgba(220, 53, 69, 0.95);
-    color: #fff;
-    border: none;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    opacity: 0;
-    transition: .2s ease;
-}
+    /* DELETE BUTTON */
+    .image-delete {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: rgba(220, 53, 69, 0.95);
+        color: #fff;
+        border: none;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 0;
+        transition: .2s ease;
+    }
 
-.image-card {
-    position: relative;
-}
+    .image-card {
+        position: relative;
+    }
 
-.image-card:hover .image-delete {
-    opacity: 1;
-}
+    .image-card:hover .image-delete {
+        opacity: 1;
+    }
 
-.image-delete:hover {
-    background: #bb2d3b;
-}
+    .image-delete:hover {
+        background: #bb2d3b;
+    }
 
 </style>
 
