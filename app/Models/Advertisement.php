@@ -46,6 +46,7 @@ class Advertisement extends Model
         'is_verified',
         'verified_at',
         'status',
+        'refunded',
         'receipt_type',
         'dni',
         'full_name',
@@ -60,6 +61,7 @@ class Advertisement extends Model
         'amount' => 'decimal:2',
         'published' => 'boolean',
         'verification_requested' => 'boolean',
+        'refunded' => 'boolean',
         'is_verified' => 'boolean',
 
         'urgent_publication' => 'boolean',

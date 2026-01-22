@@ -69,14 +69,18 @@
                     <label class="fw-semibold">Título del Anuncio</label>
 
                     <input type="text"
-                        class="form-control"
                         name="title"
                         value="{{ old('title', $ad->title ?? '') }}"
+                        class="form-control @error('title') is-invalid @enderror"
                         id="titleInput"
                         placeholder="Se busca Perforista / Ayudante de Cocina / Pintor"
                         minlength="3"
                         maxlength="70"
                         required>
+
+                        @error('title')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
 
                     <small class="text-muted">
                         <span id="charCount">0</span>/70 caracteres
@@ -86,9 +90,17 @@
                 {{-- Descripción --}}
                 <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="descriptionContainer">
                     <label class="fw-semibold">Descripción</label>
-                    <textarea name="description" class="form-control" rows="4" placeholder="Describe tu anuncio">
-                        {{ old('description', $ad->description ?? '') }}
-                    </textarea>
+                    <textarea
+                        name="description"
+                        class="form-control @error('description') is-invalid @enderror"
+                        rows="4"
+                        placeholder="Describe tu anuncio"
+                        required
+                    >{{ old('description', $ad->description ?? '') }}</textarea>
+
+                    @error('description')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 {{-- LISTA DE CAMPOS DINÁMICOS --}}
@@ -101,17 +113,23 @@
                     <input
                         type="text"
                         name="district"
-                        class="form-control uppercase-input"
-                        placeholder="Ej: San Juan de Miraflores"
+                        class="form-control uppercase-input @error('district') is-invalid @enderror"
+                        placeholder="Ej: El Tambo"
                         value="{{ old('district', $ad->district ?? '') }}"
+                        required
                     >
+
+                    @error('district')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
 
                     <label class="fw-semibold mt-2">Provincia</label>
                     <input
                         type="text"
                         name="province"
                         class="form-control uppercase-input"
-                        placeholder="Ej: Lima"
+                        placeholder="Ej: Huancayo"
+                        required
                         value="{{ old('province', $ad->province ?? '') }}"
                     >
 
@@ -120,7 +138,8 @@
                         type="text"
                         name="department"
                         class="form-control uppercase-input"
-                        placeholder="Ej: Lima"
+                        placeholder="Ej: Junín"
+                        required
                         value="{{ old('department', $ad->department ?? '') }}"
                     >
 
@@ -146,7 +165,8 @@
                         type="text"
                         name="whatsapp"
                         class="form-control"
-                        placeholder="Ej: +51 999 888 777"
+                        placeholder="Ej: 999888777"
+                        required
                         value="{{ old('whatsapp', $ad->whatsapp ?? $user->whatsapp ?? '') }}"
                     >
 
@@ -155,30 +175,41 @@
                         type="text"
                         name="call_phone"
                         class="form-control"
-                        placeholder="Ej: 01 555 4444"
+                        placeholder="Ej: 983777666"
+                        required
                         value="{{ old('call_phone', $ad->call_phone ?? $user->call_phone ?? '') }}"
                     >
 
                 </div>
 
                 <!-- MONTO -->
-                <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="amountContainer">
-                    <div class="d-flex justify-content-between align-items-start gap-3">
-                        <div style="flex:1">
-                            <label class="fw-semibold">Monto / Precio / Sueldo *</label>
+                <div class="field-card {{ isset($ad) || $errors->has('amount') ? '' : 'd-none' }}" id="amountContainer">
 
+                    <label class="fw-semibold mb-2">Monto / Precio / Sueldo *</label>
+
+                    <div class="row g-3 align-items-start">
+
+                        <!-- INPUT MONTO -->
+                        <div class="col-12 col-md-8">
                             <input
                                 type="number"
                                 step="0.01"
                                 min="0"
                                 name="amount"
                                 id="amountInput"
-                                class="form-control"
+                                class="form-control @error('amount') is-invalid @enderror"
                                 value="{{ old('amount', $ad->amount ?? '') }}"
                                 {{ isset($ad) && !$ad->amount_visible ? 'disabled' : '' }}
                             >
 
-                            <select id="amountTextSelect" class="form-select mt-2 {{ isset($ad) && !$ad->amount_visible ? '' : 'd-none' }}">
+                            @error('amount')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+
+                            <select
+                                id="amountTextSelect"
+                                class="form-select mt-2 {{ old('amount_visible', $ad->amount_visible ?? 1) ? 'd-none' : '' }}"
+                            >
                                 <option value="">Selecciona texto por defecto...</option>
                                 @foreach([
                                     'Sueldo a tratar',
@@ -195,12 +226,13 @@
                                 @endforeach
                             </select>
 
-                            <small class="text-muted">
-                                Si marcas "Ocultar monto", el público verá el texto seleccionado o "No especificado".
+                            <small class="text-muted d-block mt-1">
+                                Si ocultas el monto, el público verá el texto seleccionado o "No especificado".
                             </small>
                         </div>
 
-                        <div style="min-width:170px; display:flex; align-items:center; justify-content:center;">
+                        <!-- SWITCH -->
+                        <div class="col-12 col-md-4 d-flex align-items-center">
                             <div class="form-check form-switch">
                                 <input
                                     class="form-check-input"
@@ -208,9 +240,12 @@
                                     id="amountVisibleCheckbox"
                                     {{ old('amount_visible', $ad->amount_visible ?? 1) ? 'checked' : '' }}
                                 >
-                                <label class="form-check-label">Mostrar monto</label>
+                                <label class="form-check-label ms-2">
+                                    Mostrar monto
+                                </label>
                             </div>
                         </div>
+
                     </div>
 
                     <!-- hidden fields -->
@@ -232,7 +267,15 @@
                 <!-- DIAS PUBLICACION / COSTOS -->
                 <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="costContainer">
 
-                    <label class="fw-semibold">Días de publicación *</label>
+                    <label class="fw-semibold">
+                        Días de publicación *
+                    </label>
+
+                    <div class="form-text text-primary d-flex align-items-center gap-1">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <span>Solo se permiten publicaciones de 2 días en adelante</span>
+                    </div>
+
                     <input
                         type="number"
                         min="2"
@@ -241,6 +284,7 @@
                         id="days_active"
                         class="form-control"
                         value="{{ old('days_active', $ad->days_active ?? 2) }}"
+                        data-min="2"
                         required
                     >
 
@@ -557,10 +601,11 @@
 
                     <input type="file"
                         name="images[]"
-                        class="form-control"
                         id="ownImagesInput"
+                        class="form-control"
                         accept="image/*"
-                        multiple>
+                        multiple
+                        required>
 
                     <small class="text-muted d-block">
                         Máximo 5 imágenes. Si subes nuevas, se agregarán al anuncio.
@@ -654,15 +699,18 @@
                         $hasEnoughBalance = $virtualWallet >= $summaryTotalCost;
                     @endphp
 
-                    <input type="hidden" name="publish" id="publishInput" value="0">
-                    <button
-                        type="submit"
-                        class="btn btn-danger w-100"
-                        id="submitAdBtn"
-                        {{ isset($ad) && !$hasEnoughBalance ? 'disabled' : '' }}
-                    >
-                        Enviar Solicitud de Anuncio
-                    </button>
+                    <form id="adForm">
+                        <input type="hidden" name="publish" id="publishInput" value="0">
+
+                        <button
+                            type="submit"
+                            class="btn btn-danger w-100"
+                            id="submitAdBtn"
+                            {{ isset($ad) && !$hasEnoughBalance ? 'disabled' : '' }}
+                        >
+                            Enviar Solicitud de Anuncio
+                        </button>
+                    </form>
 
                     <small
                         id="balanceWarning"
@@ -729,11 +777,24 @@ window.ALERTS = @json($alertsPrepared);
 </script>
 
 <script>
+
+    /*Scrip de bloqueo de la tecla enter para envio del formulario*/
+    document.getElementById('adForm').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            return false;
+        }
+    });
+
     const FORM_MODE = "{{ isset($ad) ? 'edit' : 'create' }}";
     const fieldsFromServer = @json($fields ?? []);
     const adDataFromServer = @json($ad ?? null);
     const valuesFromServer = @json($values ?? []);
-    const VIRTUAL_WALLET = {{ (float) $virtualWallet }};
+    window.VIRTUAL_WALLET = @json((float) $virtualWallet);
+
+     window.MY_ADS_INDEX_URL = @json(route('my-ads.index'));
+     window.RECHARGES_INDEX_URL = @json(route('recharges.index'));
+
 
     const PRICES = {
         urgent: {{ $urgentPrice }},
@@ -915,47 +976,38 @@ function checkBalanceBeforeSubmit(finalPrice) {
 /*Logica de cuando el usuario ingresa a la vista de create con saldo 0*/
 document.addEventListener('DOMContentLoaded', function () {
 
-    const virtualWallet = {{ (int) $virtualWallet }};
+    const virtualWallet = Number(window.VIRTUAL_WALLET) || 0;
+    console.log('Saldo detectado:', virtualWallet);
 
-    if (virtualWallet <= 0) {
+    if (virtualWallet < 1) {
         Swal.fire({
             icon: 'warning',
             title: 'Saldo insuficiente',
             html: `
-                <p class="mb-1">No tienes saldo disponible para crear un anuncio.</p>
-                <strong>Necesitas realizar una recarga.</strong>
+                <p class="mb-1">No tienes saldo suficiente para crear un anuncio.</p>
+                <strong>El saldo mínimo requerido es S/ 1.00</strong>
             `,
             showCancelButton: true,
             confirmButtonText: '💳 Ir a Recargar',
-            cancelButtonText: '👀 Solo ver',
+            cancelButtonText: '❌ Salir',
             allowOutsideClick: false,
             allowEscapeKey: false,
             reverseButtons: true,
         }).then((result) => {
 
             if (result.isConfirmed) {
-                window.location.href = "{{ route('recharges.index') }}";
+                window.location.href = window.RECHARGES_INDEX_URL;
             }
 
             if (result.dismiss === Swal.DismissReason.cancel) {
-                disableAdForm();
+                window.history.length > 1
+                    ? window.history.back()
+                    : window.location.href = window.MY_ADS_INDEX_URL;
             }
         });
     }
 
-    function disableAdForm() {
-
-        // Mensaje visual
-        const info = document.createElement('div');
-        info.className = 'alert alert-info mt-3';
-        info.innerHTML = `
-            <i class="fa-solid fa-circle-info me-1"></i>
-            Estás en modo solo visual. Recarga saldo para publicar anuncios.
-        `;
-
-        form.prepend(info);
-    }
-});
+}); 
 
 /*Que muestre el alert al querer crear un servicio privado*/
 document.addEventListener('DOMContentLoaded', () => {
@@ -1767,7 +1819,7 @@ let availablePrice = {{ $availablePrice }};
 let topPrice       = {{ $topPrice }};
 
 // DEFINE PRIMERO LA FUNCIÓN
-function calculateDatesAndCosts() {
+function calculateDatesAndCosts(forceMin = false) {
 
     if (!subcatPrice || subcatPrice <= 0) return;
 
@@ -1775,38 +1827,36 @@ function calculateDatesAndCosts() {
     if (!daysInput) return;
 
     let days = parseInt(daysInput.value);
-    if (!days || days < 2) {
+
+    // SOLO forzar mínimo cuando se indique
+    if (forceMin && (!days || days < 2)) {
         days = 2;
         daysInput.value = 2;
     }
 
+    // Si está vacío, no calcular todavía
+    if (!days || days < 2) return;
+
     let total = subcatPrice * days;
 
-    // Chequear si cada extra está seleccionado
-    const semiNewSelected = document.getElementById("semi_new_publication_switch")?.checked ?? false;
-
+    // ===== EXTRAS =====
     if (document.getElementById("urgent_publication")?.checked) total += urgentPrice;
     if (document.getElementById("featured_publication")?.checked) total += featuredPrice;
     if (document.getElementById("premiere_publication_switch")?.checked) total += premierePrice;
-    if (semiNewSelected) total += semiNewPrice; // ahora usa variable definida
+    if (document.getElementById("semi_new_publication_switch")?.checked) total += semiNewPrice;
     if (document.getElementById("new_publication")?.checked) total += newPrice;
     if (document.getElementById("available_publication")?.checked) total += availablePrice;
     if (document.getElementById("top_publication")?.checked) total += topPrice;
 
-    // ELEMENTOS VISUALES
-    const pricePerDayEl = document.getElementById("pricePerDay");
-    const totalCostEl = document.getElementById("totalCost");
-    const summaryTotalCostEl = document.getElementById("summaryTotalCost");
-    const expiresInput = document.getElementById("expiresAt");
-
-    if (pricePerDayEl) pricePerDayEl.value = `S/. ${subcatPrice.toFixed(2)}`;
-    if (totalCostEl) totalCostEl.value = `S/. ${total.toFixed(2)}`;
-    if (summaryTotalCostEl) summaryTotalCostEl.textContent = `S/. ${total.toFixed(2)}`;
+    // ===== ELEMENTOS VISUALES =====
+    document.getElementById("pricePerDay").value = `S/. ${subcatPrice.toFixed(2)}`;
+    document.getElementById("totalCost").value = `S/. ${total.toFixed(2)}`;
+    document.getElementById("summaryTotalCost").textContent = `S/. ${total.toFixed(2)}`;
 
     // ===== FECHA EXPIRACIÓN =====
     const today = new Date();
     today.setDate(today.getDate() + days);
-    expiresInput.value = today.toLocaleDateString("es-PE", {
+    document.getElementById("expiresAt").value = today.toLocaleDateString("es-PE", {
         day: "2-digit",
         month: "2-digit",
         year: "numeric"
@@ -1860,22 +1910,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 switch (f.type) {
                     case 'number':
                         input = `<input type="number" class="form-control"
-                                name="dynamic[${f.id}]" value="${value}">`;
+                                name="dynamic[${f.id}]" value="${value}" required>`;
                         break;
 
                     case 'textarea':
                         input = `<textarea class="form-control dynamic-lowercase"
-                                name="dynamic[${f.id}]">${value}</textarea>`;
+                                name="dynamic[${f.id}]" required>${value}</textarea>`;
                         break;
 
                     default:
                         input = `<input type="text" class="form-control dynamic-lowercase"
-                                name="dynamic[${f.id}]" value="${value}">`;
+                                name="dynamic[${f.id}]" value="${value}" required>`;
                 }
 
                 fieldsContainer.innerHTML += `
                     <div class="field-card">
-                        <label class="fw-semibold">${f.name}</label>
+                        <label class="fw-semibold" required>${f.name}</label>
                         ${input}
                     </div>
                 `;
@@ -1892,7 +1942,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <label class="fw-semibold">${f.name}</label>
                                 <input type="text"
                                     class="form-control dynamic-lowercase"
-                                    name="dynamic[${f.id}]">
+                                    name="dynamic[${f.id}]" required>
                             </div>
                         `;
                     });
@@ -2016,14 +2066,18 @@ document.addEventListener("DOMContentLoaded", () => {
         safeListener("available_publication", "change", calculateDatesAndCosts);
         safeListener("top_publication", "change", calculateDatesAndCosts);
 
-        document.getElementById("days_active").addEventListener("input", () => {
-            const input = document.getElementById("days_active");
-            if (!input.value || parseInt(input.value) < 2) {
-                input.value = 2;
+        const daysInput = document.getElementById("days_active");
+
+        daysInput.addEventListener("input", () => {
+            const value = parseInt(daysInput.value);
+            if (value >= 2) {
+                calculateDatesAndCosts();
             }
-            calculateDatesAndCosts();
         });
 
+        daysInput.addEventListener("blur", () => {
+            calculateDatesAndCosts(true);
+        });
 
     // MOSTRAR CAMPOS OBLIGATORIOS 
     function showMainFields() {

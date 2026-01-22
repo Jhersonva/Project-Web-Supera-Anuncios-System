@@ -4,6 +4,13 @@
 
 @section('content')
 
+@php
+    $esExpirado = $ad->expires_at < now();
+    $esPendiente = $ad->status === 'pendiente' && !$esExpirado;
+    $esAprobado  = $ad->status === 'publicado' && !$esExpirado;
+    $esRechazado = $ad->status === 'rechazado' && !$esExpirado;
+@endphp
+
 <style>
     .ad-container{
         border-radius: 16px;
@@ -35,12 +42,12 @@
         font-weight: 700;
     }
     .price-box{
-        background: #ffecec;
+        background: #0fb839;
         padding: 12px;
         border-radius: 10px;
         font-size: 1.2rem;
         font-weight: bold;
-        color: #d61c1c;
+        color: #ffffff;
         text-align: center;
     }
     .field-item{
@@ -255,8 +262,21 @@
         {{-- INFORMACIÓN PRINCIPAL --}}
         <div class="col-md-8">
 
+            @if($esRechazado)
+                <div class="alert alert-danger mt-3">
+                    <strong><i class="fa-solid fa-circle-info me-1"></i> Anuncio rechazado</strong>
+                    <p class="mb-0 mt-1">
+                        El anuncio fue rechazado por el administrador.<br>
+                        <strong>El monto pagado fue devuelto automáticamente a tu monedero virtual.</strong>
+                    </p>
+                </div>
+            @endif
+
+
             {{-- PRECIO --}}
             <div class="price-box mb-4">
+                Monto / Precio / Sueldo:<br>
+                {{-- LÓGICA DE VISIBILIDAD DEL PRECIO --}}
                 @if($ad->amount_visible == 1)
                     S/. {{ number_format($ad->amount, 2) }}
                 @elseif(!empty($ad->amount_text))

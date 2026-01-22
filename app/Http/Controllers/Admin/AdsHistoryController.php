@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Advertisement;
 use App\Models\SystemSetting;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 class AdsHistoryController extends Controller
@@ -103,19 +104,47 @@ class AdsHistoryController extends Controller
         $ad->status = 'publicado';
         $ad->published = 1; 
         $ad->save();
-        Log::info('DESPUÉS', $ad->only(['status','is_verified']));
 
         return back()->with('success', 'Anuncio aprobado correctamente.');
     }
 
     public function reject($id)
     {
-        $ad = Advertisement::findOrFail($id);
-        $ad->status = 'rechazado';
-        $ad->published = 0; 
-        $ad->save();
+        DB::transaction(function () use ($id) {
 
-        return back()->with('success', 'Anuncio rechazado correctamente.');
+            $ad = Advertisement::with(['user', 'subcategory'])->lockForUpdate()->findOrFail($id);
+
+            // Evitar doble devolución
+            if ($ad->refunded) {
+                return;
+            }
+
+            // Total pagado REAL
+            $totalPaid =
+                ($ad->subcategory->price * $ad->days_active)
+                + $ad->urgent_price
+                + $ad->featured_price
+                + $ad->premiere_price
+                + $ad->semi_new_price
+                + $ad->new_price
+                + $ad->available_price
+                + $ad->top_price;
+
+            // Devolver saldo al usuario
+            $user = $ad->user;
+            $user->virtual_wallet += $totalPaid;
+            $user->save();
+
+            // Actualizar anuncio
+            $ad->update([
+                'status'    => 'rechazado',
+                'published' => 0,
+                'refunded'  => true,
+            ]);
+
+        });
+
+        return back()->with('success', 'Anuncio rechazado y saldo devuelto al usuario.');
     }
 
     public function pendingCount()

@@ -164,10 +164,14 @@
                                         <i class="fa-solid fa-eye"></i>
                                     </a>
 
-                                    @if($ad->status !== 'draft')
+                                    @if(
+                                        $ad->status !== 'draft' &&
+                                        $ad->status !== 'publicado' &&
+                                        $ad->status !== 'rechazado'
+                                    )
                                         <a href="{{ route('my-ads.editAd', $ad->id) }}"
-                                            class="btn btn-sm btn-outline-warning"
-                                            title="Editar anuncio">
+                                        class="btn btn-sm btn-outline-warning"
+                                        title="Editar anuncio">
                                             <i class="fa-solid fa-pen"></i>
                                         </a>
                                     @endif
@@ -273,7 +277,11 @@
                                 <i class="fa-solid fa-eye"></i>
                             </a>
 
-                            @if($ad->status !== 'draft')
+                            @if(
+                                $ad->status !== 'draft' &&
+                                $ad->status !== 'publicado' &&
+                                $ad->status !== 'rechazado'
+                            )
                                 <a href="{{ route('my-ads.editAd', $ad->id) }}" class="btn btn-sm btn-warning">
                                     <i class="fa-solid fa-pen"></i>
                                 </a>
