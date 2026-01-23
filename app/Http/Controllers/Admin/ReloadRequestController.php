@@ -45,7 +45,9 @@ class ReloadRequestController extends Controller
 
         // Validar número de operación
         $request->validate([
-            'operation_number' => 'required|string|max:50',
+            'operation_number' => 'required|string|max:50|unique:recharges,operation_number',
+        ], [
+            'operation_number.unique' => 'El número de operación ya fue utilizado en otra recarga.',
         ]);
 
         $empleado = Auth::user();
@@ -81,12 +83,11 @@ class ReloadRequestController extends Controller
             'employee_id' => $empleado->id,
             'type' => 'income',
             'amount' => $recarga->monto,
-            'description' => 'Recarga aprobada para el usuario: ' . $usuario->full_name
+            'description' => 'Recarga aprobada para el usuario: ' . $usuario->display_name
         ]);
 
         return back()->with('success', 'Recarga aprobada correctamente.');
     }
-
 
     public function reject(Request $request, $id)
     {

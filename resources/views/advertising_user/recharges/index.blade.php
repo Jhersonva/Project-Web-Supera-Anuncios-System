@@ -136,13 +136,13 @@
         @foreach ($recharges as $r)
         <div class="card-historial">
 
-            <div class="d-flex justify-content-between mb-2">
+            <div class="m-0">
                 <strong>Monto:</strong>
                 S/. {{ number_format($r->monto, 2) }}
             </div>
 
             <p class="m-0">
-                <strong>Método:</strong> {{ ucfirst($r->metodo_pago) }}
+                <strong>Método:</strong> {{ $r->paymentMethod->name_method ?? 'No definido' }}
             </p>
 
             <p class="m-0">

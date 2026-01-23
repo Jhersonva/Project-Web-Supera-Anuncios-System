@@ -34,7 +34,7 @@ class AuthController extends Controller
                 'email'    => 'required|email|max:120|unique:users,email',
                 'password' => 'required|string|min:8',
 
-                'phone'    => 'nullable|string|max:9|unique:users,phone',
+                'call_phone'    => 'nullable|string|max:9|unique:users,call_phone',
                 'locality' => 'nullable|string|max:150',
             ]);
 
@@ -51,7 +51,7 @@ class AuthController extends Controller
 
                 'email'    => $validated['email'],
                 'password' => Hash::make($validated['password']),
-                'phone'    => $validated['phone'] ?? null,
+                'call_phone'    => $validated['call_phone'] ?? null,
                 'locality' => $validated['locality'] ?? null,
             ]);
 

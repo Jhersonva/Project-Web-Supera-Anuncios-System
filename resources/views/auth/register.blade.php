@@ -64,18 +64,21 @@
           </div>
 
           <label class="form-label small fw-semibold">DNI</label>
-          <div class="input-group auth-input mb-3">
-              <span class="input-group-text bg-white">
-                  <i class="fa-solid fa-id-card"></i>
-              </span>
-              <input
-                  type="text"
-                  name="dni"
-                  class="form-control"
-                  maxlength="8"
-                  placeholder="Ingrese su DNI"
-              >
-          </div>
+            <div class="input-group auth-input mb-3">
+                <span class="input-group-text bg-white">
+                    <i class="fa-solid fa-id-card"></i>
+                </span>
+                <input
+                    type="text"
+                    name="dni"
+                    class="form-control"
+                    inputmode="numeric"
+                    pattern="[0-9]{8}"
+                    maxlength="8"
+                    placeholder="Ingrese su DNI"
+                >
+            </div>
+
       </div>
 
       <div id="businessFields" class="d-none">
@@ -94,25 +97,40 @@
 
           <label class="form-label small fw-semibold">RUC</label>
           <div class="input-group auth-input mb-3">
-              <span class="input-group-text bg-white">
-                  <i class="fa-solid fa-file-invoice"></i>
-              </span>
-              <input
-                  type="text"
-                  name="ruc"
-                  class="form-control"
-                  maxlength="11"
-                  placeholder="Ingrese su RUC"
-              >
-          </div>
+                <span class="input-group-text bg-white">
+                    <i class="fa-solid fa-file-invoice"></i>
+                </span>
+                <input
+                    type="text"
+                    name="ruc"
+                    class="form-control"
+                    required
+                    inputmode="numeric"
+                    pattern="[0-9]{11}"
+                    maxlength="11"
+                    placeholder="Ingrese su RUC"
+                >
+            </div>
       </div>
 
       <!-- Celular -->
       <label class="form-label small fw-semibold">Número de Celular</label>
       <div class="input-group auth-input mb-3">
-        <span class="input-group-text bg-white"><i class="fa-solid fa-phone"></i></span>
-        <input type="text" id="regPhone" name="phone" class="form-control" placeholder="9XXXXXXXX" required maxlength="9">
-      </div>
+            <span class="input-group-text bg-white">
+                <i class="fa-solid fa-phone"></i>
+            </span>
+            <input
+                type="text"
+                id="regPhone"
+                name="call_phone"
+                class="form-control"
+                required
+                inputmode="numeric"
+                pattern="[0-9]{9}"
+                maxlength="9"
+                placeholder="9XXXXXXXX"
+            >
+        </div>
 
       <!-- Localidad -->
       <label class="form-label small fw-semibold">Localidad</label>
@@ -136,24 +154,29 @@
         <span class="input-group-text bg-white toggle-pass"><i class="fa-solid fa-eye"></i></span>
       </div>
 
-      <div class="form-check mt-4">
-        <input
-          class="form-check-input"
-          type="checkbox"
-          id="acceptTerms"
-          name="accept_terms"
-          value="1"
-        >
+      <form>
+        <div class="form-check mt-4">
+            <input
+            class="form-check-input"
+            type="checkbox"
+            id="acceptTerms"
+            name="accept_terms"
+            value="1"
+            required
+            >
 
-        <label class="form-check-label small" for="acceptTerms">
-          Acepto los
-          <a href="javascript:void(0)" id="openTerms" class="fw-semibold">
-            términos y condiciones
-          </a>
-        </label>
-      </div>
+            <label class="form-check-label small" for="acceptTerms">
+            Acepto los
+            <a href="javascript:void(0)" id="openTerms" class="fw-semibold">
+                términos y condiciones
+            </a>
+            </label>
+        </div>
 
-      <button class="btn btn-primary w-100 py-2 fw-bold mt-4">Registrarse</button>
+        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold mt-4">
+            Registrarse
+        </button>
+      </form>
 
       <p class="mt-3 text-center">
         ¿Ya tienes una cuenta?
@@ -170,6 +193,19 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+
+// Validacion de campos dni, ruc y llamadas
+document.querySelectorAll('input[name="dni"], input[name="ruc"], input[name="call_phone"]').forEach(input => {
+    input.addEventListener('input', function () {
+        let max = 0;
+        if (this.name === 'dni') max = 8;
+        if (this.name === 'ruc') max = 11;
+        if (this.name === 'call_phone') max = 9;
+
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, max);
+    });
+});
+
 document.getElementById('accountType').addEventListener('change', function () {
 
     const person = document.getElementById('personFields');
@@ -264,7 +300,7 @@ document.getElementById('registerForm').addEventListener('submit', function (e) 
             throw data;
         }
 
-        // ✅ REGISTRO EXITOSO
+        // REGISTRO EXITOSO
         Swal.fire({
             icon: 'success',
             title: 'Cuenta creada',
@@ -277,7 +313,7 @@ document.getElementById('registerForm').addEventListener('submit', function (e) 
     })
     .catch(error => {
 
-        // ❌ ERRORES DE VALIDACIÓN
+        // ERRORES DE VALIDACIÓN
         if (error.errors) {
 
             const messages = Object.values(error.errors)

@@ -92,7 +92,13 @@
 
                             <td>{{ $ad->category->name }} > {{ $ad->subcategory->name }}</td>
 
-                            <td>{{ $ad->user->full_name }}</td>
+                            <td>
+                                @if($ad->user->account_type === 'business')
+                                    {{ $ad->user->company_reason }}
+                                @else
+                                    {{ $ad->user->full_name }}
+                                @endif
+                            </td>
 
                             <td>
                                 @if($ad->expires_at < now())
@@ -133,11 +139,10 @@
                                         <i class="fa-solid fa-pen"></i>
                                     </a>
 
-                                    <form action="{{ route('my-ads.deleteAd', $ad->id) }}" method="POST"
-                                        onsubmit="return confirm('¿Eliminar anuncio?');">
+                                    <form class="delete-ad-form" action="{{ route('my-ads.deleteAd', $ad->id) }}" method="POST">
                                         @csrf
                                         @method('DELETE')
-                                        <button class="btn btn-sm btn-outline-danger">
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-delete">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
                                     </form>
@@ -173,7 +178,14 @@
 
                         <div class="small mb-3">
                             <div><strong>Categoría:</strong> {{ $ad->category->name }} > {{ $ad->subcategory->name }}</div>
-                            <div><strong>Usuario:</strong> {{ $ad->user->full_name }}</div>
+                            <div>
+                                <strong>Usuario:</strong>
+                                @if($ad->user->account_type === 'business')
+                                    {{ $ad->user->company_reason }}
+                                @else
+                                    {{ $ad->user->full_name }}
+                                @endif
+                            </div>
                             <div><strong>Fecha:</strong> {{ $ad->created_at->format('d/m/Y') }}</div>
 
                             <div class="mt-2">
@@ -278,11 +290,43 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
 <script>
 function sendWhatsApp(phone, message) {
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    // Seleccionamos todos los botones eliminar
+    const deleteButtons = document.querySelectorAll('.btn-delete');
+
+    deleteButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const form = this.closest('form'); 
+
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "Esta acción no se puede deshacer.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            })
+            .then((result) => {
+                if (result.isConfirmed) {
+                    form.submit(); 
+                }
+            });
+        });
+    });
+
+});
 
 </script>
 

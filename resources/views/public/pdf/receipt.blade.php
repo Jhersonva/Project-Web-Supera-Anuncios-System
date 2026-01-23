@@ -125,12 +125,14 @@
         <div class="section-title">Información General</div>
         <table>
             <tr>
-                <td class="label">ID Anuncio</td>
-                <td class="value">#{{ $ad->id }}</td>
-            </tr>
-            <tr>
                 <td class="label">Usuario</td>
-                <td class="value">{{ $user->full_name }}</td>
+                <td class="value">
+                    @if($user->account_type === 'business')
+                        {{ $user->company_reason }}
+                    @else
+                        {{ $user->full_name }}
+                    @endif
+                </td>
             </tr>
             <tr>
                 <td class="label">Tipo de Comprobante</td>
@@ -148,6 +150,7 @@
         <div class="section-title">Datos del Cliente</div>
         <table>
 
+            {{-- BOLETA --}}
             @if($ad->receipt_type === 'boleta')
                 <tr>
                     <td class="label">DNI</td>
@@ -159,6 +162,7 @@
                 </tr>
             @endif
 
+            {{-- FACTURA --}}
             @if($ad->receipt_type === 'factura')
                 <tr>
                     <td class="label">RUC</td>
@@ -174,13 +178,13 @@
                 </tr>
             @endif
 
+            {{-- NOTA DE VENTA --}}
             @if($ad->receipt_type === 'nota_venta')
                 <tr>
                     <td class="label">Cliente</td>
                     <td class="value">{{ $ad->full_name }}</td>
                 </tr>
             @endif
-
         </table>
     </div>
 

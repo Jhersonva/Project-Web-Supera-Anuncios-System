@@ -469,17 +469,9 @@ function createAdCard(ad){
 
     // Usuario
     const userImg = ad.user_info.profile_image;
-    const userName = ad.user_info.full_name;
+    const userName = ad.user_info.display_name ?? 'Usuario';
     const userVerified = Number(ad.user_info.is_verified) === 1;
     const adVerified   = Number(ad.is_verified) === 1;
-
-    console.log('DEBUG VERIFIED:', {
-        ad_id: ad.id,
-        ad_is_verified_raw: ad.is_verified,
-        ad_is_verified_casted: adVerified,
-        user_is_verified_raw: ad.user_info.is_verified,
-        user_is_verified_casted: userVerified
-    });
 
     // verificado si el anuncio O el usuario lo está
     const amountVisible = Number(ad.amount_visible);

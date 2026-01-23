@@ -90,8 +90,17 @@
 
                     <div class="col-md-6">
                         <label class="profile-label">DNI</label>
-                        <input type="text" class="form-control" name="dni"
-                            value="{{ old('dni', $user->dni) }}" required>
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="dni"
+                            required
+                            inputmode="numeric"
+                            pattern="[0-9]{8}"
+                            maxlength="8"
+                            placeholder="Ej: 12345678"
+                            value="{{ old('dni', $user->dni) }}"
+                        >
                     </div>
 
                     <div class="col-md-6">
@@ -114,8 +123,17 @@
 
                     <div class="col-md-6">
                         <label class="profile-label">RUC</label>
-                        <input type="text" class="form-control" name="ruc"
-                            value="{{ old('ruc', $user->ruc) }}" required>
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="ruc"
+                            required
+                            inputmode="numeric"
+                            pattern="[0-9]{11}"
+                            maxlength="11"
+                            placeholder="Ej: 20123456789"
+                            value="{{ old('ruc', $user->ruc) }}"
+                        >
                     </div>
                 @endif
 
@@ -131,12 +149,6 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="profile-label">Teléfono</label>
-                    <input type="text" class="form-control" name="phone"
-                        value="{{ old('phone', $user->phone) }}">
-                </div>
-
-                <div class="col-md-6">
                     <label class="profile-label">Localidad</label>
                     <input type="text" class="form-control" name="locality"
                         value="{{ old('locality', $user->locality) }}">
@@ -144,20 +156,32 @@
 
                 <div class="col-md-6">
                     <label class="profile-label">WhatsApp</label>
-                    <input type="text" class="form-control" name="whatsapp"
-                        value="{{ old('whatsapp', $user->whatsapp) }}">
+                    <input
+                        type="text"
+                        class="form-control"
+                        name="whatsapp"
+                        required
+                        inputmode="numeric"
+                        pattern="[0-9]{9}"
+                        maxlength="9"
+                        placeholder="Ej: 999888777"
+                        value="{{ old('whatsapp', $user->whatsapp) }}"
+                    >
                 </div>
 
                 <div class="col-md-6">
                     <label class="profile-label">Teléfono para llamadas</label>
-                    <input type="text" class="form-control" name="call_phone"
-                        value="{{ old('call_phone', $user->call_phone) }}">
-                </div>
-
-                <div class="col-md-6">
-                    <label class="profile-label">Correo de contacto</label>
-                    <input type="email" class="form-control" name="contact_email"
-                        value="{{ old('contact_email', $user->contact_email) }}">
+                    <input
+                        type="text"
+                        class="form-control"
+                        name="call_phone"
+                        required
+                        inputmode="numeric"
+                        pattern="[0-9]{9}"
+                        maxlength="9"
+                        placeholder="Ej: 983777666"
+                        value="{{ old('call_phone', $user->call_phone) }}"
+                    >
                 </div>
 
                 <div class="col-md-6">
@@ -196,6 +220,22 @@
 </div>
 
 <script>
+
+// Validacion de campos dni y ruc
+document.querySelectorAll('input[name="dni"], input[name="ruc"]').forEach(input => {
+    input.addEventListener('input', function () {
+        const max = this.name === 'dni' ? 8 : 11;
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, max);
+    });
+});
+
+// Validacion de whatsapp dni y numero de llamadas
+document.querySelectorAll('input[name="whatsapp"], input[name="call_phone"]').forEach(input => {
+    input.addEventListener('input', function () {
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 9);
+    });
+});
+
 document.getElementById('profile_image').addEventListener('change', function (e) {
 
     const file = e.target.files[0];

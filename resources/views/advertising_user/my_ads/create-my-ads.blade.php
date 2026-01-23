@@ -167,6 +167,9 @@
                         class="form-control"
                         placeholder="Ej: 999888777"
                         required
+                        inputmode="numeric"
+                        pattern="[0-9]{9}"
+                        maxlength="9"
                         value="{{ old('whatsapp', $ad->whatsapp ?? $user->whatsapp ?? '') }}"
                     >
 
@@ -177,6 +180,9 @@
                         class="form-control"
                         placeholder="Ej: 983777666"
                         required
+                        inputmode="numeric"
+                        pattern="[0-9]{9}"
+                        maxlength="9"
                         value="{{ old('call_phone', $ad->call_phone ?? $user->call_phone ?? '') }}"
                     >
 
@@ -620,6 +626,9 @@
 
                 </div>
 
+                @php
+                    $receiptUser = $ad?->user ?? auth()->user();
+                @endphp
                 <!-- COMPROBANTE -->
                 <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="receiptContainer">
 
@@ -654,11 +663,22 @@
                             value="{{ old('dni', $ad->dni ?? '') }}">
 
                         <label class="fw-semibold mt-2">Nombre Completo</label>
-                        <input type="text"
+                        <input
+                            type="text"
                             name="boleta_full_name"
                             id="boleta_full_name"
                             class="form-control"
-                            value="{{ old('boleta_full_name', $ad->full_name ?? '') }}">
+                            value="{{ old(
+                                'boleta_full_name',
+                                isset($ad) && $ad
+                                    ? ($ad->user->account_type === 'business'
+                                        ? $ad->user->company_reason
+                                        : $ad->user->full_name)
+                                    : (auth()->user()->account_type === 'business'
+                                        ? auth()->user()->company_reason
+                                        : auth()->user()->full_name)
+                            ) }}"
+                        >
                     </div>
 
                     <!-- FACTURA -->
@@ -668,29 +688,52 @@
                             name="ruc"
                             class="form-control"
                             maxlength="11"
-                            value="{{ old('ruc', $ad->ruc ?? '') }}">
+                            value="{{ old('ruc')
+                                ?: ($receiptUser->account_type === 'business'
+                                    ? $receiptUser->ruc
+                                    : '')
+                            }}"
+                        >
 
                         <label class="fw-semibold mt-2">Razón Social</label>
                         <input type="text"
                             name="company_name"
                             class="form-control"
-                            value="{{ old('company_name', $ad->company_name ?? '') }}">
+                            value="{{ old('company_name')
+                                ?: ($receiptUser->account_type === 'business'
+                                    ? $receiptUser->company_reason
+                                    : '')
+                            }}"
+                        >
 
                         <label class="fw-semibold mt-2">Dirección</label>
                         <input type="text"
                             name="address"
                             class="form-control"
-                            value="{{ old('address', $ad->address ?? '') }}">
+                            value="{{ old('address')
+                                ?: ($receiptUser->account_type === 'business'
+                                    ? $receiptUser->locality
+                                    : '')
+                            }}"
+                        >
                     </div>
 
                     <!-- NOTA DE VENTA -->
                     <div id="notaVentaFields" class="mt-3 d-none">
                         <label class="fw-semibold mt-2">Nombre Completo</label>
-                        <input type="text"
+                        <input
+                            type="text"
                             name="nota_full_name"
                             id="nota_full_name"
                             class="form-control"
-                            value="{{ old('nota_full_name', $ad->full_name ?? '') }}">
+                            value="{{ old('nota_full_name')
+                                ?: (
+                                    $receiptUser->account_type === 'business'
+                                        ? $receiptUser->company_reason
+                                        : $receiptUser->full_name
+                                )
+                            }}"
+                        >
                     </div>
 
                     <hr class="my-4">
@@ -784,6 +827,13 @@ window.ALERTS = @json($alertsPrepared);
 </script>
 
 <script>
+
+    /*Validacion de campos whastapp y llamadas*/
+    document.querySelectorAll('input[name="whatsapp"], input[name="call_phone"]').forEach(input => {
+        input.addEventListener('input', function () {
+            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 9);
+        });
+    });
 
     /*Scrip de bloqueo de la tecla enter para envio del formulario*/
     document.getElementById('adForm').addEventListener('keydown', function (e) {
@@ -961,17 +1011,25 @@ function checkBalanceBeforeSubmit(finalPrice) {
             `,
             showCancelButton: true,
             confirmButtonText: '💳 Ir a Recargar',
-            cancelButtonText: '🗑️ Borrar anuncio',
+            cancelButtonText: '❌ Salir',
+
+            // Colores
+            confirmButtonColor: '#28a745', 
+            cancelButtonColor: '#dc3545', 
+
             reverseButtons: true,
         }).then(result => {
 
-            // IR A RECARGAR → GUARDAR COMO DRAFT
+            // IR A RECARGAR (guardar como draft)
             if (result.isConfirmed) {
                 document.getElementById('save_as_draft').value = 1;
                 document.getElementById('adForm').submit();
             }
 
-            // (el form nunca se envía)
+            // SALIR → IR A MIS ANUNCIOS
+            if (result.dismiss === Swal.DismissReason.cancel) {
+                window.location.href = "{{ route('my-ads.index') }}";
+            }
         });
 
         return false;
@@ -984,7 +1042,6 @@ function checkBalanceBeforeSubmit(finalPrice) {
 document.addEventListener('DOMContentLoaded', function () {
 
     const virtualWallet = Number(window.VIRTUAL_WALLET) || 0;
-    console.log('Saldo detectado:', virtualWallet);
 
     if (virtualWallet < 1) {
         Swal.fire({
@@ -997,6 +1054,8 @@ document.addEventListener('DOMContentLoaded', function () {
             showCancelButton: true,
             confirmButtonText: '💳 Ir a Recargar',
             cancelButtonText: '❌ Salir',
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33', 
             allowOutsideClick: false,
             allowEscapeKey: false,
             reverseButtons: true,
@@ -1417,7 +1476,7 @@ function updatePreview() {
         ],
 
         whatsapp: "{{ auth()->user()->whatsapp ?? '' }}",
-        call_phone: "{{ auth()->user()->phone ?? '' }}",
+        call_phone: "{{ auth()->user()->call_phone ?? '' }}",
 
         full_url: "#",
         time_ago: "Ahora"
@@ -1533,7 +1592,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let currentSubcategory = null;
     let tempSelectedImages = [];
-    //const MAX_IMAGES = 5;
+    const imageInput = document.getElementById('ownImagesInput');
+    let MAX_IMAGES = 5;
+    let selectedFiles = [];
+
+    imageInput.addEventListener('change', function (e) {
+
+        const newFiles = Array.from(e.target.files);
+
+        // Total si se agregan
+        const totalFiles = selectedFiles.length + newFiles.length;
+
+        if (totalFiles > MAX_IMAGES) {
+
+            // ALERTA (usa SweetAlert2 si ya lo tienes)
+            Swal.fire({
+                icon: 'warning',
+                title: 'Límite de imágenes',
+                text: 'Solo se permiten máximo 5 imágenes.',
+                confirmButtonText: 'Entendido'
+            });
+
+            // Limpiar selección nueva (no borra las anteriores)
+            imageInput.value = '';
+            return;
+        }
+
+        // Agregar archivos válidos al buffer
+        selectedFiles = selectedFiles.concat(newFiles);
+
+        // Reconstruir FileList
+        const dataTransfer = new DataTransfer();
+        selectedFiles.forEach(file => dataTransfer.items.add(file));
+
+        imageInput.files = dataTransfer.files;
+    });
 
     const modal = new bootstrap.Modal(
         document.getElementById('modalSubcategoryImages')
@@ -1593,6 +1686,9 @@ document.addEventListener("DOMContentLoaded", () => {
         imagesContainer?.classList.add('d-none');
 
         tempSelectedImages = [];
+        selectedFiles = []; 
+
+        imageInput.value = '';
 
         if (previewList) previewList.innerHTML = '';
 
@@ -1715,6 +1811,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ABRIR MODAL DE IMÁGENES
+    /*
     openImagesBtn?.addEventListener('click', () => {
 
         imagesGrid.innerHTML = `<small class="text-muted">Cargando imágenes...</small>`;
@@ -1780,9 +1877,10 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
         modal.show();
-    });
+    });*/
 
     // CONFIRMAR IMÁGENES
+    /*
     confirmBtn?.addEventListener('click', () => {
 
         if (!tempSelectedImages.length) return;
@@ -1808,7 +1906,7 @@ document.addEventListener("DOMContentLoaded", () => {
         modal.hide();
 
         updatePreview();
-    });
+    });*/
 
 });
 

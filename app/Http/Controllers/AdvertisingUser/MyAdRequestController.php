@@ -172,8 +172,8 @@ class MyAdRequestController extends Controller
             'district'        => 'required|string|max:255',
             'contact_location'=> 'required|string|max:255',
 
-            'whatsapp'        => 'required|string|min:9|max:20',
-            'call_phone'      => 'required|string|min:6|max:20',
+            'whatsapp'        => 'required|string|max:9',
+            'call_phone'      => 'required|string|max:9',
 
             'amount_visible'  => 'required|in:0,1',
             'amount'          => 'required_if:amount_visible,1|numeric|min:0',
@@ -185,8 +185,22 @@ class MyAdRequestController extends Controller
             'images.*'        => 'image|mimes:jpg,jpeg,png,webp|max:4096',
 
             // CAMPOS DINÁMICOS (OBLIGATORIOS)
-            'dynamic'         => 'required|array',
+            'dynamic'         => 'nullable|array',
         ]);
+
+         // Obtener campos dinámicos reales de la subcategoría
+        $fields = FieldSubcategoryAd::where(
+            'ad_subcategories_id',
+            $request->subcategory_id
+        )->get();
+
+
+        // Validar SOLO los que existen
+        foreach ($fields as $field) {
+            $request->validate([
+                "dynamic.{$field->id}" => 'required|string|max:255'
+            ]);
+        }
 
         $user = auth()->user();
 

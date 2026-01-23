@@ -14,7 +14,7 @@ return new class extends Migration
             $table->decimal('monto', 10, 2);
             $table->foreignId('payment_method_id')->nullable()->constrained('payment_methods')->nullOnDelete();
             $table->string('img_cap_pago');
-            $table->string('operation_number')->nullable();
+            $table->string('operation_number')->nullable()->unique();
             $table->text('reject_message')->nullable();
             $table->enum('status', ['pendiente', 'aceptado', 'rechazado'])->default('pendiente');
             $table->timestamp('notified_at')->nullable();

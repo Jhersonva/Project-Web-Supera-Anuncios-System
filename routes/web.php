@@ -127,10 +127,22 @@ Route::get('/api/ads', function (Request $request) {
     $transform = function ($ad) {
         $ad->full_url = route('public.ad.detail', ['slug'=>$ad->slug,'id'=>$ad->id]);
         $ad->time_ago = $ad->created_at->locale('es')->diffForHumans();
+        $user = $ad->user;
+        $displayName = null;
+        if ($user) {
+            if ($user->account_type === 'business') {
+                $displayName = $user->company_reason;
+            } else {
+                $displayName = $user->full_name;
+            }
+        }
         $ad->user_info = [
-            'full_name' => optional($ad->user)->full_name ?? 'Usuario',
-            'profile_image' => optional($ad->user)->profile_image ? asset($ad->user->profile_image) : asset('assets/img/profile-image/default-user.png'),
-            'is_verified' => optional($ad->user)->is_verified ? true : false,
+            'account_type'  => $user?->account_type,
+            'display_name' => $displayName,
+            'profile_image'=> $user && $user->profile_image
+                ? asset($user->profile_image)
+                : asset('assets/img/profile-image/default-user.png'),
+            'is_verified'  => (bool) $user?->is_verified,
         ];
         $ad->whatsapp = optional($ad->user)->whatsapp ?? optional($ad->user)->phone ?? null;
         $ad->call_phone = optional($ad->user)->call_phone ?? optional($ad->user)->phone ?? null;

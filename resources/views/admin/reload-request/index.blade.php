@@ -68,7 +68,14 @@
             <div class="card-recarga">
 
                 <div class="d-flex justify-content-between">
-                    <h5 class="fw-bold">{{ $r->user->full_name }}</h5>
+                    <h5 class="fw-bold">
+                        @if($r->user->account_type === 'business')
+                            {{ $r->user->company_reason }}
+                        @else
+                            {{ $r->user->full_name }}
+                        @endif
+                    </h5>
+
                     <span class="badge bg-warning text-dark px-3 py-2">Pendiente</span>
                 </div>
 
@@ -124,9 +131,15 @@
                             </div>
 
                             <div class="modal-body">
-                                <p><strong>Usuario:</strong> {{ $r->user->full_name }}</p>
+                                <h5 class="text-center">
+                                    @if($r->user->account_type === 'business')
+                                        {{ $r->user->company_reason }}
+                                    @else
+                                        {{ $r->user->full_name }}
+                                    @endif
+                                </h5>
 
-                                <label class="form-label fw-bold">Número de Operación</label>
+                                <label class="form-label text-center d-block">Número de Operación</label>
                                 <input type="text" class="form-control" name="operation_number" required>
                             </div>
 
@@ -184,7 +197,13 @@
             <div class="card-recarga">
 
                 <div class="d-flex justify-content-between">
-                    <h5 class="fw-bold">{{ $r->user->full_name }}</h5>
+                    <h5 class="fw-bold">
+                        @if($r->user->account_type === 'business')
+                            {{ $r->user->company_reason }}
+                        @else
+                            {{ $r->user->full_name }}
+                        @endif
+                    </h5>
 
                     @if($r->status === 'aceptado')
                         <span class="badge bg-success px-3 py-2">Aprobado</span>
