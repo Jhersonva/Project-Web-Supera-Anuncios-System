@@ -274,15 +274,23 @@
 
 
             {{-- PRECIO --}}
+            @php
+                $currencySymbol = match($ad->amount_currency) {
+                    'USD' => '$',
+                    'PEN' => 'S/.',
+                    default => '',
+                };
+            @endphp
+
             <div class="price-box mb-4">
                 Monto / Precio / Sueldo:<br>
-                {{-- LÓGICA DE VISIBILIDAD DEL PRECIO --}}
+
                 @if($ad->amount_visible == 1)
-                    S/. {{ number_format($ad->amount, 2) }}
+                    {{ $currencySymbol }} {{ number_format($ad->amount, 2) }}
                 @elseif(!empty($ad->amount_text))
-                    S/. {{ $ad->amount_text }}
+                    {{ $currencySymbol }} {{ $ad->amount_text }}
                 @else
-                    S/. No especificado
+                    No especificado
                 @endif
             </div>
 

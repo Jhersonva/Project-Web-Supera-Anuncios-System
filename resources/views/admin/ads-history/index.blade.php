@@ -101,18 +101,25 @@
                             </td>
 
                             <td>
-                                @if($ad->expires_at < now())
+                                @if($ad->status === 'draft')
+                                    <span class="badge bg-dark">Borrador</span>
+
+                                @elseif($ad->expires_at && $ad->expires_at < now())
                                     <span class="badge bg-secondary">Expirado</span>
-                                @elseif($ad->status == 'pendiente')
+
+                                @elseif($ad->status === 'pendiente')
                                     <span class="badge bg-warning text-dark">Pendiente</span>
-                                @elseif($ad->status == 'rechazado')
+
+                                @elseif($ad->status === 'rechazado')
                                     <span class="badge bg-danger">Rechazado</span>
-                                @elseif($ad->status == 'publicado')
+
+                                @elseif($ad->status === 'publicado')
                                     <span class="badge bg-success">Publicado</span>
+
                                 @else
                                     <span class="badge bg-secondary">Desconocido</span>
                                 @endif
-                            </td>                    
+                            </td>
 
                             <td>{{ $ad->created_at->format('d/m/Y') }}</td>
 
@@ -190,18 +197,23 @@
 
                             <div class="mt-2">
                                 <strong>Estado:</strong>
-                                @if($ad->expires_at < now())
-                                    <span class="badge bg-danger">Expirado</span>
+                                @if($ad->status === 'draft')
+                                    <span class="badge bg-dark">Borrador</span>
 
-                                @elseif($ad->status == 'pendiente')
+                                @elseif($ad->expires_at && $ad->expires_at < now())
+                                    <span class="badge bg-secondary">Expirado</span>
+
+                                @elseif($ad->status === 'pendiente')
                                     <span class="badge bg-warning text-dark">Pendiente</span>
 
-                                @elseif($ad->status == 'rechazado')
+                                @elseif($ad->status === 'rechazado')
                                     <span class="badge bg-danger">Rechazado</span>
 
-                                @elseif($ad->status == 'publicado')
+                                @elseif($ad->status === 'publicado')
                                     <span class="badge bg-success">Publicado</span>
 
+                                @else
+                                    <span class="badge bg-secondary">Desconocido</span>
                                 @endif
 
                             </div>

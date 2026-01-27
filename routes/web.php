@@ -144,8 +144,15 @@ Route::get('/api/ads', function (Request $request) {
                 : asset('assets/img/profile-image/default-user.png'),
             'is_verified'  => (bool) $user?->is_verified,
         ];
-        $ad->whatsapp = optional($ad->user)->whatsapp ?? optional($ad->user)->phone ?? null;
-        $ad->call_phone = optional($ad->user)->call_phone ?? optional($ad->user)->phone ?? null;
+        $ad->whatsapp = $ad->whatsapp
+            ?: optional($ad->user)->whatsapp
+            ?: optional($ad->user)->phone
+            ?: null;
+
+        $ad->call_phone = $ad->call_phone
+            ?: optional($ad->user)->call_phone
+            ?: optional($ad->user)->phone
+            ?: null;
         $ad->dynamic_fields = $ad->dynamicFields->take(4)->map(fn($df)=>['label'=>$df->field->name??'','value'=>$df->value])->values();
         unset($ad->dynamicFields);
         $ad->urgent_publication    = (int) $ad->urgent_publication;
@@ -196,6 +203,10 @@ Route::post('/chat/start/{ad}', [ChatController::class, 'startConversation'])
 
 Route::get('/chat', [ChatController::class, 'index'])
     ->name('chat.index')
+    ->middleware('auth');
+
+Route::get('/chat/unread-count', [ChatController::class, 'unreadCount'])
+    ->name('chat.unread-count')
     ->middleware('auth');
 
 Route::get('/chat/check-new', [ChatController::class, 'checkNewConversations'])

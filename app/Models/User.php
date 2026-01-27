@@ -77,4 +77,36 @@ class User extends Authenticatable
     {
         return $this->hasMany(Message::class);
     }
+
+    public function getIsProfileCompleteAttribute(): bool
+    {
+        // Campos comunes obligatorios
+        $common = [
+            $this->email,
+            $this->locality,
+            $this->whatsapp,
+            $this->call_phone,
+        ];
+
+        foreach ($common as $value) {
+            if (empty($value)) {
+                return false;
+            }
+        }
+
+        // Persona natural
+        if ($this->account_type === 'person') {
+            return !empty($this->full_name)
+                && !empty($this->dni);
+        }
+
+        // Empresa
+        if ($this->account_type === 'business') {
+            return !empty($this->company_reason)
+                && !empty($this->ruc);
+        }
+
+        return false;
+    }
+
 }

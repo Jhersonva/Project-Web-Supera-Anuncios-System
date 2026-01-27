@@ -53,7 +53,7 @@
         {{-- CATEGORÍA --}}
         <div class="field-card">
             <label class="fw-semibold mb-2">Categoría</label>
-            <select id="categorySelect" name="category_id" class="form-select" disabled>
+            <select id="categorySelect" name="category_id" class="form-select">
                 <option value="">-- Selecciona --</option>
                 @foreach($categories as $cat)
                     <option value="{{ $cat->id }}" {{ $ad->ad_categories_id == $cat->id ? 'selected' : '' }}>
@@ -66,7 +66,7 @@
         {{-- SUBCATEGORÍA --}}
         <div id="subcatContainer" class="field-card">
             <label class="fw-semibold mb-2">Subcategoría</label>
-            <select id="subcategorySelect" name="subcategory_id" class="form-select" disabled>
+            <select id="subcategorySelect" name="subcategory_id" class="form-select">
                 @foreach($subcategories as $sub)
                     <option value="{{ $sub->id }}" {{ $ad->ad_subcategories_id == $sub->id ? 'selected' : '' }}>
                         {{ $sub->name }} 
@@ -78,13 +78,13 @@
         {{-- Título --}}
         <div class="field-card" id="titleContainer">
             <label class="fw-semibold">Título del Anuncio</label>
-            <input type="text" class="form-control" name="title" value="{{ $ad->title }}" disabled>
+            <input type="text" class="form-control" name="title" value="{{ $ad->title }}">
         </div>
 
         {{-- Descripción --}}
         <div class="field-card" id="descriptionContainer">
             <label class="fw-semibold">Descripción</label>
-            <textarea name="description" class="form-control" rows="4" disabled>{{ $ad->description }}</textarea>
+            <textarea name="description" class="form-control" rows="4">{{ $ad->description }}</textarea>
         </div>
 
         {{-- LISTA DE CAMPOS DINÁMICOS --}}
@@ -96,7 +96,7 @@
             <div class="field-card">
                 <label class="fw-semibold">{{ $field->name }}</label>
                 <input type="text" class="form-control" name="dynamic[{{ $field->id }}]"
-                       value="{{ $existing ? $existing->value : '' }}" disabled>
+                       value="{{ $existing ? $existing->value : '' }}">
             </div>
             @endforeach
         </div>
@@ -111,7 +111,6 @@
                 class="form-control"
                 placeholder="Ej: Lima"
                 value="{{ $ad->department }}"
-                disabled
             >
 
             <label class="fw-semibold mt-2">Provincia</label>
@@ -121,7 +120,6 @@
                 class="form-control"
                 placeholder="Ej: Lima"
                 value="{{ $ad->province  }}"
-                disabled
             >
 
             <label class="fw-semibold mt-2">Distrito</label>
@@ -131,7 +129,6 @@
                 class="form-control"
                 placeholder="Ej: San Juan de Miraflores"
                 value="{{ $ad->district }}"
-                disabled
             >
         </div>
 
@@ -166,12 +163,14 @@
         </div>
 
         {{-- MONTO --}}
-        <div class="field-card" id="amountContainer">
+        <div class="field-card {{ isset($ad) || $errors->has('amount') ? '' : 'd-none' }}" id="amountContainer">
 
-            <div class="d-flex justify-content-between align-items-start gap-3">
-                <div style="flex:1">
+            <label class="fw-semibold mb-2">Monto / Precio / Sueldo *</label>
 
-                    <label class="fw-semibold">Monto / Precio / Sueldo *</label>
+            <div class="row g-3 align-items-start">
+
+                {{-- INPUT MONTO --}}
+                <div class="col-12 col-md-8">
 
                     <input
                         type="number"
@@ -179,68 +178,117 @@
                         min="0"
                         name="amount"
                         id="amountInput"
-                        class="form-control"
-                        value="{{ $ad->amount_visible ? $ad->amount : '' }}"
-                        disabled
+                        class="form-control @error('amount') is-invalid @enderror"
+                        value="{{ old('amount', $ad->amount_visible ? $ad->amount : '') }}"
+                        {{ !$ad->amount_visible ? 'disabled' : '' }}
                     >
 
+                    @error('amount')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+
                     {{-- SELECT TEXTO --}}
-                    <select id="amountTextSelect" class="form-select mt-2" disabled>
-                        <option value="">Selecciona texto...</option>
-                        <option value="Sueldo a tratar" {{ $ad->amount_text == 'Sueldo a tratar' ? 'selected' : '' }}>
-                            Sueldo a tratar
-                        </option>
-                        <option value="Sueldo por comisiones" {{ $ad->amount_text == 'Sueldo por comisiones' ? 'selected' : '' }}>
-                            Sueldo por comisiones
-                        </option>
-                        <option value="No especificado" {{ $ad->amount_text == 'No especificado' ? 'selected' : '' }}>
-                            No especificado
-                        </option>
+                    <select
+                        id="amountTextSelect"
+                        class="form-select mt-2 {{ $ad->amount_visible ? 'd-none' : '' }}"
+                    >
+                        <option value="">Selecciona texto por defecto...</option>
+
+                        @foreach([
+                            'Sueldo a tratar',
+                            'Monto a tratar',
+                            'Sueldo por comisiones',
+                            'No especificado'
+                        ] as $text)
+                            <option
+                                value="{{ $text }}"
+                                {{ old('amount_text', $ad->amount_text) === $text ? 'selected' : '' }}
+                            >
+                                ({{ $text }})
+                            </option>
+                        @endforeach
                     </select>
 
-                    <small class="text-muted">
-                        Si ocultas el monto, se mostrará el texto seleccionado.
+                    <small class="text-muted d-block mt-1">
+                        Si ocultas el monto, el público verá el texto seleccionado o "No especificado".
                     </small>
 
                 </div>
 
-                <div style="min-width:170px; display:flex; align-items:center; justify-content:center;">
+                {{-- SWITCH --}}
+                <div class="col-12 col-md-4 d-flex align-items-center">
                     <div class="form-check form-switch">
                         <input
                             class="form-check-input"
                             type="checkbox"
                             id="amountVisibleCheckbox"
-                            {{ $ad->amount_visible ? 'checked' : '' }}
-                            disabled
+                            {{ old('amount_visible', $ad->amount_visible) ? 'checked' : '' }}
                         >
-                        <label class="form-check-label">Mostrar monto</label>
+                        <label class="form-check-label ms-2">
+                            Mostrar monto
+                        </label>
                     </div>
                 </div>
+
             </div>
 
-            <input type="hidden" name="amount_visible" id="amountVisibleInput" value="{{ $ad->amount_visible }}">
-            <input type="hidden" name="amount_text" id="amountTextInput" value="{{ $ad->amount_text }}">
+            {{-- HIDDEN --}}
+            <input
+                type="hidden"
+                name="amount_visible"
+                id="amountVisibleInput"
+                value="{{ old('amount_visible', $ad->amount_visible) }}"
+            >
 
+            <input
+                type="hidden"
+                name="amount_text"
+                id="amountTextInput"
+                value="{{ old('amount_text', $ad->amount_text) }}"
+            >
         </div>
+
 
         {{-- COSTOS --}}
         <div class="field-card" id="costContainer">
-            <label class="fw-semibold">Días de publicación *</label>
-            <input type="number" min="1" name="days_active" id="days_active" class="form-control"
-                   value="{{ $ad->days_active }}" disabled>
+            {{-- DÍAS PUBLICACIÓN / COSTOS --}}
+            <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="costContainer">
+
+                <label class="fw-semibold">
+                    Días de publicación *
+                </label>
+
+                <div class="form-text text-primary d-flex align-items-center gap-1">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <span>Solo se permiten publicaciones de 2 días en adelante</span>
+                </div>
+
+                <input
+                    type="number"
+                    min="2"
+                    step="1"
+                    name="days_active"
+                    id="days_active"
+                    class="form-control"
+                    value="{{ old('days_active', $ad->days_active ?? 2) }}"
+                    data-min="2"
+                    required
+                >
+
+            </div>
 
             <small class="text-muted">Indica cuántos días deseas que tu anuncio esté activo.</small>
             <br>
 
             <label class="fw-semibold mt-2">Costo por día</label>
-            <input type="text" id="pricePerDay" class="form-control mb-2" value="S/. {{ $subcategories->firstWhere('id', $ad->ad_subcategories_id)->price ?? 0 }}" disabled>
+            <input type="text" id="pricePerDay" class="form-control mb-2" value="S/. {{ $subcategories->firstWhere('id', $ad->ad_subcategories_id)->price ?? 0 }}">
 
             <label class="fw-semibold mt-2">Costo total</label>
-            <input type="text" id="totalCost" class="form-control mb-2" value="S/. 0.00" disabled>
+            <input type="text" id="totalCost" class="form-control mb-2" value="S/. 0.00">
 
             <label class="fw-semibold mt-2">Fecha de expiración</label>
             <input type="text" id="expiresAt" class="form-control"
-                   value="{{ $ad->expires_at }}" disabled>
+                   value="{{ $ad->expires_at }}">
         </div>
 
         {{-- PUBLICACIÓN URGENTE --}}
@@ -255,7 +303,6 @@
                     name="urgent_publication"
                     value="1"
                     {{ $ad->urgent_publication ? 'checked' : '' }}
-                    disabled
                 >
                 <label class="form-check-label" for="urgent_publication">
                     Activar publicación como urgente
@@ -279,7 +326,6 @@
                     name="featured_publication"
                     value="1"
                     {{ $ad->featured_publication ? 'checked' : '' }}
-                    disabled
                 >
                 <label class="form-check-label">
                     Activar publicación como destacada
@@ -301,7 +347,6 @@
                     type="checkbox"
                     id="premiere_publication_switch"
                     {{ $ad->premiere_publication ? 'checked' : '' }}
-                    disabled
                 >
 
                 <input
@@ -333,7 +378,6 @@
                     name="semi_new_publication"
                     value="1"
                     {{ $ad->semi_new_publication ? 'checked' : '' }}
-                    disabled
                 >
                 <label class="form-check-label">
                     Activar publicación como seminuevo
@@ -357,7 +401,6 @@
                     name="new_publication"
                     value="1"
                     {{ $ad->new_publication ? 'checked' : '' }}
-                    disabled
                 >
                 <label class="form-check-label">
                     Activar publicación como nuevo
@@ -381,7 +424,6 @@
                     name="available_publication"
                     value="1"
                     {{ $ad->available_publication ? 'checked' : '' }}
-                    disabled
                 >
                 <label class="form-check-label">
                     Activar publicación como disponible
@@ -405,7 +447,6 @@
                     name="top_publication"
                     value="1"
                     {{ $ad->top_publication ? 'checked' : '' }}
-                    disabled
                 >
                 <label class="form-check-label">
                     Activar publicación como TOP
@@ -741,15 +782,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // LÓGICA DE MONTO VISIBLE
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', () => {
 
-    const amountInput = document.getElementById('amountInput');
-    const amountVisibleCheckbox = document.getElementById('amountVisibleCheckbox');
-    const amountVisibleInput = document.getElementById('amountVisibleInput');
-    const amountTextSelect = document.getElementById('amountTextSelect');
-    const amountTextInput = document.getElementById('amountTextInput');
+    const amountContainer        = document.getElementById('amountContainer');
+    if (!amountContainer) return;
+
+    const amountInput            = document.getElementById('amountInput');
+    const amountVisibleCheckbox  = document.getElementById('amountVisibleCheckbox');
+    const amountVisibleInput     = document.getElementById('amountVisibleInput');
+    const amountTextSelect       = document.getElementById('amountTextSelect');
+    const amountTextInput        = document.getElementById('amountTextInput');
 
     function toggleAmount(visible) {
+
         if (visible) {
             amountInput.disabled = false;
             amountInput.required = true;
@@ -763,20 +808,26 @@ document.addEventListener('DOMContentLoaded', function () {
             amountInput.value = '';
 
             amountTextSelect.classList.remove('d-none');
+
+            amountVisibleInput.value = 0;
             amountTextInput.value = amountTextSelect.value || 'No especificado';
         }
     }
 
-    // estado inicial desde BD
+    // Estado inicial (EDIT)
     toggleAmount(amountVisibleCheckbox.checked);
 
+    // Switch mostrar / ocultar
     amountVisibleCheckbox.addEventListener('change', function () {
         toggleAmount(this.checked);
+        updatePreview?.();
     });
 
+    // Cambio de texto
     amountTextSelect.addEventListener('change', function () {
         if (!amountVisibleCheckbox.checked) {
-            amountTextInput.value = this.value;
+            amountTextInput.value = this.value || 'No especificado';
+            updatePreview?.();
         }
     });
 
@@ -785,6 +836,29 @@ document.addEventListener('DOMContentLoaded', function () {
 document.addEventListener("DOMContentLoaded", () => {
 
     const daysInput = document.getElementById("days_active");
+
+    if (daysInput) {
+
+        daysInput.addEventListener("input", () => {
+            const value = parseInt(daysInput.value, 10);
+
+            if (value >= 2) {
+                calculateDatesAndCosts?.();
+                recalculateEditTotal?.();
+            }
+        });
+
+        daysInput.addEventListener("blur", () => {
+            const value = parseInt(daysInput.value, 10);
+
+            if (!value || value < 2) {
+                daysInput.value = 2;
+            }
+
+            calculateDatesAndCosts?.(true);
+            recalculateEditTotal?.();
+        });
+    }
 
     const checkboxes = [
         "urgent_publication",

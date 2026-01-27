@@ -104,7 +104,6 @@
                     type="text"
                     name="ruc"
                     class="form-control"
-                    required
                     inputmode="numeric"
                     pattern="[0-9]{11}"
                     maxlength="11"
@@ -211,15 +210,24 @@ document.getElementById('accountType').addEventListener('change', function () {
     const person = document.getElementById('personFields');
     const business = document.getElementById('businessFields');
 
+    const dni = document.querySelector('input[name="dni"]');
+    const ruc = document.querySelector('input[name="ruc"]');
+
     person.classList.add('d-none');
     business.classList.add('d-none');
 
+    // limpiar required
+    dni.required = false;
+    ruc.required = false;
+
     if (this.value === 'person') {
         person.classList.remove('d-none');
+        dni.required = true;
     }
 
     if (this.value === 'business') {
         business.classList.remove('d-none');
+        ruc.required = true;
     }
 });
 

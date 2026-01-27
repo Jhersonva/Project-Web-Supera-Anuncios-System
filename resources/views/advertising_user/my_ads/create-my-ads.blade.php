@@ -195,23 +195,48 @@
 
                     <div class="row g-3 align-items-start">
 
-                        <!-- INPUT MONTO -->
+                        <!-- MONEDA + MONTO (SE OCULTAN JUNTOS) -->
                         <div class="col-12 col-md-8">
-                            <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                name="amount"
-                                id="amountInput"
-                                class="form-control @error('amount') is-invalid @enderror"
-                                value="{{ old('amount', $ad->amount ?? '') }}"
-                                {{ isset($ad) && !$ad->amount_visible ? 'disabled' : '' }}
+
+                            <div
+                                id="amountValueContainer"
+                                class="{{ old('amount_visible', $ad->amount_visible ?? 1) ? '' : 'd-none' }}"
                             >
+                                <div class="input-group">
 
-                            @error('amount')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                                    <select
+                                        name="amount_currency"
+                                        id="amountCurrency"
+                                        class="form-select"
+                                        style="max-width: 130px"
+                                    >
+                                        <option value="PEN"
+                                            {{ old('amount_currency', $ad->amount_currency ?? 'PEN') === 'PEN' ? 'selected' : '' }}>
+                                            S/ PEN
+                                        </option>
+                                        <option value="USD"
+                                            {{ old('amount_currency', $ad->amount_currency ?? '') === 'USD' ? 'selected' : '' }}>
+                                            $ USD
+                                        </option>
+                                    </select>
 
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        name="amount"
+                                        id="amountInput"
+                                        class="form-control @error('amount') is-invalid @enderror"
+                                        value="{{ old('amount', $ad->amount ?? '') }}"
+                                    >
+                                </div>
+
+                                @error('amount')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <!-- TEXTO CUANDO EL MONTO ESTÁ OCULTO -->
                             <select
                                 id="amountTextSelect"
                                 class="form-select mt-2 {{ old('amount_visible', $ad->amount_visible ?? 1) ? 'd-none' : '' }}"
@@ -305,7 +330,9 @@
                         type="text"
                         id="pricePerDay"
                         class="form-control mb-2"
-                        value="{{ isset($ad) ? 'S/. ' . number_format($subcategories->first()->price ?? 0, 2) : '' }}"
+                        value="{{ isset($ad)
+                            ? 'S/. ' . number_format($ad->subcategory->price ?? 0, 2)
+                            : '' }}"
                         readonly
                     >
 
@@ -335,16 +362,21 @@
                 <!-- PUBLICACIÓN URGENTE -->
                 <div class="field-card d-none" id="urgentContainer">
 
-
                     <label class="fw-semibold">¿Publicación urgente?</label>
 
                     <div class="form-check form-switch">
                         <input class="form-check-input"
                             type="checkbox"
-                            id="urgent_publication"
+                            id="urgent_publication_switch"
                             name="urgent_publication"
                             value="1"
                             {{ isset($ad) && $ad->urgent_publication ? 'checked' : '' }}>
+
+                        <input
+                            type="hidden"
+                            name="urgent_publication"
+                            id="urgent_publication"
+                            value="{{ isset($ad) && $ad->urgent_publication ? 1 : 0 }}">
                             
                         <label class="form-check-label" for="urgent_publication">
                             Activar publicación como urgente
@@ -868,10 +900,6 @@ window.ALERTS = @json($alertsPrepared);
 
 <script>
 
-let subcatPrice = {{ isset($ad) && isset($subcategories->first()->price)
-    ? $subcategories->first()->price
-    : 0 }};
-
 function updatePublishButton(totalCost) {
     const btn = document.getElementById("submitAdBtn");
     const warning = document.getElementById("balanceWarning");
@@ -886,7 +914,6 @@ function updatePublishButton(totalCost) {
         warning?.classList.remove("d-none");
     }
 }
-
 
 document.getElementById('submitAdBtn').addEventListener('click', function () {
     document.getElementById('publishInput').value = 1;
@@ -920,6 +947,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+safeListener("urgent_publication_switch", "change", () => {
+    document.getElementById("urgent_publication").value =
+        document.getElementById("urgent_publication_switch").checked ? 1 : 0;
+
+    calculateDatesAndCosts();
+});
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -1327,6 +1360,16 @@ function truncateText(text, limit = 70) {
     return (lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated) + '…';
 }
 
+function getCurrencySymbol(currency) {
+    switch (currency) {
+        case 'USD':
+            return '$';
+        case 'PEN':
+        default:
+            return 'S/';
+    }
+}
+
 // CREA LA CARD DE PREVISUALIZACIÓN
 function createAdCard(ad) {
 
@@ -1401,11 +1444,19 @@ function createAdCard(ad) {
                 <div class="ad-price-box">
                     <p class="fw-bold ${ad.amount_visible == 0 ? 'text-secondary' : 'text-success'}">
                         ${
-                            ad.amount_visible == 1
-                                ? `S/ ${ad.amount}`
-                                : ad.amount_text
-                                    ? `S/ ${ad.amount_text}`
-                                    : "S/ No especificado"
+                            (() => {
+                                const symbol = getCurrencySymbol(ad.amount_currency);
+
+                                if (ad.amount_visible == 1 && ad.amount) {
+                                    return `${symbol} ${ad.amount}`;
+                                }
+
+                                if (ad.amount_text) {
+                                    return `${symbol} ${ad.amount_text}`;
+                                }
+
+                                return `${symbol} No especificado`;
+                            })()
                         }
                     </p>
                 </div>
@@ -1444,6 +1495,7 @@ function createAdCard(ad) {
 function updatePreview() {
 
     const dynamicPreviewFields = getPreviewDynamicFields();
+    const currencySelect = document.getElementById('amountCurrency');
 
     const ad = {
         title: document.querySelector("input[name='title']")?.value || "Título del anuncio",
@@ -1454,6 +1506,7 @@ function updatePreview() {
         province: document.querySelector("input[name='province']")?.value.toUpperCase() || "",
 
         amount: amountInput.value || null,
+        amount_currency: currencySelect?.value || 'PEN',
         amount_text: amountTextInput.value || null,
         amount_visible: parseInt(amountVisibleInput.value),
 
@@ -1497,7 +1550,8 @@ document.querySelectorAll("#adForm input, #adForm textarea, #adForm select")
         el.addEventListener("change", updatePreview);
     });
 
-function startPreviewCarousel(images) {
+
+    function startPreviewCarousel(images) {
 
     // Limpiar carrusel previo
     if (previewCarouselTimer) {
@@ -1810,110 +1864,12 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     });
 
-    // ABRIR MODAL DE IMÁGENES
-    /*
-    openImagesBtn?.addEventListener('click', () => {
-
-        imagesGrid.innerHTML = `<small class="text-muted">Cargando imágenes...</small>`;
-        tempSelectedImages = [];
-
-        fetch(`/advertising/subcategories/${currentSubcategory}/images`)
-            .then(r => r.json())
-            .then(images => {
-
-                imagesGrid.innerHTML = '';
-
-                if (!images.length) {
-                    imagesGrid.innerHTML = `
-                        <small class="text-muted">
-                            Esta subcategoría no tiene imágenes
-                        </small>`;
-                    return;
-                }
-
-                images.forEach(img => {
-
-                    const card = document.createElement('div');
-                    card.className = 'image-card';
-                    card.innerHTML = `<img src="/${img.image}">`;
-
-                    card.addEventListener('click', () => {
-
-                    const index = tempSelectedImages.findIndex(i => i.id === img.id);
-
-                    // Deseleccionar
-                    if (index !== -1) {
-                        tempSelectedImages.splice(index, 1);
-                        card.classList.remove('border', 'border-dark');
-                        return;
-                    }
-
-                    // Límite dinámico
-                    if (tempSelectedImages.length >= MAX_IMAGES) {
-
-                        if (MAX_IMAGES === 1) {
-                            // Empleos → reemplazar
-                            tempSelectedImages = [img];
-
-                            document.querySelectorAll('.image-card')
-                                .forEach(c => c.classList.remove('border', 'border-dark'));
-
-                            card.classList.add('border', 'border-dark');
-                        } else {
-                            alert(`Solo puedes seleccionar máximo ${MAX_IMAGES} imágenes`);
-                        }
-
-                        return;
-                    }
-
-                    // Seleccionar
-                    tempSelectedImages.push(img);
-                    card.classList.add('border', 'border-dark');
-                });
-
-
-                    imagesGrid.appendChild(card);
-                });
-            });
-
-        modal.show();
-    });*/
-
-    // CONFIRMAR IMÁGENES
-    /*
-    confirmBtn?.addEventListener('click', () => {
-
-        if (!tempSelectedImages.length) return;
-
-        // Guardar IDs
-        selectedInput.value = tempSelectedImages.map(i => i.id).join(',');
-
-        // Guardar imágenes de referencia (URLs)
-        referenceImages = tempSelectedImages.map(img => `/${img.image}`);
-
-        // Render previews visuales
-        previewList.innerHTML = '';
-
-        referenceImages.forEach(src => {
-            const item = document.createElement('div');
-            item.className = 'image-card border border-dark';
-            item.style.maxWidth = '120px';
-            item.innerHTML = `<img src="${src}">`;
-            previewList.appendChild(item);
-        });
-
-        previewBox.classList.remove('d-none');
-        modal.hide();
-
-        updatePreview();
-    });*/
-
 });
 
 
 //let subcatPrice = 0;
 
-// PRECIO URGENTE 
+// Tags
 let urgentPrice = {{ $urgentPrice }};
 let featuredPrice = {{ $featuredPrice }};
 let premierePrice  = {{ $premierePrice  }};
@@ -1944,7 +1900,7 @@ function calculateDatesAndCosts(forceMin = false) {
     let total = subcatPrice * days;
 
     // ===== EXTRAS =====
-    if (document.getElementById("urgent_publication")?.checked) total += urgentPrice;
+    if (document.getElementById("urgent_publication_switch")?.checked) {total += urgentPrice;}
     if (document.getElementById("featured_publication")?.checked) total += featuredPrice;
     if (document.getElementById("premiere_publication_switch")?.checked) total += premierePrice;
     if (document.getElementById("semi_new_publication_switch")?.checked) total += semiNewPrice;
@@ -2229,6 +2185,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Cargar campos automáticamente al editar
     if (FORM_MODE === 'edit' && adDataFromServer) {
 
+        subcatPrice = parseFloat(adDataFromServer.subcategory_price);
         const subcatId = adDataFromServer.ad_subcategories_id;
 
         showMainFields();

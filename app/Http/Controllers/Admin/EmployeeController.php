@@ -14,8 +14,10 @@ class EmployeeController extends Controller
      */
     public function index()
     {
-        // ADMIN (asumimos role_id = 1)
-        $admin = User::where('role_id', 1)->first();
+        // TODOS LOS ADMINS
+        $admins = User::where('role_id', 1)
+            ->orderBy('full_name', 'asc')
+            ->get();
 
         // EMPLEADOS
         $employees = User::where('role_id', 3)
@@ -24,7 +26,7 @@ class EmployeeController extends Controller
 
         return view(
             'admin.config.employee.index',
-            compact('admin', 'employees')
+            compact('admins', 'employees')
         );
     }
 
@@ -35,11 +37,18 @@ class EmployeeController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->role_id == 1 && auth()->user()->role_id !== 1) {
+            abort(403);
+        }
+
         $request->validate([
-            'full_name' => 'required',
-            'email'     => 'required|email|unique:users,email',
-            'dni'       => 'required|digits:8|unique:users,dni',
-            'password'  => 'required|min:6',
+            'full_name'  => 'required|string|max:150',
+            'email'      => 'required|email|unique:users,email',
+            'dni'        => 'required|digits:8|unique:users,dni',
+            'whatsapp'   => 'nullable|digits:9',
+            'call_phone' => 'nullable|digits:9',
+            'password'   => 'required|min:6',
+            'role_id'    => 'required|in:1,3',
         ], [
             // full_name
             'full_name.required' => 'El nombre completo es obligatorio.',
@@ -54,27 +63,32 @@ class EmployeeController extends Controller
             'dni.digits'   => 'El DNI debe tener exactamente 8 dígitos.',
             'dni.unique'   => 'Este DNI ya está registrado en el sistema.',
 
+            // whatsapp
+            'whatsapp.digits' => 'El número de WhatsApp debe tener exactamente 9 dígitos.',
+
+            // call_phone
+            'call_phone.digits' => 'El número de llamadas debe tener exactamente 9 dígitos.',
+
             // password
             'password.required' => 'La contraseña es obligatoria.',
             'password.min'      => 'La contraseña debe contener al menos 6 caracteres.',
         ]);
 
         User::create([
-            'role_id'   => 3,
-            'full_name' => $request->full_name,
-            'email'     => $request->email,
-            'dni'       => $request->dni,
-            'phone'     => $request->phone,
-            'locality'  => $request->locality,
-            'whatsapp'  => $request->whatsapp,
-            'call_phone'=> $request->call_phone,
-            'contact_email'=> $request->contact_email,
-            'address'   => $request->address,
-            'password'  => Hash::make($request->password),
-            'is_active' => true
+            'role_id'    => $request->role_id,
+            'full_name'  => $request->full_name,
+            'email'      => $request->email,
+            'dni'        => $request->dni,
+            'locality'   => $request->locality,
+            'whatsapp'   => $request->whatsapp,
+            'call_phone' => $request->call_phone,
+            'address'    => $request->address,
+            'password'   => Hash::make($request->password),
+            'is_active'  => true
         ]);
 
-        return redirect()->route('admin.config.employees')
+        return redirect()
+            ->route('admin.config.employees')
             ->with('success', 'Empleado registrado correctamente.');
     }
 
@@ -90,38 +104,44 @@ class EmployeeController extends Controller
     public function update(Request $request, User $employee)
     {
         $request->validate([
-            'full_name' => 'required',
-            'email'     => 'required|email|unique:users,email,' . $employee->id,
-            'dni'       => 'required|digits:8|unique:users,dni,' . $employee->id,
-            'password'  => 'nullable|min:6',
+            'full_name'  => 'required|string|max:150',
+            'email'      => 'required|email|unique:users,email,' . $employee->id,
+            'dni'        => 'required|digits:8|unique:users,dni,' . $employee->id,
+            'whatsapp'   => 'nullable|digits:9',
+            'call_phone' => 'nullable|digits:9',
+            'password'   => 'nullable|min:6',
+            // Si es admin, validar role_id
+            'role_id'    => auth()->user()->role_id === 1 ? 'required|in:1,3' : '',
         ], [
             'full_name.required' => 'El nombre completo es obligatorio.',
-
-            'email.required' => 'El correo electrónico es obligatorio.',
-            'email.email'    => 'Debes ingresar un correo electrónico válido.',
-            'email.unique'   => 'Otro usuario ya está usando este correo.',
-
-            'dni.required' => 'El DNI es obligatorio.',
-            'dni.digits'   => 'El DNI debe tener exactamente 8 dígitos.',
-            'dni.unique'   => 'Otro usuario ya está usando este DNI.',
-
-            'password.min' => 'La contraseña debe tener al menos 6 caracteres.',
+            'email.required'     => 'El correo electrónico es obligatorio.',
+            'email.email'        => 'Debes ingresar un correo electrónico válido.',
+            'email.unique'       => 'Otro usuario ya está usando este correo.',
+            'dni.required'       => 'El DNI es obligatorio.',
+            'dni.digits'         => 'El DNI debe tener exactamente 8 dígitos.',
+            'dni.unique'         => 'Otro usuario ya está usando este DNI.',
+            'whatsapp.digits'   => 'El número de WhatsApp debe tener exactamente 9 dígitos.',
+            'call_phone.digits' => 'El número de llamadas debe tener exactamente 9 dígitos.',
+            'password.min'       => 'La contraseña debe tener al menos 6 caracteres.',
+            'role_id.required'   => 'El rol del usuario es obligatorio.',
+            'role_id.in'         => 'El rol seleccionado no es válido.',
         ]);
 
-        // Datos base (SIN password)
         $data = $request->only([
             'full_name',
             'email',
             'dni',
-            'phone',
             'locality',
             'whatsapp',
             'call_phone',
-            'contact_email',
             'address',
         ]);
 
-        // Si se escribió una nueva contraseña → la actualizamos
+        // Solo los admins pueden cambiar el rol
+        if (auth()->user()->role_id === 1 && $request->filled('role_id')) {
+            $data['role_id'] = $request->role_id;
+        }
+
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }

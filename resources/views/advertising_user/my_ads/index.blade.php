@@ -54,18 +54,16 @@
             </div>
         </div>
 
-        @if($ads->count() == 0)
-            <div class="alert alert-warning text-center">
-                No se encontraron anuncios.
-            </div>
-        @endif
+        
 
         {{-- ========================= --}}
         {{--   ESCRITORIO (TABLA) --}}
         {{-- ========================= --}}
         <div class="table-responsive desktop-table">
             <table class="table table-hover align-middle">
+                
                 <thead class="table-light">
+                    
                     <tr>
                         <th>Imagen</th>
                         <th>Título</th>
@@ -166,7 +164,6 @@
 
                                     @if(
                                         $ad->status !== 'draft' &&
-                                        $ad->status !== 'publicado' &&
                                         $ad->status !== 'rechazado'
                                     )
                                         <a href="{{ route('my-ads.editAd', $ad->id) }}"
@@ -183,19 +180,25 @@
                                     </button>
 
                                     <form id="deleteForm-{{ $ad->id }}" 
-                                    action="{{ route('my-ads.deleteAd', $ad->id) }}" 
-                                    method="POST" style="display:none;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <input type="hidden" name="return_to" value="{{ url()->full() }}">
-                                </form>
+                                        action="{{ route('my-ads.deleteAd', $ad->id) }}" 
+                                        method="POST" style="display:none;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <input type="hidden" name="return_to" value="{{ url()->full() }}">
+                                    </form>
 
                                 </div>
                             </td>
                         </tr>
                     @endforeach
                 </tbody>
+                
             </table>
+            @if($ads->count() == 0)
+                <div class="alert alert-warning text-center">
+                    No se encontraron anuncios.
+                </div>
+            @endif
         </div>
 
         {{-- ======================= --}}
@@ -251,6 +254,15 @@
 
                         {{-- Acciones --}}
                         <div class="d-flex gap-2 justify-content-center flex-wrap">
+
+                            {{-- CONTINUAR BORRADOR --}}
+                            @if($ad->status === 'draft')
+                                <a href="{{ route('my-ads.editDraft', $ad->id) }}"
+                                    class="btn btn-sm btn-outline-primary">
+                                    <i class="fa-solid fa-play"></i>
+                                    <span class="d-none d-sm-inline"> Editar</span>
+                                </a>
+                            @endif
                             
                             @if($ad->published)
                                 <button class="btn btn-sm btn-outline-info"
@@ -287,14 +299,19 @@
                                 </a>
                             @endif
 
-                            <form action="{{ route('my-ads.deleteAd', $ad->id) }}" method="POST"
-                                onsubmit="return confirm('¿Eliminar anuncio?');">
+                            <button type="button"
+                                class="btn btn-sm btn-outline-danger"
+                                onclick="confirmDelete({{ $ad->id }})">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+
+                            <form id="deleteForm-{{ $ad->id }}"
+                                action="{{ route('my-ads.deleteAd', $ad->id) }}"
+                                method="POST"
+                                style="display:none;">
                                 @csrf
                                 @method('DELETE')
                                 <input type="hidden" name="return_to" value="{{ url()->full() }}">
-                                <button class="btn btn-sm btn-outline-danger">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
                             </form>
 
                         </div>
@@ -304,12 +321,6 @@
             @endforeach
         </div>
 
-        {{-- PAGINACIÓN 
-        <div class="mt-3">
-            {{ $ads->links() }}
-        </div>--}}
-
-        <!-- BOTÓN FLOTANTE CREAR ANUNCIO -->
         {{-- BOTONES FLOTANTES --}}
         @auth
             @if(!in_array((int) auth()->user()->role_id, [1, 3]))

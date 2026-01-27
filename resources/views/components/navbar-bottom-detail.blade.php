@@ -12,27 +12,33 @@
 
         {{-- WhatsApp --}}
         <div>
-            <a href="https://wa.me/{{ $ad->user->whatsapp }}" target="_blank" class="text-success fs-3 d-block">
+            <a href="https://wa.me/{{ $ad->whatsapp ?? $ad->user->whatsapp ?? $ad->user->phone }}"
+            target="_blank"
+            class="text-success fs-3 d-block">
                 <i class="fab fa-whatsapp"></i>
             </a>
+
             <small class="text-secondary">WhatsApp</small>
         </div>
 
         {{-- Llamada --}}
         <div>
-            <a href="tel:{{ $ad->user->call_phone ?? $ad->user->phone }}" class="text-primary fs-3 d-block">
+            <a href="tel:{{ $ad->call_phone ?? $ad->user->call_phone ?? $ad->user->phone }}"
+            class="text-primary fs-3 d-block">
                 <i class="fa-solid fa-phone"></i>
             </a>
             <small class="text-secondary">Llamar</small>
         </div>
 
         {{-- Email --}}
-        <div>
-            <a href="mailto:{{ $ad->user->contact_email ?? $ad->user->email }}" class="text-danger fs-3 d-block">
-                <i class="fa-solid fa-envelope"></i>
-            </a>
-            <small class="text-secondary">Email</small>
-        </div>
+        @if($ad->user->email)
+            <div>
+                <a href="mailto:{{ $ad->user->email }}" class="text-danger fs-3 d-block">
+                    <i class="fa-solid fa-envelope"></i>
+                </a>
+                <small class="text-secondary">Email</small>
+            </div>
+        @endif
 
         {{-- Dirección --}}
         <div>

@@ -16,26 +16,37 @@ class ChatController extends Controller
 
         $conversations = Conversation::where('sender_id', $userId)
             ->orWhere('receiver_id', $userId)
-            ->with(['sender', 'receiver', 'advertisement'])
+            ->with([
+                'sender',
+                'receiver',
+                'advertisement',
+                'messages' => function ($q) use ($userId) {
+                    $q->where('is_read', false)
+                    ->where('user_id', '!=', $userId);
+                }
+            ])
             ->latest()
             ->get();
 
         return view('public.chat.index', compact('conversations'));
     }
 
-
     public function show($id)
     {
         $conversation = Conversation::with('messages.user')->findOrFail($id);
 
-        // Solo puede verlo si forma parte de la conversación
         if (!in_array(auth()->id(), [$conversation->sender_id, $conversation->receiver_id])) {
             abort(403);
         }
 
+        // Marcar mensajes como leídos
+        Message::where('conversation_id', $conversation->id)
+            ->where('user_id', '!=', auth()->id())
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
         return view('public.chat.show', compact('conversation'));
     }
-
 
     public function startConversation(Request $request, $adId)
     {
@@ -126,4 +137,22 @@ class ChatController extends Controller
             'conversations' => $newConversations
         ]);
     }
+
+    public function unreadCount()
+    {
+        $userId = auth()->id();
+
+        $count = Message::where('is_read', false)
+            ->whereHas('conversation', function ($q) use ($userId) {
+                $q->where('sender_id', $userId)
+                ->orWhere('receiver_id', $userId);
+            })
+            ->where('user_id', '!=', $userId) 
+            ->count();
+
+        return response()->json([
+            'count' => $count
+        ]);
+    }
+
 }

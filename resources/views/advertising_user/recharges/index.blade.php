@@ -160,6 +160,13 @@
                 @endif
             </p>
 
+            @if($r->status !== 'pendiente' && $r->reject_message)
+                <p class="m-0">
+                    <strong>Mensaje del la solicitud:</strong><br>
+                    <span class="text-muted">{{ $r->reject_message }}</span>
+                </p>
+            @endif
+
         </div>
         @endforeach
 

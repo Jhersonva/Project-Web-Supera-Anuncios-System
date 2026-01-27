@@ -204,14 +204,14 @@
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
 
-                                <!-- GALERÍA -->
+                                {{-- GALERÍA 
                                 <button class="btn btn-sm btn-outline-info"
                                     data-bs-toggle="modal"
                                     data-bs-target="#modalImages"
                                     data-sub-id="{{ $sub->id }}"
                                     data-sub-name="{{ $sub->name }}">
                                     <i class="fa-solid fa-images"></i> Imágenes
-                                </button>
+                                </button>--}}
                             </div>
                         </div>
 

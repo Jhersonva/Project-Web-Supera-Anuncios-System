@@ -18,7 +18,10 @@ return new class extends Migration {
             $table->string('province')->nullable();
             $table->string('district')->nullable();
             $table->string('contact_location')->nullable();
+            $table->string('whatsapp', 9)->nullable();
+            $table->string('call_phone', 9)->nullable();
             $table->decimal('amount', 10, 2)->nullable(0);
+            $table->enum('amount_currency', ['PEN', 'USD'])->default('PEN');
             $table->boolean('amount_visible')->default(1);
             $table->string('amount_text')->nullable();
             $table->unsignedInteger('days_active')->default(1);

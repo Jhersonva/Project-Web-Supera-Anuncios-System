@@ -25,11 +25,9 @@ class UserProfileController extends Controller
 
         $rules = [
             'email'     => 'required|email|unique:users,email,' . $user->id,
-            //'phone'     => 'nullable|digits:9',
             'locality'  => 'nullable|max:150',
             'whatsapp'  => 'nullable|max:9',
             'call_phone'=> 'nullable|max:9',
-            //'contact_email' => 'nullable|email|max:150',
             'address'   => 'nullable|max:200',
             'password'  => 'nullable|min:6',
             'profile_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048'

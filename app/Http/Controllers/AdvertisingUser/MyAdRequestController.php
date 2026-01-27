@@ -19,6 +19,7 @@ use App\Support\AdPrices;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class MyAdRequestController extends Controller
 {
@@ -177,6 +178,7 @@ class MyAdRequestController extends Controller
 
             'amount_visible'  => 'required|in:0,1',
             'amount'          => 'required_if:amount_visible,1|numeric|min:0',
+            'amount_currency' => 'required_if:amount_visible,1|in:PEN,USD',
 
             'days_active'     => 'required|integer|min:2',
 
@@ -336,7 +338,10 @@ class MyAdRequestController extends Controller
             'province'            => $request->province,
             'district'            => $request->district,
             'contact_location'      => $request->contact_location,
+            'whatsapp'              => $request->whatsapp,
+            'call_phone'            => $request->call_phone,
             'amount'                => $amount,
+            'amount_currency' => $request->amount_currency ?? 'PEN',
             'amount_visible'        => $request->amount_visible,
             'amount_text'        => $request->amount_text,
             'days_active'           => $days,
@@ -380,14 +385,7 @@ class MyAdRequestController extends Controller
             'company_name' => $receiptData['company_name'],
             'address'      => $receiptData['address'],
         ]);
-
         
-
-        $user->update([
-            'whatsapp'   => $request->whatsapp,
-            'call_phone' => $request->call_phone,
-        ]);
-
         // IMAGEN DE SUBCATEGORÍA SELECCIONADA
         if ($request->filled('selected_subcategory_image')) {
 
@@ -416,7 +414,6 @@ class MyAdRequestController extends Controller
                 ]);
             }
         }
-
 
         if (!$saveAsDraft) {
 
@@ -917,21 +914,49 @@ class MyAdRequestController extends Controller
 
     public function destroy(Request $request, $id)
     {
-        $ad = Advertisement::findOrFail($id);
+        DB::transaction(function () use ($request, $id) {
 
-        // ELIMINAR IMÁGENES
-        foreach ($ad->images as $img) {
-            if (file_exists(public_path($img->image))) {
-                @unlink(public_path($img->image));
+            $ad = Advertisement::with(['images', 'user', 'subcategory'])
+                ->lockForUpdate()
+                ->findOrFail($id);
+
+            $user = $ad->user;
+
+            if (in_array($ad->status, ['pendiente'])) {
+
+                $totalPaid =
+                    ($ad->subcategory->price * $ad->days_active)
+                    + $ad->urgent_price
+                    + $ad->featured_price
+                    + $ad->premiere_price
+                    + $ad->semi_new_price
+                    + $ad->new_price
+                    + $ad->available_price
+                    + $ad->top_price;
+
+                if ($totalPaid > 0) {
+                    $user->virtual_wallet += $totalPaid;
+                    $user->save();
+                }
             }
-            $img->delete();
-        }
 
-        ValueFieldAd::where('advertisementss_id', $ad->id)->delete();
+            if ($ad->receipt_file && file_exists(public_path($ad->receipt_file))) {
+                @unlink(public_path($ad->receipt_file));
+            }
 
-        $ad->delete();
+            foreach ($ad->images as $img) {
+                if (file_exists(public_path($img->image))) {
+                    @unlink(public_path($img->image));
+                }
+                $img->delete();
+            }
+
+            ValueFieldAd::where('advertisementss_id', $ad->id)->delete();
+
+            $ad->delete();
+        });
 
         return redirect()->to($request->return_to)
-        ->with('success', 'Anuncio eliminado correctamente.');
+            ->with('success', 'Anuncio eliminado correctamente.');
     }
 }

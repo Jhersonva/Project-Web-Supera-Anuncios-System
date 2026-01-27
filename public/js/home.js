@@ -475,6 +475,7 @@ function createAdCard(ad){
 
     // verificado si el anuncio O el usuario lo está
     const amountVisible = Number(ad.amount_visible);
+    const currencySymbol = ad.amount_currency === 'USD' ? '$' : 'S/';
 
     return `
     <div class="ad-card-wrapper col-12 col-md-6 col-lg-4 d-flex justify-content-center">
@@ -568,10 +569,10 @@ function createAdCard(ad){
                     <p class="fw-bold ${amountVisible === 0 ? 'text-secondary' : 'text-success'}">
                         ${
                             amountVisible === 1
-                                ? `S/ ${ad.amount}`
+                                ? `${currencySymbol} ${ad.amount}`
                                 : ad.amount_text
-                                    ? `S/ ${ad.amount_text}`
-                                    : "S/ No especificado"
+                                    ? `${currencySymbol} ${ad.amount_text}`
+                                    : 'No especificado'
                         }
                     </p>
                 </div>
@@ -586,31 +587,35 @@ function createAdCard(ad){
                 </div>
                 ` : ''}
 
-                <div class="ad-buttons"> 
+                <div class="ad-buttons row g-2">
 
-                    <!-- Ver -->
-                    <button class="btn btn-sm btn-primary"
-                        onclick="handleVer('${ad.full_url}')">
-                        <i class="fa-solid fa-eye"></i> Ver
-                    </button>
+                    <div class="col-6 col-md-auto">
+                        <button class="btn btn-sm btn-primary w-100"
+                            onclick="handleVer('${ad.full_url}')">
+                            <i class="fa-solid fa-eye"></i> Ver
+                        </button>
+                    </div>
 
-                    <!-- WhatsApp -->
-                    <button class="btn btn-sm btn-success"
-                        onclick="handleWhatsapp('${ad.whatsapp}', '${ad.title}')">
-                        <i class="fa-brands fa-whatsapp"></i> WhatsApp
-                    </button>
+                    <div class="col-6 col-md-auto">
+                        <button class="btn btn-sm btn-success w-100"
+                            onclick="handleWhatsapp('${ad.whatsapp}', '${ad.title}')">
+                            <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                        </button>
+                    </div>
 
-                    <!-- Llamar -->
-                    <button class="btn btn-sm btn-info"
-                        onclick="handleLlamada('${ad.call_phone}')">
-                        <i class="fa-solid fa-phone"></i> Llamar
-                    </button>
+                    <div class="col-6 col-md-auto">
+                        <button class="btn btn-sm btn-info w-100"
+                            onclick="handleLlamada('${ad.call_phone}')">
+                            <i class="fa-solid fa-phone"></i> Llamar
+                        </button>
+                    </div>
 
-                    <!-- CHAT / CONTACTO -->
-                    <button class="btn btn-sm btn-danger"
-                        onclick="handleContact(${ad.id})">
-                        <i class="fa-solid fa-comments"></i> Chat
-                    </button>
+                    <div class="col-6 col-md-auto">
+                        <button class="btn btn-sm btn-danger w-100"
+                            onclick="handleContact(${ad.id})">
+                            <i class="fa-solid fa-comments"></i> Chat
+                        </button>
+                    </div>
 
                 </div>
                 

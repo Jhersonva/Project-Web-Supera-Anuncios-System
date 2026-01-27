@@ -11,7 +11,7 @@
         >
 
         {{-- NOMBRE --}}
-        <strong class="mb-0">
+        <strong class="mb-0 d-none d-md-inline">
             {{ system_company_name() }}
         </strong>
 

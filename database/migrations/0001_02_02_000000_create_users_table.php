@@ -24,8 +24,8 @@ return new class extends Migration
             $table->string('password', 255);
             $table->string('phone', 9)->nullable();
             $table->string('locality', 150)->nullable();
-            $table->string('whatsapp', 20)->nullable();       
-            $table->string('call_phone', 20)->nullable();     
+            $table->string('whatsapp', 9)->nullable();       
+            $table->string('call_phone', 9)->nullable();     
             $table->string('contact_email', 150)->nullable(); 
             $table->string('address', 200)->nullable();  
             $table->date('birthdate')->nullable();

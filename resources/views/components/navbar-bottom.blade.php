@@ -31,8 +31,15 @@
                 </a>
 
                 <a href="{{ route('chat.index') }}" 
-                    class="text-center {{ request()->routeIs('chat.*') ? 'nav-item-active' : '' }}">
+                    class="text-center position-relative {{ request()->routeIs('chat.*') ? 'nav-item-active' : '' }}">
+
                     <i class="fa-solid fa-comments fs-4"></i><br>Chat
+
+                    <span id="badge-chat"
+                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                        style="display:none">
+                        0
+                    </span>
                 </a>
 
                 <a href="{{ route('profile.index') }}" 

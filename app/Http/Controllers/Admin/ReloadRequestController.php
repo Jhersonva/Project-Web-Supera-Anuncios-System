@@ -37,79 +37,118 @@ class ReloadRequestController extends Controller
 
     public function approve(Request $request, $id)
     {
-        $recarga = Recharge::findOrFail($id);
+        $request->validate(
+            [
+                'operation_number' => 'required|string|max:50|unique:recharges,operation_number',
+                'admin_message'    => 'required|string|min:5',
+            ],
+            [
+                'operation_number.required' => 'Debes ingresar el número de operación.',
+                'operation_number.unique'   => 'Este número de operación ya fue registrado.',
+                'operation_number.max'      => 'El número de operación no debe superar los 50 caracteres.',
+                'admin_message.required'    => 'Debes escribir un mensaje para el usuario.',
+                'admin_message.min'         => 'El mensaje debe tener al menos 5 caracteres.',
+            ]
+        );
+
+        $recarga = Recharge::with('user')->findOrFail($id);
 
         if ($recarga->status !== 'pendiente') {
             return back()->with('warning', 'La recarga ya fue procesada.');
         }
 
-        // Validar número de operación
-        $request->validate([
-            'operation_number' => 'required|string|max:50|unique:recharges,operation_number',
-        ], [
-            'operation_number.unique' => 'El número de operación ya fue utilizado en otra recarga.',
-        ]);
-
         $empleado = Auth::user();
 
-        // VALIDAR QUE HAYA UNA CAJA ABIERTA
+        // Caja abierta
         $caja = CashBox::where('user_id', $empleado->id)
-                        ->where('status', 'open')
-                        ->first();
+            ->where('status', 'open')
+            ->first();
 
         if (!$caja) {
-            return back()->with('error', 'No puedes aprobar la recarga porque no tienes una caja abierta.');
+            return back()->with('error', 'No tienes una caja abierta.');
         }
 
-        // Guardar número de operación
-        $recarga->operation_number = $request->operation_number;
-
-        // Sumar monto al monedero virtual del usuario
         $usuario = $recarga->user;
+
+        // Sumar saldo
         $usuario->virtual_wallet += $recarga->monto;
         $usuario->save();
 
-        // Cambiar estado
-        $recarga->status = 'aceptado';
-        $recarga->save();
+        // Actualizar recarga
+        $recarga->update([
+            'status'           => 'aceptado',
+            'operation_number' => $request->operation_number,
+            'reject_message'   => $request->admin_message,
+            'notified_at'      => now(),
+        ]);
 
-        // Actualizar saldo de caja
-        $caja->current_balance += $recarga->monto;
-        $caja->save();
+        // Caja
+        $caja->increment('current_balance', $recarga->monto);
 
-        // Registrar movimiento de caja
         CashMovement::create([
             'cash_box_id' => $caja->id,
             'employee_id' => $empleado->id,
-            'type' => 'income',
-            'amount' => $recarga->monto,
-            'description' => 'Recarga aprobada para el usuario: ' . $usuario->display_name
+            'type'        => 'income',
+            'amount'      => $recarga->monto,
+            'description' => 'Recarga aprobada - Usuario ID ' . $usuario->id
         ]);
+
+        // WhatsApp
+        if ($request->has('send_whatsapp') && $usuario->whatsapp) {
+
+            $phone = preg_replace('/[^0-9]/', '', $usuario->whatsapp);
+
+            $mensaje = urlencode(
+                "*Recarga aprobada*\n\n" .
+                "Monto: S/. {$recarga->monto}\n" .
+                "Operación: {$request->operation_number}\n\n" .
+                "{$request->admin_message}"
+            );
+
+            return back()
+                ->with('success', 'Recarga aprobada correctamente.')
+                ->with('whatsapp_url', "https://wa.me/{$phone}?text={$mensaje}");
+        }
 
         return back()->with('success', 'Recarga aprobada correctamente.');
     }
 
     public function reject(Request $request, $id)
     {
-        $recarga = Recharge::findOrFail($id);
+        $request->validate([
+            'reject_message' => 'required|string|min:5',
+        ]);
+
+        $recarga = Recharge::with('user')->findOrFail($id);
 
         if ($recarga->status !== 'pendiente') {
             return back()->with('warning', 'Esta recarga ya fue procesada.');
         }
 
-        // Validar que ingrese un motivo de rechazo
-        $request->validate([
-            'reject_message' => 'required|string|min:5',
+        $recarga->update([
+            'status'         => 'rechazado',
+            'reject_message' => $request->reject_message,
+            'notified_at'    => now(),
         ]);
 
-        // Guardar mensaje
-        $recarga->reject_message = $request->reject_message;
+        $usuario = $recarga->user;
 
-        // Cambiar estado
-        $recarga->status = 'rechazado';
-        $recarga->save();
+        if ($request->has('send_whatsapp') && $usuario->whatsapp) {
 
-        return back()->with('info', 'La recarga ha sido rechazada.');
+            $phone = preg_replace('/[^0-9]/', '', $usuario->whatsapp);
+
+            $mensaje = urlencode(
+                "*Recarga rechazada*\n\n" .
+                "Monto: S/. {$recarga->monto}\n\n" .
+                "{$request->reject_message}"
+            );
+
+            return back()
+                ->with('info', 'Recarga rechazada.')
+                ->with('whatsapp_url', "https://wa.me/{$phone}?text={$mensaje}");
+        }
+
+        return back()->with('info', 'Recarga rechazada.');
     }
 
 }

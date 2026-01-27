@@ -41,7 +41,13 @@
                         </small>
                     </div>
 
-                    <i class="fa-solid fa-chevron-right"></i>
+                    @if($conv->messages->count() > 0)
+                        <span class="badge bg-danger rounded-pill ms-2">
+                            {{ $conv->messages->count() }}
+                        </span>
+                    @endif
+
+                    <i class="fa-solid fa-chevron-right ms-2"></i>
 
                 </a>
             @endforeach

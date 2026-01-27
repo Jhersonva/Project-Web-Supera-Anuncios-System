@@ -57,6 +57,11 @@
 
     <script>
 
+    @auth
+        window.PROFILE_COMPLETE = @json(auth()->user()->is_profile_complete);
+        window.PROFILE_CONFIG_URL = "{{ route('profile.index') }}";
+    @endauth
+
     document.addEventListener('DOMContentLoaded', function () {
 
         @if(auth()->check() && in_array(auth()->user()->role->name, ['admin', 'employee']))
@@ -109,6 +114,37 @@
 
     });
 
+    document.addEventListener('DOMContentLoaded', function () {
+
+        @if(auth()->check())
+
+            const badgeChat = document.getElementById('badge-chat');
+
+            async function actualizarChat() {
+                if (!badgeChat) return;
+
+                try {
+                    const res = await axios.get('{{ route('chat.unread-count') }}');
+                    const count = res.data.count;
+
+                    badgeChat.textContent = count;
+                    badgeChat.style.display = count > 0 ? 'inline-block' : 'none';
+
+                } catch (e) {
+                    console.warn('Error chat badge');
+                }
+            }
+
+            actualizarChat();
+
+            setInterval(() => {
+                actualizarChat();
+            }, 5000);
+
+        @endif
+
+    });
+
     @if (session('success'))
         Swal.fire({
             icon: 'success',
@@ -147,6 +183,53 @@
         .then(reg => console.log('Service Worker registrado', reg))
         .catch(err => console.error('SW error', err));
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+    if (!window.IS_AUTHENTICATED) return;
+    if (window.PROFILE_COMPLETE) return;
+
+    const STORAGE_KEY = 'profile_alert_last_shown';
+    const MINUTES_DELAY = 1; // 🔥 TEST: cada 1 minuto
+
+    const now = Date.now();
+    const lastShown = localStorage.getItem(STORAGE_KEY);
+
+    if (lastShown && (now - lastShown) < MINUTES_DELAY * 60 * 1000) {
+        return;
+    }
+
+    Swal.fire({
+        icon: 'warning',
+        title: 'Verifica tus datos',
+        html: `
+            <p class="mb-2">
+                Tu perfil no está completamente configurado.
+            </p>
+            <p class="small text-muted">
+                Es necesario completar tus datos para poder publicar anuncios
+                y generar confianza con otros usuarios.
+            </p>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Ir a configurar',
+        cancelButtonText: 'Más tarde',
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        allowOutsideClick: false,
+        allowEscapeKey: false
+    }).then((result) => {
+
+        localStorage.setItem(STORAGE_KEY, Date.now());
+
+        if (result.isConfirmed) {
+            window.location.href = window.PROFILE_CONFIG_URL;
+        }
+    });
+
+});
+
+
     </script>
 
 

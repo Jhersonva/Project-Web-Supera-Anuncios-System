@@ -54,45 +54,45 @@
             {{-- ===================== --}}
             {{-- ADMINISTRADOR --}}
             {{-- ===================== --}}
-            @if($admin)
-            <div class="card shadow-sm border-0 p-4 mb-4" style="border-radius:16px;background:#f8f9fa;">
+            @if($admins->count())
+                <div class="card shadow-sm border-0 p-4 mb-4" style="border-radius:16px;background:#f8f9fa;">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-primary text-white p-3 rounded-circle me-3"
+                            style="width:60px;height:60px;display:flex;align-items:center;justify-content:center;">
+                            <i class="fa-solid fa-user-shield fa-lg"></i>
+                        </div>
 
-                <div class="d-flex align-items-center mb-3">
-                    <div class="bg-primary text-white p-3 rounded-circle me-3"
-                        style="width:60px;height:60px;display:flex;align-items:center;justify-content:center;">
-                        <i class="fa-solid fa-user-shield fa-lg"></i>
+                        <div>
+                            <h5 class="fw-bold m-0">Administradores</h5>
+                            <small class="text-muted">Usuarios con rol administrador</small>
+                        </div>
                     </div>
 
-                    <div>
-                        <h5 class="fw-bold m-0">Administrador</h5>
-                        <small class="text-muted">Cuenta principal del sistema</small>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <tbody>
+                                @foreach($admins as $admin)
+                                    <tr>
+                                        <td class="fw-semibold">{{ $admin->full_name }}</td>
+                                        <td>{{ $admin->email }}</td>
+                                        <td>{{ $admin->dni }}</td>
+                                        <td>{{ $admin->phone }}</td>
+                                        <td>{{ $admin->locality }}</td>
+                                        <td>
+                                            <span class="badge bg-primary">ADMIN</span>
+                                        </td>
+                                        <td class="text-end">
+                                            <a href="{{ route('admin.config.employees.edit', $admin) }}"
+                                            class="btn btn-sm btn-primary">
+                                                Editar Perfil
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-
-                <div class="table-responsive">
-                    <table class="table align-middle mb-0">
-                        <tbody>
-                            <tr>
-                                <td class="fw-semibold">{{ $admin->full_name }}</td>
-                                <td>{{ $admin->email }}</td>
-                                <td>{{ $admin->dni }}</td>
-                                <td>{{ $admin->phone }}</td>
-                                <td>{{ $admin->locality }}</td>
-                                <td>
-                                    <span class="badge bg-primary">ADMIN</span>
-                                </td>
-                                <td class="text-end">
-                                    <a href="{{ route('admin.config.employees.edit', $admin) }}"
-                                    class="btn btn-sm btn-primary">
-                                        Editar Perfil
-                                    </a>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-            </div>
             @endif
 
             <table class="table table-hover align-middle">

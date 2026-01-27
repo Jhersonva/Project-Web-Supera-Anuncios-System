@@ -92,7 +92,10 @@
                 <p>
                     <strong>Comprobante:</strong>
                     @if($r->img_cap_pago)
-                        <a href="{{ asset($r->img_cap_pago) }}" target="_blank">
+                        <a href="#"
+                        class="text-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#voucherModal{{ $r->id }}">
                             Ver <i class="fa-solid fa-eye"></i>
                         </a>
                     @else
@@ -121,8 +124,9 @@
             {{-- MODAL APROBAR --}}
             <div class="modal fade" id="approveModal{{ $r->id }}">
                 <div class="modal-dialog">
-                    <form method="POST" action="{{ route('admin.reload-request.approve', $r->id) }}">
+                    <form method="POST" id="approveForm{{ $r->id }}" action="{{ route('admin.reload-request.approve', $r->id) }}"  data-whatsapp="{{ preg_replace('/[^0-9]/', '', $r->user->whatsapp) }}">
                         @csrf
+
                         <div class="modal-content">
 
                             <div class="modal-header">
@@ -131,7 +135,8 @@
                             </div>
 
                             <div class="modal-body">
-                                <h5 class="text-center">
+
+                                <h5 class="text-center mb-4">
                                     @if($r->user->account_type === 'business')
                                         {{ $r->user->company_reason }}
                                     @else
@@ -139,12 +144,55 @@
                                     @endif
                                 </h5>
 
-                                <label class="form-label text-center d-block">Número de Operación</label>
-                                <input type="text" class="form-control" name="operation_number" required>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold d-block text-center">
+                                        Número de Operación
+                                    </label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        name="operation_number"
+                                        required
+                                    >
+                                </div>
+
+                                <div class="mb-2">
+                                    <label class="form-label fw-semibold">
+                                        Mensaje para el usuario
+                                    </label>
+                                    <textarea
+                                        class="form-control"
+                                        name="admin_message"
+                                        rows="3"
+                                        placeholder="Ej: Tu recarga fue aprobada correctamente."
+                                        required
+                                    ></textarea>
+                                </div>
+
+                                <div class="form-check mt-3">
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        name="send_whatsapp"
+                                        value="1"
+                                        checked
+                                        id="sendWhatsappApprove{{ $r->id }}"
+                                    >
+                                    <label class="form-check-label fw-semibold" for="sendWhatsappApprove{{ $r->id }}">
+                                        Enviar mensaje por WhatsApp
+                                    </label>
+                                </div>
+
                             </div>
 
                             <div class="modal-footer">
-                                <button class="btn btn-success w-100">Confirmar aprobación</button>
+                                <button
+                                    type="submit"
+                                    class="btn btn-success w-100"
+                                >
+                                    Confirmar aprobación
+                                </button>
+
                             </div>
 
                         </div>
@@ -165,14 +213,48 @@
                             </div>
 
                             <div class="modal-body">
-                                <p><strong>Usuario:</strong> {{ $r->user->full_name }}</p>
 
-                                <label class="form-label fw-bold">Motivo del rechazo</label>
-                                <textarea class="form-control" name="reject_message" rows="3" required></textarea>
+                                <h5 class="text-center mb-4">
+                                    @if($r->user->account_type === 'business')
+                                        {{ $r->user->company_reason }}
+                                    @else
+                                        {{ $r->user->full_name }}
+                                    @endif
+                                </h5>
+
+                                <div class="mb-2">
+                                    <label class="form-label fw-semibold">
+                                        Motivo del rechazo
+                                    </label>
+                                    <textarea
+                                        class="form-control"
+                                        name="reject_message"
+                                        rows="3"
+                                        placeholder="Ej: El comprobante no es válido o no coincide con el monto."
+                                        required
+                                    ></textarea>
+                                </div>
+
+                                <div class="form-check mt-3">
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        name="send_whatsapp"
+                                        value="1"
+                                        checked
+                                        id="sendWhatsappReject{{ $r->id }}"
+                                    >
+                                    <label class="form-check-label fw-semibold" for="sendWhatsappReject{{ $r->id }}">
+                                        Enviar mensaje por WhatsApp
+                                    </label>
+                                </div>
+
                             </div>
 
                             <div class="modal-footer">
-                                <button class="btn btn-danger w-100">Rechazar</button>
+                                <button class="btn btn-danger w-100">
+                                    Confirmar rechazo
+                                </button>
                             </div>
 
                         </div>
@@ -180,7 +262,31 @@
                 </div>
             </div>
 
-            @endforeach
+            {{-- MODAL COMPROBANTE --}}
+            <div class="modal fade" id="voucherModal{{ $r->id }}" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                Comprobante de Pago
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <div class="modal-body text-center">
+                            <img
+                                src="{{ asset($r->img_cap_pago) }}"
+                                alt="Comprobante de pago"
+                                class="img-fluid rounded shadow"
+                                style="max-height: 75vh;"
+                            >
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+           @endforeach
 
         @endif
 
@@ -225,11 +331,21 @@
                     <strong>Fecha:</strong>
                     {{ $r->created_at->format('d/m/Y H:i') }}
                 </p>
+
+                @if($r->status !== 'pendiente' && $r->reject_message)
+                    <p class="m-0">
+                        <strong>Mensaje de la solicitud:</strong><br>
+                        <span class="text-muted">{{ $r->reject_message }}</span>
+                    </p>
+                @endif
+
             </div>
             @endforeach
         @endif
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
 // SELECTORES
@@ -255,63 +371,54 @@ btnHistorial.addEventListener("click", () => {
     seccionHistorial.style.display  = "block";
 });
 
+
 document.addEventListener("DOMContentLoaded", function () {
 
-    // ÉXITO
-    @if(session('success'))
+    @if(session('whatsapp_url'))
+        Swal.fire({
+            icon: 'success',
+            title: 'Recarga aprobada',
+            text: '¿Deseas enviar el mensaje por WhatsApp?',
+            showCancelButton: true,
+            confirmButtonText: 'Abrir WhatsApp',
+            cancelButtonText: 'Ahora no',
+            allowOutsideClick: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "{{ session('whatsapp_url') }}";
+            }
+        });
+
+    @elseif(session('success'))
         Swal.fire({
             icon: 'success',
             title: '¡Operación exitosa!',
             text: "{{ session('success') }}",
-            showConfirmButton: false,
-            timer: 2200,
-            timerProgressBar: true
+            confirmButtonText: "Ok"
         });
-    @endif
 
-    // ERROR
-    @if(session('error'))
+    @elseif(session('error'))
         Swal.fire({
             icon: 'error',
             title: 'Error',
             text: "{{ session('error') }}",
             confirmButtonText: "Entendido"
         });
-    @endif
 
-    // WARNING
-    @if(session('warning'))
+    @elseif(session('warning'))
         Swal.fire({
             icon: 'warning',
             title: 'Atención',
             text: "{{ session('warning') }}",
             confirmButtonText: "Ok"
         });
-    @endif
 
-    // INFO
-    @if(session('info'))
+    @elseif(session('info'))
         Swal.fire({
             icon: 'info',
             title: 'Información',
             text: "{{ session('info') }}",
             confirmButtonText: "Ok"
-        });
-    @endif
-
-    // VALIDACIONES
-    @if ($errors->any())
-        Swal.fire({
-            icon: 'error',
-            title: 'Corrige los errores',
-            html: `
-                <ul style="text-align:left;">
-                    @foreach ($errors->all() as $e)
-                        <li>{{ $e }}</li>
-                    @endforeach
-                </ul>
-            `,
-            confirmButtonText: "Cerrar"
         });
     @endif
 
