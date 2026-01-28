@@ -104,13 +104,13 @@
         {{-- UBICACIÓN DEL ANUNCIO --}}
         <div class="field-card" id="locationAdContainer">
 
-            <label class="fw-semibold">Departamento</label>
+            <label class="fw-semibold mt-2">Distrito</label>
             <input
                 type="text"
-                name="department"
+                name="district"
                 class="form-control"
-                placeholder="Ej: Lima"
-                value="{{ $ad->department }}"
+                placeholder="Ej: San Juan de Miraflores"
+                value="{{ $ad->district }}"
             >
 
             <label class="fw-semibold mt-2">Provincia</label>
@@ -122,14 +122,15 @@
                 value="{{ $ad->province  }}"
             >
 
-            <label class="fw-semibold mt-2">Distrito</label>
+            <label class="fw-semibold">Departamento</label>
             <input
                 type="text"
-                name="district"
+                name="department"
                 class="form-control"
-                placeholder="Ej: San Juan de Miraflores"
-                value="{{ $ad->district }}"
+                placeholder="Ej: Lima"
+                value="{{ $ad->department }}"
             >
+            
         </div>
 
         {{-- Dirección --}}
@@ -147,8 +148,12 @@
                 type="text"
                 name="whatsapp"
                 class="form-control"
+                placeholder="Ej: 999888777"
+                required
+                inputmode="numeric"
+                pattern="[0-9]{9}"
+                maxlength="9"
                 value="{{ old('whatsapp', $ad->whatsapp ?? $user->whatsapp ?? '') }}"
-                placeholder="Ej: +51 999888777"
             >
 
             <label class="fw-semibold mt-2">Contacto vía Llamada</label>
@@ -156,11 +161,12 @@
                 type="text"
                 name="call_phone"
                 class="form-control"
-                value="{{ old('call_phone', $ad->call_phone ?? $user->call_phone ?? '') }}"
                 placeholder="Ej: 983777666"
+                required
                 inputmode="numeric"
                 pattern="[0-9]{9}"
                 maxlength="9"
+                value="{{ old('call_phone', $ad->call_phone ?? $user->call_phone ?? '') }}"
             >
 
         </div>
@@ -175,46 +181,41 @@
                 <!-- MONEDA + MONTO -->
                 <div class="col-12 col-md-8">
 
-                    <div
-                        id="amountValueContainer"
-                        class="{{ old('amount_visible', $ad->amount_visible ?? 1) ? '' : 'd-none' }}"
-                    >
-                        <div class="input-group">
+                    <div class="input-group">
 
-                            {{-- MONEDA --}}
-                            <select
-                                name="amount_currency"
-                                id="amountCurrency"
-                                class="form-select"
-                                style="max-width: 130px"
-                            >
-                                <option value="PEN"
-                                    {{ old('amount_currency', $ad->amount_currency ?? 'PEN') === 'PEN' ? 'selected' : '' }}>
-                                    S/ PEN
-                                </option>
+                        {{-- MONEDA --}}
+                        <select
+                            name="amount_currency"
+                            id="amountCurrency"
+                            class="form-select"
+                            style="max-width: 130px"
+                        >
+                            <option value="PEN"
+                                {{ old('amount_currency', $ad->amount_currency ?? 'PEN') === 'PEN' ? 'selected' : '' }}>
+                                S/ PEN
+                            </option>
 
-                                <option value="USD"
-                                    {{ old('amount_currency', $ad->amount_currency ?? '') === 'USD' ? 'selected' : '' }}>
-                                    $ USD
-                                </option>
-                            </select>
+                            <option value="USD"
+                                {{ old('amount_currency', $ad->amount_currency ?? '') === 'USD' ? 'selected' : '' }}>
+                                $ USD
+                            </option>
+                        </select>
 
-                            {{-- MONTO --}}
-                            <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                name="amount"
-                                id="amountInput"
-                                class="form-control @error('amount') is-invalid @enderror"
-                                value="{{ old('amount', $ad->amount_visible ? $ad->amount : '') }}"
-                            >
-                        </div>
-
-                        @error('amount')
-                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
+                        {{-- MONTO --}}
+                        <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            name="amount"
+                            id="amountInput"
+                            class="form-control @error('amount') is-invalid @enderror"
+                            value="{{ old('amount', $ad->amount_visible ? $ad->amount : '') }}"
+                        >
                     </div>
+
+                    @error('amount')
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                    @enderror
 
                     {{-- TEXTO CUANDO EL MONTO ESTÁ OCULTO --}}
                     <select
@@ -242,6 +243,7 @@
                         Si ocultas el monto, el público verá el texto seleccionado o "No especificado".
                     </small>
                 </div>
+
 
                 {{-- SWITCH --}}
                 <div class="col-12 col-md-4 d-flex align-items-center">
@@ -276,47 +278,43 @@
             >
         </div>
 
-
         {{-- COSTOS --}}
-        <div class="field-card" id="costContainer">
+        <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="costContainer">
             {{-- DÍAS PUBLICACIÓN / COSTOS --}}
-            <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="costContainer">
 
-                <label class="fw-semibold">
-                    Días de publicación *
-                </label>
+            <label class="fw-semibold">
+                Días de publicación *
+            </label>
 
-                <div class="form-text text-primary d-flex align-items-center gap-1">
-                    <i class="bi bi-info-circle-fill"></i>
-                    <span>Solo se permiten publicaciones de 2 días en adelante</span>
-                </div>
-
-                <input
-                    type="number"
-                    min="2"
-                    step="1"
-                    name="days_active"
-                    id="days_active"
-                    class="form-control"
-                    value="{{ old('days_active', $ad->days_active ?? 2) }}"
-                    data-min="2"
-                    required
-                >
-
+            <div class="form-text text-primary d-flex align-items-center gap-1">
+                <i class="bi bi-info-circle-fill"></i>
+                <span>Solo se permiten publicaciones de 2 días en adelante</span>
             </div>
+
+            <input
+                type="number"
+                min="2"
+                step="1"
+                name="days_active"
+                id="days_active"
+                class="form-control"
+                value="{{ old('days_active', $ad->days_active ?? 2) }}"
+                data-min="2"
+                required
+            >
 
             <small class="text-muted">Indica cuántos días deseas que tu anuncio esté activo.</small>
             <br>
 
             <label class="fw-semibold mt-2">Costo por día</label>
-            <input type="text" id="pricePerDay" class="form-control mb-2" value="S/. {{ $subcategories->firstWhere('id', $ad->ad_subcategories_id)->price ?? 0 }}">
+            <input type="text" id="pricePerDay" class="form-control mb-2" value="S/. {{ $subcategories->firstWhere('id', $ad->ad_subcategories_id)->price ?? 0 }}" readonly>
 
             <label class="fw-semibold mt-2">Costo total</label>
-            <input type="text" id="totalCost" class="form-control mb-2" value="S/. 0.00">
+            <input type="text" id="totalCost" class="form-control mb-2" value="S/. 0.00" readonly>
 
             <label class="fw-semibold mt-2">Fecha de expiración</label>
             <input type="text" id="expiresAt" class="form-control"
-                   value="{{ $ad->expires_at }}">
+                   value="{{ $ad->expires_at }}" readonly>
         </div>
 
         {{-- PUBLICACIÓN URGENTE --}}
@@ -486,6 +484,46 @@
             </small>
         </div>
 
+        {{-- ANUNCIO VERIFICADO --}}
+        @php
+            $showVerified = isset($ad) && $ad->ad_categories_id != 1;
+        @endphp
+
+        <div class="field-card {{ $showVerified ? '' : 'd-none' }}" id="verifiedContainer">
+
+            <label class="fw-semibold">¿Deseas verificar tu anuncio?</label>
+
+            <div class="form-check form-switch mb-2">
+                <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="verification_requested"
+                    name="verification_requested"
+                    value="1"
+                    {{ isset($ad) && $ad->verification_requested ? 'checked' : '' }}
+                >
+                <label class="form-check-label" for="verification_requested">
+                    Marcar anuncio como verificado
+                </label>
+            </div>
+
+            <p class="text-muted small mb-2">
+                Al activar esta opción, autorizas que este anuncio sea revisado y pueda
+                mostrarse como <strong>ANUNCIO VERIFICADO</strong>.
+            </p>
+
+            <button type="button"
+                    id="confirmVerifiedBtn"
+                    class="btn btn-outline-danger btn-sm w-100">
+                <i class="fa-solid fa-shield-check"></i>
+                Confirmar verificación del anuncio
+            </button>
+
+            <small class="text-muted d-block mt-2">
+                Disponible solo para Inmuebles y Vehículos / Maquinarias
+            </small>
+        </div>
+
         {{-- RESUMEN --}}
         <div class="field-card" id="summaryContainer">
             <h5 class="fw-bold mb-3">Resumen de Pago</h5>
@@ -494,6 +532,23 @@
                 <span class="fw-semibold">Costo total:</span>
                 <span id="summaryTotalCost" class="fw-bold text-danger">S/. 0.00</span>
             </div>
+
+            <div class="d-flex justify-content-between mt-2">
+                <span class="fw-semibold">Tu saldo:</span>
+                <span class="fw-bold text-success">
+                    S/. {{ number_format($virtualWallet, 2) }}
+                </span>
+            </div>
+
+            @if(isset($summaryTotalCost) && $summaryTotalCost > $virtualWallet)
+                        <small class="text-danger d-block mt-2 fw-semibold">
+                            ⚠ Saldo insuficiente para publicar este anuncio
+                        </small>
+                    @else
+                        <small class="text-muted d-block mt-2">
+                            El costo se calcula según los días y las opciones seleccionadas.
+                        </small>
+                    @endif
         </div>
 
         {{-- IMÁGENES DEL ANUNCIO (EDIT) --}}
@@ -549,12 +604,88 @@
             >
 
             <small class="text-muted d-block">
-                Máximo 5 imágenes en total.
+                Máximo 5 imágenes. Si subes nuevas, se agregarán al anuncio.
             </small>
         </div>
 
         <input type="hidden" name="remove_images" id="remove_images">
 
+        {{-- COMPROBANTE DE PAGO --}}
+        @php
+            $receiptUser = $ad->user;
+        @endphp
+
+        <div class="field-card" id="receiptContainer">
+
+            <h5 class="fw-bold mb-3">Datos del Comprobante de Pago</h5>
+
+            {{-- Tipo de comprobante --}}
+            <label class="fw-semibold mb-2">Tipo de comprobante</label>
+            <select class="form-select" name="receipt_type" id="receipt_type">
+                <option value="boleta" {{ $ad->receipt_type === 'boleta' ? 'selected' : '' }}>
+                    Boleta
+                </option>
+                <option value="factura" {{ $ad->receipt_type === 'factura' ? 'selected' : '' }}>
+                    Factura
+                </option>
+                <option value="nota_venta" {{ $ad->receipt_type === 'nota_venta' ? 'selected' : '' }}>
+                    Nota de Venta
+                </option>
+            </select>
+
+            {{-- BOLETA --}}
+            <div id="boletaFields" class="mt-3 d-none">
+                <label class="fw-semibold">DNI</label>
+                <input type="text" name="dni" class="form-control" maxlength="8"
+                    value="{{ $ad->dni }}">
+
+                <label class="fw-semibold mt-2">Nombre Completo</label>
+                <input type="text" name="boleta_full_name" id="boleta_full_name"
+                    class="form-control"
+                    value="{{ $ad->full_name }}">
+            </div>
+
+            {{-- FACTURA --}}
+            <div id="facturaFields" class="mt-3 d-none">
+                <label class="fw-semibold">RUC</label>
+                <input type="text" name="ruc" class="form-control" maxlength="11"
+                    value="{{ $ad->ruc }}">
+
+                <label class="fw-semibold mt-2">Razón Social</label>
+                <input type="text" name="company_name" class="form-control"
+                    value="{{ $ad->company_name }}">
+
+                <label class="fw-semibold mt-2">Dirección</label>
+                <input type="text" name="address" class="form-control"
+                    value="{{ $ad->address }}">
+            </div>
+
+            {{-- NOTA DE VENTA --}}
+            <div id="notaVentaFields" class="mt-3 d-none">
+                <label class="fw-semibold mt-2">Nombre Completo</label>
+                <input type="text" name="nota_full_name" id="nota_full_name"
+                    class="form-control"
+                    value="{{ $ad->full_name }}">
+            </div>
+{{--
+            <hr class="my-4">
+
+            
+            <h5 class="fw-bold mb-2">Previsualización del Comprobante</h5>
+
+            <div class="p-3 border rounded bg-light" id="receiptPreview"></div>
+
+            {{-- PDF generado 
+            @if($ad->receipt_file)
+                <a href="{{ asset($ad->receipt_file) }}"
+                target="_blank"
+                class="btn btn-outline-primary btn-sm mt-3 w-100">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    Ver comprobante generado
+                </a>
+            @endif--}}
+
+        </div>
 
         <!-- BOTÓN -->
         <button class="btn btn-danger w-100 py-2 fw-semibold mt-3" id="submitBtn">
@@ -568,6 +699,15 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+
+/* Validación de campos WhatsApp y llamadas */
+document.querySelectorAll('input[name="whatsapp"], input[name="call_phone"]').forEach(input => {
+    input.addEventListener('input', function () {
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 9);
+    });
+});
+
+// PRECIOS DE ETIQUETAS
 const currentSubcategory = "{{ $ad->ad_subcategories_id }}";
 const selectedImageIds  = "{{ $ad->selected_subcategory_image }}";
 let referenceImages = [];
@@ -665,13 +805,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedImages = [];
 });
 
-
 // LÓGICA DE MONTO VISIBLE
 document.addEventListener('DOMContentLoaded', () => {
 
     const amountContainer        = document.getElementById('amountContainer');
     if (!amountContainer) return;
 
+    const amountValueContainer   = document.getElementById('amountValueContainer');
     const amountInput            = document.getElementById('amountInput');
     const amountVisibleCheckbox  = document.getElementById('amountVisibleCheckbox');
     const amountVisibleInput     = document.getElementById('amountVisibleInput');
@@ -681,13 +821,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function toggleAmount(visible) {
 
         if (visible) {
+            amountInput.classList.remove('d-none');
             amountInput.disabled = false;
             amountInput.required = true;
+
             amountTextSelect.classList.add('d-none');
 
             amountVisibleInput.value = 1;
             amountTextInput.value = '';
         } else {
+            //amountInput.classList.add('d-none');
             amountInput.disabled = true;
             amountInput.required = false;
             amountInput.value = '';
@@ -699,16 +842,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Estado inicial (EDIT)
+    // ESTADO INICIAL (EDIT)
     toggleAmount(amountVisibleCheckbox.checked);
 
-    // Switch mostrar / ocultar
+    // SWITCH
     amountVisibleCheckbox.addEventListener('change', function () {
         toggleAmount(this.checked);
         updatePreview?.();
     });
 
-    // Cambio de texto
+    // TEXTO CUANDO ESTÁ OCULTO
     amountTextSelect.addEventListener('change', function () {
         if (!amountVisibleCheckbox.checked) {
             amountTextInput.value = this.value || 'No especificado';
@@ -718,6 +861,76 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
+// LÓGICA DE ANUNCIO VERIFICADO SEGÚN CATEGORÍA Y SUBCATEGORÍA
+const verifiedContainer = document.getElementById('verifiedContainer');
+const verifiedInput     = document.getElementById('verification_requested');
+
+function updateVerifiedVisibility(categoryId, subcategoryId) {
+
+    if (!verifiedContainer || !verifiedInput) return;
+
+    const allowedCategory = categoryId === '2' || categoryId === '3';
+    const hasSubcategory  = subcategoryId && subcategoryId !== '';
+
+    if (allowedCategory && hasSubcategory) {
+        verifiedContainer.classList.remove('d-none');
+    } else {
+        verifiedContainer.classList.add('d-none');
+        verifiedInput.checked = false;
+    }
+}
+
+// Inicializar estado
+document.addEventListener('DOMContentLoaded', () => {
+
+    const categorySelect    = document.getElementById('category_id');
+    const subcategorySelect = document.getElementById('subcategory_id');
+
+    if (categorySelect && subcategorySelect) {
+        updateVerifiedVisibility(
+            categorySelect.value,
+            subcategorySelect.value
+        );
+    }
+});
+
+// Actualizar visibilidad al cambiar categoría o subcategoría
+document.addEventListener('DOMContentLoaded', () => {
+
+    const requestInput = document.getElementById('verification_requested');
+    const confirmBtn   = document.getElementById('confirmVerifiedBtn');
+
+    if (!requestInput || !confirmBtn) return;
+
+    function syncButtonWithCheckbox() {
+        if (requestInput.checked) {
+            confirmBtn.classList.remove('btn-outline-danger');
+            confirmBtn.classList.add('btn-success');
+            confirmBtn.innerHTML = `
+                <i class="fa-solid fa-check"></i>
+                Verificación solicitada
+            `;
+        } else {
+            confirmBtn.classList.remove('btn-success');
+            confirmBtn.classList.add('btn-outline-danger');
+            confirmBtn.innerHTML = `
+                <i class="fa-solid fa-shield-check"></i>
+                Confirmar verificación del anuncio
+            `;
+        }
+    }
+
+    confirmBtn.addEventListener('click', () => {
+        requestInput.checked = true;
+        syncButtonWithCheckbox();
+    });
+
+    requestInput.addEventListener('change', syncButtonWithCheckbox);
+
+    syncButtonWithCheckbox(); 
+});
+
+// LÓGICA DE CÁLCULO DE COSTOS SEGUN LAS ETIQUETAS
 document.addEventListener("DOMContentLoaded", () => {
 
     const daysInput = document.getElementById("days_active");
@@ -842,22 +1055,17 @@ input.addEventListener('change', function () {
 
     const files = Array.from(this.files);
 
-    // contar imágenes actuales visibles
     const currentCount =
         document.querySelectorAll('.image-wrapper:not(.removed)').length;
 
     if (currentCount + newImages.length + files.length > MAX_IMAGES) {
         alert(`Máximo ${MAX_IMAGES} imágenes en total`);
-        input.value = '';
         return;
     }
 
-    files.forEach(file => {
-        newImages.push(file);
-    });
+    files.forEach(file => newImages.push(file));
 
     renderNewImages();
-    input.value = '';
 });
 
 function renderNewImages() {
@@ -902,6 +1110,80 @@ document.querySelector('form').addEventListener('submit', function (e) {
     newImages.forEach(file => dt.items.add(file));
     input.files = dt.files;
 });
+
+// LÓGICA DE COMPROBANTE DE PAGO
+const receiptType     = document.getElementById("receipt_type");
+const boletaFields    = document.getElementById("boletaFields");
+const facturaFields   = document.getElementById("facturaFields");
+const notaVentaFields = document.getElementById("notaVentaFields");
+const receiptPreview  = document.getElementById("receiptPreview");
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    function applyReceiptType(type) {
+
+        boletaFields.classList.add("d-none");
+        facturaFields.classList.add("d-none");
+        notaVentaFields.classList.add("d-none");
+
+        if (type === "boleta") boletaFields.classList.remove("d-none");
+        if (type === "factura") facturaFields.classList.remove("d-none");
+        if (type === "nota_venta") notaVentaFields.classList.remove("d-none");
+
+        updateReceiptPreview();
+    }
+
+    receiptType.addEventListener("change", () => {
+        applyReceiptType(receiptType.value);
+    });
+
+    applyReceiptType(receiptType.value);
+});
+
+document.addEventListener("input", (e) => {
+    if (
+        e.target.name === "dni" ||
+        e.target.name === "boleta_full_name" ||
+        e.target.name === "nota_full_name" ||
+        e.target.name === "ruc" ||
+        e.target.name === "company_name" ||
+        e.target.name === "address"
+    ) {
+        updateReceiptPreview();
+    }
+});
+
+/*
+function updateReceiptPreview() {
+
+    const type = receiptType.value;
+    let html = `<strong>Tipo:</strong> ${type.toUpperCase()}<br>`;
+
+    if (type === "boleta") {
+        html += `
+            <strong>DNI:</strong> ${document.querySelector("[name='dni']").value || "-"}<br>
+            <strong>Cliente:</strong> ${document.getElementById("boleta_full_name").value || "-"}<br>
+        `;
+    }
+
+    if (type === "factura") {
+        html += `
+            <strong>RUC:</strong> ${document.querySelector("[name='ruc']").value || "-"}<br>
+            <strong>Razón Social:</strong> ${document.querySelector("[name='company_name']").value || "-"}<br>
+            <strong>Dirección:</strong> ${document.querySelector("[name='address']").value || "-"}<br>
+        `;
+    }
+
+    if (type === "nota_venta") {
+        html += `
+            <strong>Cliente:</strong> ${document.getElementById("nota_full_name").value || "-"}<br>
+        `;
+    }
+
+    html += `<small class="text-muted">Este comprobante ya fue generado.</small>`;
+
+    receiptPreview.innerHTML = html;
+}*/
 
 </script>
 

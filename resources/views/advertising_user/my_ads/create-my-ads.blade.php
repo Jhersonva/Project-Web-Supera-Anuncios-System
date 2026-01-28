@@ -1607,24 +1607,48 @@ document.getElementById("fieldsContainer")
         }
     });
 
+
 document.addEventListener('DOMContentLoaded', () => {
 
     const requestInput = document.getElementById('verification_requested');
-    const confirmBtn = document.getElementById('confirmVerifiedBtn');
+    const confirmBtn   = document.getElementById('confirmVerifiedBtn');
 
-    if (confirmBtn && requestInput) {
-        confirmBtn.addEventListener('click', () => {
-            requestInput.checked = true;
+    if (!requestInput || !confirmBtn) return;
 
+    // Función que sincroniza el botón según el checkbox
+    function syncButtonWithCheckbox() {
+        if (requestInput.checked) {
             confirmBtn.classList.remove('btn-outline-danger');
             confirmBtn.classList.add('btn-success');
             confirmBtn.innerHTML = `
                 <i class="fa-solid fa-check"></i>
                 Verificación solicitada
             `;
-        });
+        } else {
+            confirmBtn.classList.remove('btn-success');
+            confirmBtn.classList.add('btn-outline-danger');
+            confirmBtn.innerHTML = `
+                <i class="fa-solid fa-shield-check"></i>
+                Confirmar verificación del anuncio
+            `;
+        }
     }
+
+    // Click en el botón → marca el checkbox
+    confirmBtn.addEventListener('click', () => {
+        requestInput.checked = true;
+        syncButtonWithCheckbox();
+    });
+
+    // Click en el checkbox → actualiza el botón
+    requestInput.addEventListener('change', () => {
+        syncButtonWithCheckbox();
+    });
+
+    // Estado inicial (por si viene marcado desde backend)
+    syncButtonWithCheckbox();
 });
+
 
 
 // Seleccionar Categoria y Sub
@@ -1867,7 +1891,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-//let subcatPrice = 0;
+let subcatPrice = 0;
 
 // Tags
 let urgentPrice = {{ $urgentPrice }};

@@ -256,8 +256,6 @@ class MyAdRequestController extends Controller
             + $newPrice
             + $availablePrice
             + $topPrice;
-        
-        
 
         // Validación de saldo
         if ($user->virtual_wallet < $finalPrice && !$saveAsDraft) {
@@ -484,6 +482,8 @@ class MyAdRequestController extends Controller
 
     public function edit($id)
     {
+        $user = auth()->user();
+
         $ad = Advertisement::with(['mainImage', 'images', 'fields_values', 'user'])->findOrFail($id);
 
         $categories = AdCategory::all();
@@ -499,6 +499,7 @@ class MyAdRequestController extends Controller
         $newPrice        = Setting::get('new_publication_price', 3.00);
         $availablePrice  = Setting::get('available_publication_price', 2.00);
         $topPrice        = Setting::get('top_publication_price', 1.00);
+        $virtualWallet = $user->virtual_wallet ?? 0;
 
         return view('advertising_user.my_ads.edit-my-ads', compact(
             'ad',
@@ -512,139 +513,336 @@ class MyAdRequestController extends Controller
             'newPrice',
             'availablePrice',
             'topPrice',
+            'virtualWallet',
             'isEmployment'
         ));
     }
 
     public function update(Request $request, $id)
     {
-        $ad = Advertisement::with('images', 'mainImage')->findOrFail($id);
 
-        // ELIMINAR IMÁGENES SI SE PIDE
-        if ($request->remove_images === 'all') {
-            foreach ($ad->images as $img) {
-                if (file_exists(public_path($img->image))) {
-                    @unlink(public_path($img->image));
-                }
-                $img->delete();
-            }
+        $ad = Advertisement::with(['images', 'fields_values'])->findOrFail($id);
+        
+        // Si está publicado, solo permitir ciertos campos
+        $isPublished = $ad->status === 'publicado';
+
+        $user = auth()->user();
+
+        if ($isPublished) {
+
+            // SOLO CAMPOS EDITABLES
+            $request->validate([
+                'department'       => 'required|string|max:255',
+                'province'         => 'required|string|max:255',
+                'district'         => 'required|string|max:255',
+                'contact_location' => 'required|string|max:255',
+                'whatsapp'         => 'required|string|max:9',
+                'call_phone'       => 'required|string|max:9',
+            ]);
+
+        } else {
+
+            $request->validate([
+                'category_id'     => 'required|exists:ad_categories,id',
+                'subcategory_id'  => 'required|exists:ad_subcategories,id',
+
+                'title'           => 'required|string|min:3|max:70',
+                'description'     => 'required|string|min:3',
+
+                'department'      => 'required|string|max:255',
+                'province'        => 'required|string|max:255',
+                'district'        => 'required|string|max:255',
+                'contact_location'=> 'required|string|max:255',
+
+                'whatsapp'        => 'required|string|max:9',
+                'call_phone'      => 'required|string|max:9',
+
+                'amount_visible'  => 'required|in:0,1',
+                'amount'          => 'required_if:amount_visible,1|numeric|min:0',
+                //'amount_text' => 'required_if:amount_visible,0|string|max:50',
+                'amount_currency' => 'required_if:amount_visible,1|in:PEN,USD',
+
+                'days_active'     => 'required|integer|min:2',
+
+                'images'          => 'nullable|array|max:5',
+                'images.*'        => 'image|mimes:jpg,jpeg,png,webp|max:4096',
+
+                'dynamic'         => 'nullable|array',
+            ]);
         }
 
-        // IMÁGENES SUBIDAS DESDE PC
-        //EMPLEOS   
-        $isEmployment = $ad->ad_categories_id == 1;
+        // ===== VALIDAR CAMPOS DINÁMICOS REALES =====
+        if (!$isPublished && $request->filled('subcategory_id')) {
+            $fields = FieldSubcategoryAd::where(
+                'ad_subcategories_id',
+                $request->subcategory_id
+            )->get();
 
-        // EMPLEOS
-        if ($isEmployment && $request->filled('selected_subcategory_image_employment')) {
-
-            foreach ($ad->images as $img) {
-                @unlink(public_path($img->image));
-                $img->delete();
-            }
-
-            $ref = AdSubcategoryImage::find(
-                $request->selected_subcategory_image_employment
-            );
-
-            if ($ref) {
-                $filename = time().'_empleo.'.pathinfo($ref->image, PATHINFO_EXTENSION);
-
-                copy(
-                    public_path($ref->image),
-                    public_path('images/advertisementss/'.$filename)
-                );
-
-                AdvertisementImage::create([
-                    'advertisementss_id' => $ad->id,
-                    'image' => 'images/advertisementss/'.$filename,
-                    'is_main' => 1,
+            foreach ($fields as $field) {
+                $request->validate([
+                    "dynamic.{$field->id}" => 'required|string|max:255'
                 ]);
             }
         }
 
-        // Bloque delete imagenes de otros
-        if (!$isEmployment && $request->filled('remove_images')) {
+        // ===== NORMALIZAR TEXTO =====
+        $request->merge([
+            'title'      => mb_strtoupper(trim($request->title), 'UTF-8'),
+            'department' => mb_strtoupper(trim($request->department), 'UTF-8'),
+            'province'   => mb_strtoupper(trim($request->province), 'UTF-8'),
+            'district'   => mb_strtoupper(trim($request->district), 'UTF-8'),
+        ]);
 
-            $idsToDelete = json_decode($request->remove_images, true);
+        // ===== DÍAS Y EXPIRACIÓN =====
+        $days = $isPublished ? $ad->days_active : (int) $request->days_active;
+        $expiresAt = $isPublished ? $ad->expires_at : now()->addDays($days);
 
-            if (is_array($idsToDelete)) {
-                foreach ($idsToDelete as $imgId) {
+        // ===== PRECIOS =====
+        if (!$isPublished) {
 
-                    $img = $ad->images->where('id', $imgId)->first();
+            $subcategory = AdSubcategory::findOrFail($request->subcategory_id);
+            $basePrice = (float) $subcategory->price;
 
-                    if ($img) {
+            $urgentPrice     = $request->boolean('urgent_publication')    ? (float) Setting::get('urgent_publication_price', 0)    : 0;
+            $featuredPrice   = $request->boolean('featured_publication')  ? (float) Setting::get('featured_publication_price', 0)  : 0;
+            $premierePrice   = $request->boolean('premiere_publication')  ? (float) Setting::get('premiere_publication_price', 0)  : 0;
+            $semiNewPrice    = $request->boolean('semi_new_publication')   ? (float) Setting::get('semi_new_publication_price', 0)   : 0;
+            $newPrice        = $request->boolean('new_publication')        ? (float) Setting::get('new_publication_price', 0)        : 0;
+            $availablePrice  = $request->boolean('available_publication')  ? (float) Setting::get('available_publication_price', 0)  : 0;
+            $topPrice        = $request->boolean('top_publication')        ? (float) Setting::get('top_publication_price', 0)        : 0;
+
+        } else {
+
+            $basePrice = 0;
+            $urgentPrice =
+            $featuredPrice =
+            $premierePrice =
+            $semiNewPrice =
+            $newPrice =
+            $availablePrice =
+            $topPrice = 0;
+        }
+
+        $saveAsDraft = $request->boolean('save_as_draft');
+
+        $finalPrice = $saveAsDraft
+            ? 0
+            : ($basePrice * $days)
+                + $urgentPrice
+                + $featuredPrice
+                + $premierePrice
+                + $semiNewPrice
+                + $newPrice
+                + $availablePrice
+                + $topPrice;
+
+        // ===== MONTO =====
+        $amount = $request->amount_visible == 1 ? $request->amount : 0;
+
+        // ===== COMPROBANTE =====
+        $receiptType = $request->filled('receipt_type') ? $request->receipt_type : 'nota_venta';
+
+        $receiptData = [
+            'receipt_type' => $receiptType,
+            'dni'          => null,
+            'ruc'          => null,
+            'company_name' => null,
+            'address'      => null,
+            'full_name'    => $user->full_name,
+        ];
+
+        if ($receiptType === 'boleta') {
+            $receiptData['dni']       = $request->dni;
+            $receiptData['full_name'] = $request->boleta_full_name;
+        }
+
+        if ($receiptType === 'factura') {
+            $receiptData['ruc']          = $request->ruc;
+            $receiptData['company_name'] = $request->company_name;
+            $receiptData['address']      = $request->address;
+            $receiptData['full_name']    = $request->company_name;
+        }
+
+        if ($receiptType === 'nota_venta') {
+            $receiptData['full_name'] = $request->nota_full_name;
+        }
+
+        $verificationRequested = in_array($request->category_id, [2, 3])
+            ? $request->boolean('verification_requested')
+            : false;
+
+        if ($isPublished) {
+
+            // SOLO CAMPOS PERMITIDOS
+            $ad->update([
+                'department'       => mb_strtoupper(trim($request->department), 'UTF-8'),
+                'province'         => mb_strtoupper(trim($request->province), 'UTF-8'),
+                'district'         => mb_strtoupper(trim($request->district), 'UTF-8'),
+                'contact_location' => $request->contact_location,
+                'whatsapp'         => $request->whatsapp,
+                'call_phone'       => $request->call_phone,
+            ]);
+
+        }
+        else {
+
+            // ===== ACTUALIZAR ANUNCIO =====
+            $ad->update([
+                'ad_categories_id'      => $request->category_id,
+                'ad_subcategories_id'   => $request->subcategory_id,
+                'title'                 => $request->title,
+                'description'           => $request->description,
+                'department'            => $request->department,
+                'province'              => $request->province,
+                'district'              => $request->district,
+                'contact_location'      => $request->contact_location,
+                'whatsapp'              => $request->whatsapp,
+                'call_phone'            => $request->call_phone,
+                'amount'                => $amount,
+                'amount_currency'       => $request->amount_currency ?? 'PEN',
+                'amount_visible'        => $request->amount_visible,
+                'amount_text'           => $request->amount_text,
+                'days_active'           => $days,
+                'expires_at'            => $expiresAt,
+                'status'                => $saveAsDraft ? 'draft' : 'pendiente',
+
+                // publicaciones
+                'urgent_publication'    => $request->boolean('urgent_publication'),
+                'urgent_price'          => $urgentPrice,
+                'featured_publication'  => $request->boolean('featured_publication'),
+                'featured_price'        => $featuredPrice,
+                'premiere_publication'  => $request->boolean('premiere_publication'),
+                'premiere_price'        => $premierePrice,
+                'semi_new_publication'  => $request->boolean('semi_new_publication'),
+                'semi_new_price'        => $semiNewPrice,
+                'new_publication'       => $request->boolean('new_publication'),
+                'new_price'             => $newPrice,
+                'available_publication' => $request->boolean('available_publication'),
+                'available_price'       => $availablePrice,
+                'top_publication'       => $request->boolean('top_publication'),
+                'top_price'             => $topPrice,
+
+                // comprobante
+                'receipt_type' => $receiptData['receipt_type'],
+                'dni'          => $receiptData['dni'],
+                'full_name'    => $receiptData['full_name'],
+                'ruc'          => $receiptData['ruc'],
+                'company_name' => $receiptData['company_name'],
+                'address'      => $receiptData['address'],
+
+                'verification_requested' => $verificationRequested,
+            ]);
+        }
+
+        // ===== CAMPOS DINÁMICOS (SIN DUPLICAR) =====
+        if (!$isPublished) {
+            ValueFieldAd::where('advertisementss_id', $ad->id)->delete();
+
+            if ($request->has('dynamic')) {
+                foreach ($request->dynamic as $fieldId => $value) {
+                    ValueFieldAd::create([
+                        'advertisementss_id' => $ad->id,
+                        'fields_subcategory_ads_id' => $fieldId,
+                        'value' => mb_strtolower(trim($value), 'UTF-8'),
+                    ]);
+                }
+            }
+        }
+
+        // ===== IMÁGENES (REEMPLAZA SOLO SI SUBEN NUEVAS) =====
+        // ELIMINAR IMÁGENES MARCADAS CON X
+        if (!$isPublished) {
+
+            if ($request->filled('remove_images')) {
+
+                $idsToRemove = json_decode($request->remove_images, true);
+
+                if (is_array($idsToRemove)) {
+
+                    $images = AdvertisementImage::whereIn('id', $idsToRemove)
+                        ->where('advertisementss_id', $ad->id)
+                        ->get();
+
+                    foreach ($images as $img) {
                         if (file_exists(public_path($img->image))) {
-                            @unlink(public_path($img->image));
+                            unlink(public_path($img->image));
                         }
                         $img->delete();
                     }
                 }
             }
-        }
 
-        //Otros
-        if (!$isEmployment &&$request->filled('selected_subcategory_image_general')) {
+            
+            // SUBIR NUEVAS IMÁGENES (SIN BORRAR LAS EXISTENTES)
+            if ($request->hasFile('images')) {
 
-            $ids = explode(',', $request->selected_subcategory_image_general);
+                $path = public_path('images/advertisementss');
+                if (!file_exists($path)) {
+                    mkdir($path, 0777, true);
+                }
 
-            foreach ($ids as $id) {
+                // contar cuántas imágenes quedan
+                $currentCount = AdvertisementImage::where('advertisementss_id', $ad->id)->count();
 
-                $ref = AdSubcategoryImage::find($id);
-                if (!$ref) continue;
+                foreach ($request->file('images') as $index => $file) {
 
-                $filename = time().'_'.$id.'.'.pathinfo($ref->image, PATHINFO_EXTENSION);
+                    if ($currentCount >= 5) break;
 
-                copy(
-                    public_path($ref->image),
-                    public_path('images/advertisementss/'.$filename)
-                );
+                    $filename = time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
+                    $file->move($path, $filename);
 
-                AdvertisementImage::create([
-                    'advertisementss_id' => $ad->id,
-                    'image' => 'images/advertisementss/'.$filename,
-                    'is_main' => 0,
-                ]);
-            }
-        }
+                    AdvertisementImage::create([
+                        'advertisementss_id' => $ad->id,
+                        'image' => 'images/advertisementss/'.$filename,
+                        'is_main' => $currentCount === 0
+                    ]);
 
-        // ================================
-        // AGREGAR NUEVAS IMÁGENES (EDIT)
-        // ================================
-        if ($request->hasFile('images')) {
-
-            $path = public_path('images/advertisementss');
-            if (!file_exists($path)) {
-                mkdir($path, 0777, true);
-            }
-
-            $currentCount = $ad->images()->count();
-
-            // descontar las imágenes marcadas para eliminar
-            if ($request->filled('remove_images')) {
-                $idsToDelete = json_decode($request->remove_images, true);
-
-                if (is_array($idsToDelete)) {
-                    $currentCount -= count($idsToDelete);
-                    if ($currentCount < 0) {
-                        $currentCount = 0;
-                    }
+                    $currentCount++;
                 }
             }
         }
 
-        // GUARDAR RESTO DE DATOS
-        // Actualizar datos del usuario
-        $user = $ad->user;
+        // ASEGURAR IMAGEN PRINCIPAL
+        $hasMain = AdvertisementImage::where('advertisementss_id', $ad->id)
+            ->where('is_main', true)
+            ->exists();
 
-        if ($user) {
-            $user->whatsapp   = $request->input('whatsapp');
-            $user->call_phone = $request->input('call_phone');
-            $user->save();
+        if (!$hasMain) {
+            $first = AdvertisementImage::where('advertisementss_id', $ad->id)->first();
+            if ($first) {
+                $first->update(['is_main' => true]);
+            }
         }
-        $ad->contact_location = $request->contact_location;
-        $ad->save();
 
-        return back()->with('success', 'Anuncio actualizado correctamente');
+        // ===== GENERAR / ACTUALIZAR COMPROBANTE DE PAGO =====
+        if (!$isPublished && !$saveAsDraft) {
+
+            $folder = public_path('proof_payment');
+            if (!file_exists($folder)) {
+                mkdir($folder, 0755, true);
+            }
+
+            // siempre el mismo archivo (se sobrescribe)
+            $receiptFile = 'receipt_' . $ad->id . '.pdf';
+            $receiptPath = $folder . DIRECTORY_SEPARATOR . $receiptFile;
+
+            $pdf = Pdf::loadView('public.pdf.receipt', [
+                'ad'         => $ad->fresh(), // datos ya actualizados
+                'user'       => $user,
+                'finalPrice' => $finalPrice,
+            ]);
+
+            file_put_contents($receiptPath, $pdf->output());
+
+            // guardar ruta del comprobante
+            $ad->update([
+                'receipt_file' => 'proof_payment/' . $receiptFile,
+            ]);
+        }
+
+        return redirect()
+            ->route('my-ads.index')
+            ->with('success', 'Anuncio actualizado correctamente.');
     }
 
     public function editDraft(Advertisement $ad)
