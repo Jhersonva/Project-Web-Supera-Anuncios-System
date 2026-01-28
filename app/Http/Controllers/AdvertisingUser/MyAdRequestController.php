@@ -924,6 +924,9 @@ class MyAdRequestController extends Controller
             'days_active' => 'required|integer|min:1',
             'amount_visible' => 'required|in:0,1',
             'amount' => 'required_if:amount_visible,1|nullable|numeric|min:0',
+            'remove_images' => 'nullable|string',
+            'images'        => 'nullable|array|max:5',
+            'images.*'      => 'image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
 
         $user = auth()->user();
@@ -1109,21 +1112,71 @@ class MyAdRequestController extends Controller
         }
 
         // =======================
-        // IMÁGENES
+        // ELIMINAR IMÁGENES MARCADAS (X)
+        // =======================
+        if ($request->filled('remove_images')) {
+
+            $idsToRemove = json_decode($request->remove_images, true);
+
+            if (is_array($idsToRemove)) {
+
+                $images = AdvertisementImage::whereIn('id', $idsToRemove)
+                    ->where('advertisementss_id', $ad->id)
+                    ->get();
+
+                foreach ($images as $img) {
+                    if (file_exists(public_path($img->image))) {
+                        unlink(public_path($img->image));
+                    }
+                    $img->delete();
+                }
+            }
+        }
+
+        // =======================
+        // SUBIR NUEVAS IMÁGENES (SIN BORRAR LAS EXISTENTES)
         // =======================
         if ($request->hasFile('images')) {
-            $path = public_path('images/advertisementss');
-            if (!file_exists($path)) mkdir($path, 0777, true);
 
-            foreach ($request->file('images') as $index => $file) {
+            $path = public_path('images/advertisementss');
+            if (!file_exists($path)) {
+                mkdir($path, 0777, true);
+            }
+
+            // cuántas imágenes quedan actualmente
+            $currentCount = AdvertisementImage::where(
+                'advertisementss_id',
+                $ad->id
+            )->count();
+
+            foreach ($request->file('images') as $file) {
+
+                if ($currentCount >= 5) break;
+
                 $filename = time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
                 $file->move($path, $filename);
 
                 AdvertisementImage::create([
                     'advertisementss_id' => $ad->id,
                     'image' => 'images/advertisementss/'.$filename,
-                    'is_main' => $index === 0
+                    'is_main' => $currentCount === 0
                 ]);
+
+                $currentCount++;
+            }
+        }
+
+        // =======================
+        // ASEGURAR IMAGEN PRINCIPAL
+        // =======================
+        $hasMain = AdvertisementImage::where('advertisementss_id', $ad->id)
+            ->where('is_main', true)
+            ->exists();
+
+        if (!$hasMain) {
+            $first = AdvertisementImage::where('advertisementss_id', $ad->id)->first();
+            if ($first) {
+                $first->update(['is_main' => true]);
             }
         }
 

@@ -602,43 +602,47 @@
                     @endif
                 </div>
 
+                <!-- IMÁGENES EXISTENTES -->
+                @if(isset($ad) && $ad && $ad->images->count())
+                    <div class="d-flex flex-wrap gap-2 mb-3" id="existingImagesWrapper">
+
+                        @foreach($ad->images as $image)
+                            <div class="position-relative image-wrapper"
+                                data-image-id="{{ $image->id }}">
+
+                                <img
+                                    src="{{ asset($image->image) }}"
+                                    class="rounded border"
+                                    style="width:120px;height:120px;object-fit:cover;"
+                                >
+
+                                {{-- BADGE PRINCIPAL --}}
+                                @if($image->is_main)
+                                    <span class="badge bg-primary position-absolute top-0 start-0">
+                                        Principal
+                                    </span>
+                                @endif
+
+                                {{-- BOTÓN ELIMINAR --}}
+                                <button
+                                    type="button"
+                                    class="delete-img-btn"
+                                    onclick="markImageForRemoval({{ $image->id }}, this)">
+                                    ×
+                                </button>
+
+                            </div>
+                        @endforeach
+
+                    </div>
+                @endif
+
+                <input type="hidden" name="remove_images" id="remove_images">
+
                 <!-- IMÁGENES -->
                 <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="imagesContainer">
 
                     <label class="fw-semibold mb-2">Imágenes del anuncio</label>
-
-                    {{-- IMÁGENES PROPIAS EXISTENTES --}}
-                    @if(isset($images) && $images->count())
-                        <div class="d-flex flex-wrap gap-2 mb-3">
-
-                            @foreach($images as $image)
-                                <div class="position-relative">
-                                    <img
-                                        src="{{ asset($image->image) }}"
-                                        class="rounded border"
-                                        style="width:120px;height:120px;object-fit:cover;"
-                                        alt="Imagen anuncio"
-                                    >
-
-                                    @if($image->is_main)
-                                        <span class="badge bg-primary position-absolute top-0 start-0">
-                                            Principal
-                                        </span>
-                                    @endif
-                                </div>
-                            @endforeach
-
-                        </div>
-
-                        <small class="text-muted d-block mb-3">
-                            Estas son las imágenes que ya subiste para este anuncio.
-                        </small>
-                    @else
-                        <small class="text-muted d-block mb-3">
-                            Aún no has subido imágenes propias.
-                        </small>
-                    @endif
-
                     <hr>
 
                     {{-- SUBIR NUEVAS IMÁGENES --}}
@@ -899,6 +903,49 @@ window.ALERTS = @json($alertsPrepared);
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+
+let imagesToDelete = [];
+
+function updateDeleteButtons() {
+
+    const wrappers = document.querySelectorAll(
+        '.image-wrapper:not(.removed)'
+    );
+
+    const canDelete = wrappers.length > 1;
+
+    wrappers.forEach(wrapper => {
+        const btn = wrapper.querySelector('.delete-img-btn');
+        if (!btn) return;
+
+        btn.classList.toggle('d-none', !canDelete);
+    });
+}
+
+function markImageForRemoval(id, btn) {
+
+    const wrapper = btn.closest('.image-wrapper');
+
+    const remaining =
+        document.querySelectorAll('.image-wrapper:not(.removed)').length;
+
+    if (remaining <= 1) {
+        alert('El anuncio debe tener al menos una imagen.');
+        return;
+    }
+
+    wrapper.classList.add('removed');
+    wrapper.style.opacity = '0.4';
+
+    if (!imagesToDelete.includes(id)) {
+        imagesToDelete.push(id);
+    }
+
+    document.getElementById('remove_images').value =
+        JSON.stringify(imagesToDelete);
+
+    updateDeleteButtons();
+}
 
 function updatePublishButton(totalCost) {
     const btn = document.getElementById("submitAdBtn");
@@ -1512,7 +1559,7 @@ function updatePreview() {
 
 
         featured_publication: document.querySelector("#featured_publication")?.checked ? 1 : 0,
-        urgent_publication: document.querySelector("#urgent_publication")?.checked ? 1 : 0,
+        urgent_publication: document.querySelector("#urgent_publication_switch")?.checked ? 1 : 0,
         premiere_publication: document.querySelector("#premiere_publication_switch")?.checked ? 1 : 0,
         semi_new_publication: document.querySelector("#semi_new_publication_switch")?.checked ? 1 : 0,
         new_publication: document.querySelector("#new_publication")?.checked ? 1 : 0,
@@ -1905,7 +1952,9 @@ let topPrice       = {{ $topPrice }};
 // DEFINE PRIMERO LA FUNCIÓN
 function calculateDatesAndCosts(forceMin = false) {
 
-    if (!subcatPrice || subcatPrice <= 0) return;
+    if (!subcatPrice || subcatPrice <= 0) {
+        if (FORM_MODE !== 'edit') return;
+    }
 
     const daysInput = document.getElementById("days_active");
     if (!daysInput) return;
@@ -2205,11 +2254,42 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    function bindSwitchCalculation(switchId, hiddenId = null) {
+        const sw = document.getElementById(switchId);
+        const hidden = hiddenId ? document.getElementById(hiddenId) : null;
+
+        if (!sw) return;
+
+        // sincronizar estado inicial
+        if (hidden) hidden.value = sw.checked ? 1 : 0;
+
+        sw.addEventListener('change', () => {
+            if (hidden) hidden.value = sw.checked ? 1 : 0;
+            calculateDatesAndCosts();
+        });
+    }
+
+    bindSwitchCalculation('urgent_publication_switch', 'urgent_publication');
+    bindSwitchCalculation('premiere_publication_switch', 'premiere_publication');
+    bindSwitchCalculation('semi_new_publication_switch', 'semi_new_publication');
+
+    bindSwitchCalculation('featured_publication');
+    bindSwitchCalculation('new_publication');
+    bindSwitchCalculation('available_publication');
+    bindSwitchCalculation('top_publication');
+
     // Cargar campos automáticamente al editar
     if (FORM_MODE === 'edit' && adDataFromServer) {
 
         subcatPrice = parseFloat(adDataFromServer.subcategory_price);
         const subcatId = adDataFromServer.ad_subcategories_id;
+
+        subcatPrice = Number(adDataFromServer.subcategory?.price || 0);
+
+        if (subcatPrice > 0) {
+            document.getElementById("pricePerDay").value =
+                `S/. ${subcatPrice.toFixed(2)}`;
+        }
 
         showMainFields();
         renderDynamicFields(subcatId);
@@ -2241,9 +2321,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         document.getElementById("top_publication").checked =
             !!adDataFromServer.top_publication;
+        
+        updateDeleteButtons();
 
         setTimeout(() => {
-            calculateDatesAndCosts();
+            calculateDatesAndCosts(true);
+            //calculateDatesAndCosts();
             updatePreview();
         }, 0);
     }
@@ -2487,6 +2570,11 @@ function updateReceiptPreview() {
 </script>
 
 <style>
+
+    /* =========================
+   GRID DE IMÁGENES DEL MODAL
+   ========================= */
+
     .is-invalid {
         border: 1px solid #dc3545;
     }
@@ -2826,36 +2914,33 @@ function updateReceiptPreview() {
     }
 
     /* DELETE BUTTON */
-    .image-delete {
-        position: absolute;
-        top: 6px;
-        right: 6px;
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-        background: rgba(220, 53, 69, 0.95);
-        color: #fff;
-        border: none;
-        font-size: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        opacity: 0;
-        transition: .2s ease;
-    }
-
-    .image-card {
+    .image-wrapper {
         position: relative;
     }
 
-    .image-card:hover .image-delete {
-        opacity: 1;
+    .delete-img-btn {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #dc3545;
+        color: #fff;
+        border: none;
+        font-size: 18px;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
     }
 
-    .image-delete:hover {
+    .delete-img-btn:hover {
         background: #bb2d3b;
     }
+
 
 </style>
 

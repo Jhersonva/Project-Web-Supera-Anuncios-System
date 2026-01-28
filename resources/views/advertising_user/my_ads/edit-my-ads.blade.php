@@ -1209,72 +1209,33 @@ Swal.fire({
 </script>
 @endif
 
+
 <style>
-/* =========================
-   GRID DE IMÁGENES DEL MODAL
-   ========================= */
-.image-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
+.image-wrapper {
+    position: relative;
 }
 
-.image-grid .image-card {
-    width: 100%;
-    height: 140px;
-    border-radius: 8px;
-    overflow: hidden;
+.delete-img-btn {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    font-size: 18px;
+    line-height: 1;
     cursor: pointer;
-    border: 2px solid transparent;
-    transition: border-color .2s ease, transform .15s ease;
-    background: #f8f9fa;
-}
-
-/* Hover */
-.image-grid .image-card:hover {
-    border-color: #0d6efd;
-    transform: scale(1.02);
-}
-
-/* Seleccionada */
-.image-grid .image-card.selected {
-    border-color: #198754; 
-    box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.25);
-}
-
-/* Imagen */
-.image-grid .image-card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-
-/* =========================
-   PREVIEW SELECCIONADO
-   ========================= */
-#selectedPreviewListEmployment,
-#selectedPreviewListGeneral {
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
 }
 
-#selectedPreviewListEmployment .image-card,
-#selectedPreviewListGeneral .image-card {
-    width: 120px;
-    height: 120px;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 2px solid #198754; 
-    background: #f8f9fa;
-}
-
-#selectedPreviewListEmployment img,
-#selectedPreviewListGeneral img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.delete-img-btn:hover {
+    background: #bb2d3b;
 }
 
 </style>
