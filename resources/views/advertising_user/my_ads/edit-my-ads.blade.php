@@ -147,8 +147,8 @@
                 type="text"
                 name="whatsapp"
                 class="form-control"
-                value="{{ old('whatsapp', $ad->user?->whatsapp) }}"
-                placeholder="Ej: +51 999 888 777"
+                value="{{ old('whatsapp', $ad->whatsapp ?? $user->whatsapp ?? '') }}"
+                placeholder="Ej: +51 999888777"
             >
 
             <label class="fw-semibold mt-2">Contacto vía Llamada</label>
@@ -156,8 +156,11 @@
                 type="text"
                 name="call_phone"
                 class="form-control"
-                value="{{ old('call_phone', $ad->user?->call_phone) }}"
-                placeholder="Ej: 01 555 4444"
+                value="{{ old('call_phone', $ad->call_phone ?? $user->call_phone ?? '') }}"
+                placeholder="Ej: 983777666"
+                inputmode="numeric"
+                pattern="[0-9]{9}"
+                maxlength="9"
             >
 
         </div>
@@ -169,28 +172,54 @@
 
             <div class="row g-3 align-items-start">
 
-                {{-- INPUT MONTO --}}
+                <!-- MONEDA + MONTO -->
                 <div class="col-12 col-md-8">
 
-                    <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        name="amount"
-                        id="amountInput"
-                        class="form-control @error('amount') is-invalid @enderror"
-                        value="{{ old('amount', $ad->amount_visible ? $ad->amount : '') }}"
-                        {{ !$ad->amount_visible ? 'disabled' : '' }}
+                    <div
+                        id="amountValueContainer"
+                        class="{{ old('amount_visible', $ad->amount_visible ?? 1) ? '' : 'd-none' }}"
                     >
+                        <div class="input-group">
 
-                    @error('amount')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
+                            {{-- MONEDA --}}
+                            <select
+                                name="amount_currency"
+                                id="amountCurrency"
+                                class="form-select"
+                                style="max-width: 130px"
+                            >
+                                <option value="PEN"
+                                    {{ old('amount_currency', $ad->amount_currency ?? 'PEN') === 'PEN' ? 'selected' : '' }}>
+                                    S/ PEN
+                                </option>
 
-                    {{-- SELECT TEXTO --}}
+                                <option value="USD"
+                                    {{ old('amount_currency', $ad->amount_currency ?? '') === 'USD' ? 'selected' : '' }}>
+                                    $ USD
+                                </option>
+                            </select>
+
+                            {{-- MONTO --}}
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                name="amount"
+                                id="amountInput"
+                                class="form-control @error('amount') is-invalid @enderror"
+                                value="{{ old('amount', $ad->amount_visible ? $ad->amount : '') }}"
+                            >
+                        </div>
+
+                        @error('amount')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    {{-- TEXTO CUANDO EL MONTO ESTÁ OCULTO --}}
                     <select
                         id="amountTextSelect"
-                        class="form-select mt-2 {{ $ad->amount_visible ? 'd-none' : '' }}"
+                        class="form-select mt-2 {{ old('amount_visible', $ad->amount_visible ?? 1) ? 'd-none' : '' }}"
                     >
                         <option value="">Selecciona texto por defecto...</option>
 
@@ -202,7 +231,7 @@
                         ] as $text)
                             <option
                                 value="{{ $text }}"
-                                {{ old('amount_text', $ad->amount_text) === $text ? 'selected' : '' }}
+                                {{ old('amount_text', $ad->amount_text ?? '') === $text ? 'selected' : '' }}
                             >
                                 ({{ $text }})
                             </option>
@@ -212,7 +241,6 @@
                     <small class="text-muted d-block mt-1">
                         Si ocultas el monto, el público verá el texto seleccionado o "No especificado".
                     </small>
-
                 </div>
 
                 {{-- SWITCH --}}
@@ -222,7 +250,7 @@
                             class="form-check-input"
                             type="checkbox"
                             id="amountVisibleCheckbox"
-                            {{ old('amount_visible', $ad->amount_visible) ? 'checked' : '' }}
+                            {{ old('amount_visible', $ad->amount_visible ?? 1) ? 'checked' : '' }}
                         >
                         <label class="form-check-label ms-2">
                             Mostrar monto
@@ -237,14 +265,14 @@
                 type="hidden"
                 name="amount_visible"
                 id="amountVisibleInput"
-                value="{{ old('amount_visible', $ad->amount_visible) }}"
+                value="{{ old('amount_visible', $ad->amount_visible ?? 1) }}"
             >
 
             <input
                 type="hidden"
                 name="amount_text"
                 id="amountTextInput"
-                value="{{ old('amount_text', $ad->amount_text) }}"
+                value="{{ old('amount_text', $ad->amount_text ?? '') }}"
             >
         </div>
 
@@ -468,80 +496,64 @@
             </div>
         </div>
 
-        {{-- IMÁGENES ACTUALES - EMPLEOS--}}
-        @if($isEmployment)
+        {{-- IMÁGENES DEL ANUNCIO (EDIT) --}}
+        <div class="field-card" id="imagesContainer">
 
-            <div class="field-card">
-                <label class="fw-semibold">Imagen actual</label>
+            <label class="fw-semibold mb-2">Imágenes del anuncio</label>
 
-                @if($ad->images->first())
-                    <img src="{{ asset($ad->images->first()->image) }}" class="img-thumb">
-                @endif
-            </div>
+            @if($ad->images->count())
+                <div class="d-flex flex-wrap gap-2 mb-3">
 
-            {{-- AGREGAR NUEVAS IMÁGENES --}}
-            @if(auth()->user()->role_id === 1)
-            <div class="field-card">
-                <label class="fw-semibold">Elegir imagen</label>
+                    @foreach($ad->images as $image)
+                        <div class="position-relative image-wrapper">
 
-                <button type="button"
-                        class="btn btn-outline-info open-images-modal">
-                    Elegir imágenes
-                </button>
+                            <img
+                                src="{{ asset($image->image) }}"
+                                class="rounded border"
+                                style="width:120px;height:120px;object-fit:cover;"
+                            >
 
-                <div id="selectedPreview" class="d-none mt-2">
-                    <div id="selectedPreviewListEmployment"></div>
+                            @if($image->is_main)
+                                <span class="badge bg-primary position-absolute top-0 start-0">
+                                    Principal
+                                </span>
+                            @endif
+
+                            <button
+                                type="button"
+                                class="delete-img-btn"
+                                onclick="markImageForRemoval({{ $image->id }}, this)">
+                                ×
+                            </button>
+
+                        </div>
+                    @endforeach
+
                 </div>
-
-                <input type="hidden" name="selected_subcategory_image_employment" id="selected_subcategory_image_employment">
-            </div>
-
-            @if($isEmployment)
-                <input type="hidden" name="remove_images" id="remove_images">
             @endif
 
-            @endif
-        @endif
+            {{-- PREVIEW DE NUEVAS IMÁGENES (UNA SOLA VEZ) --}}
+            <div id="newImagesPreview" class="d-flex flex-wrap gap-2 mt-3"></div>
 
+            <hr>
 
-        @if(!$isEmployment)
+            <label class="fw-semibold mt-3">Agregar o reemplazar imágenes</label>
 
-        {{-- IMÁGENES ACTUALES - OTROS --}}
-        <div class="field-card">
-            <label class="fw-semibold">Imágenes actuales</label>
+            <input
+                type="file"
+                name="images[]"
+                id="newImagesInput"
+                class="form-control"
+                accept="image/*"
+                multiple
+            >
 
-            <div class="d-flex flex-wrap gap-3">
-                @foreach ($ad->images as $img)
-                    <div class="position-relative image-wrapper">
-                        <img src="{{ asset($img->image) }}" class="img-thumb">
-
-                        <button type="button"
-                            class="delete-img-btn"
-                            onclick="markImageForRemoval({{ $img->id }}, this)">
-                            ×
-                        </button>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-
-        {{-- NUEVAS DESDE GALERÍA --}}
-        <div class="field-card">
-            <label class="fw-semibold">Agregar imágenes</label>
-
-            <button type="button"
-                    class="btn btn-outline-info open-images-modal">
-                Elegir imágenes
-            </button>
-
-            <div id="selectedPreviewListGeneral" class="d-flex flex-wrap gap-2 mt-2"></div>
-
-            <input type="hidden" name="selected_subcategory_image_general" id="selected_subcategory_image_general">
+            <small class="text-muted d-block">
+                Máximo 5 imágenes en total.
+            </small>
         </div>
 
         <input type="hidden" name="remove_images" id="remove_images">
-
-        @endif
 
 
         <!-- BOTÓN -->
@@ -551,37 +563,9 @@
 
     </form>
 
-<div class="modal fade" id="modalSubcategoryImages" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    Elegir imagen de referencia
-                </h5>
-                <button class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body">
-                <div id="modalImagesGrid" class="image-grid">
-                    <small class="text-muted">Cargando imágenes...</small>
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn btn-light" data-bs-dismiss="modal">
-                    Cancelar
-                </button>
-                <button class="btn btn-dark" id="confirmImage">
-                    Usar imagen
-                </button>
-            </div>
-
-        </div>
-    </div>
 </div>
 
-</div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
 const currentSubcategory = "{{ $ad->ad_subcategories_id }}";
@@ -596,10 +580,11 @@ if (removeInput) {
     removeInput.value = '';
 }
 
-
 function markImageForRemoval(id, btn) {
 
-    btn.closest('.image-wrapper').style.opacity = 0.4;
+    const wrapper = btn.closest('.image-wrapper');
+    wrapper.classList.add('removed');
+    wrapper.style.opacity = '0.4';
 
     if (!imagesToDelete.includes(id)) {
         imagesToDelete.push(id);
@@ -678,106 +663,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const isEmployment = {{ $isEmployment ? 'true' : 'false' }};
 
     let selectedImages = [];
-
-    const modal = new bootstrap.Modal(
-        document.getElementById('modalSubcategoryImages')
-    );
-
-    // =========================
-    // ABRIR MODAL
-    // =========================
-    document.querySelectorAll('.open-images-modal').forEach(btn => {
-
-    btn.addEventListener('click', () => {
-
-        selectedImages = [];
-        imagesGrid.innerHTML = 'Cargando...';
-
-        fetch(`/advertising/subcategories/{{ $ad->ad_subcategories_id }}/images`)
-            .then(r => r.json())
-            .then(images => {
-
-                imagesGrid.innerHTML = '';
-
-                images.forEach(img => {
-
-                    const card = document.createElement('div');
-                    card.className = 'image-card';
-                    card.innerHTML = `<img src="/${img.image}">`;
-
-                    card.onclick = () => {
-
-                        if (isEmployment) {
-                            selectedImages = [img];
-
-                            document
-                                .querySelectorAll('#modalImagesGrid .image-card')
-                                .forEach(c => c.classList.remove('selected'));
-
-                            card.classList.add('selected');
-                        }
-                        else {
-                            if (selectedImages.find(i => i.id === img.id)) return;
-                            selectedImages.push(img);
-                            card.classList.add('selected');
-
-                        }
-                    };
-
-                    imagesGrid.appendChild(card);
-                });
-            });
-
-        modal.show();
-    });
-
-});
-
-    // =========================
-    // CONFIRMAR
-    // =========================
-    confirmBtn?.addEventListener('click', () => {
-
-        if (!selectedImages.length) return;
-
-        const ids = selectedImages.map(i => i.id).join(',');
-
-        // LIMPIAR PREVIEW
-        previewEmployment && (previewEmployment.innerHTML = '');
-        previewGeneral && (previewGeneral.innerHTML = '');
-
-        selectedImages.forEach(img => {
-
-            const html = `
-                <div class="image-card border">
-                    <img src="/${img.image}">
-                </div>
-            `;
-
-            if (isEmployment && previewEmployment) {
-                previewEmployment.innerHTML = html;
-            }
-
-            if (!isEmployment && previewGeneral) {
-                previewGeneral.insertAdjacentHTML('beforeend', html);
-            }
-        });
-
-        previewBox?.classList.remove('d-none');
-
-        // INPUTS
-        if (isEmployment && inputEmployment) {
-            inputEmployment.value = ids;
-            removeInput.value = 'all'; 
-        }
-
-        if (!isEmployment && inputGeneral) {
-            inputGeneral.value = ids; 
-        }
-
-        modal.hide();
-    });
-
 });
 
 
@@ -948,17 +833,77 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 
-function deleteImage(id){
-    if(!confirm("¿Eliminar esta imagen?")) return;
+let newImages = [];
 
-    fetch(`/advertising/my-ads/delete-image/${id}`, {
-        method: "DELETE",
-        headers: {
-            "X-CSRF-TOKEN": "{{ csrf_token() }}"
-        }
-    })
-    .then(() => location.reload());
+const input = document.getElementById('newImagesInput');
+const preview = document.getElementById('newImagesPreview');
+
+input.addEventListener('change', function () {
+
+    const files = Array.from(this.files);
+
+    // contar imágenes actuales visibles
+    const currentCount =
+        document.querySelectorAll('.image-wrapper:not(.removed)').length;
+
+    if (currentCount + newImages.length + files.length > MAX_IMAGES) {
+        alert(`Máximo ${MAX_IMAGES} imágenes en total`);
+        input.value = '';
+        return;
+    }
+
+    files.forEach(file => {
+        newImages.push(file);
+    });
+
+    renderNewImages();
+    input.value = '';
+});
+
+function renderNewImages() {
+
+    preview.innerHTML = '';
+
+    newImages.forEach((file, index) => {
+
+        const reader = new FileReader();
+
+        reader.onload = e => {
+            const div = document.createElement('div');
+            div.classList.add('image-wrapper');
+
+            div.innerHTML = `
+                <img src="${e.target.result}"
+                     class="rounded border"
+                     style="width:120px;height:120px;object-fit:cover;">
+                <button type="button"
+                    class="delete-img-btn"
+                    onclick="removeNewImage(${index})">×</button>
+            `;
+
+            preview.appendChild(div);
+        };
+
+        reader.readAsDataURL(file);
+    });
 }
+
+function removeNewImage(index) {
+    newImages.splice(index, 1);
+    renderNewImages();
+}
+
+/* Reemplazar archivos reales antes de enviar */
+document.querySelector('form').addEventListener('submit', function (e) {
+
+    if (newImages.length === 0) return;
+
+    const dt = new DataTransfer();
+    newImages.forEach(file => dt.items.add(file));
+    input.files = dt.files;
+});
+
+</script>
 
 @if (session('success'))
 <script>
@@ -981,8 +926,6 @@ Swal.fire({
 });
 </script>
 @endif
-
-</script>
 
 <style>
 /* =========================
@@ -1007,13 +950,13 @@ Swal.fire({
 
 /* Hover */
 .image-grid .image-card:hover {
-    border-color: #0d6efd; /* azul */
+    border-color: #0d6efd;
     transform: scale(1.02);
 }
 
-/* ✅ Seleccionada */
+/* Seleccionada */
 .image-grid .image-card.selected {
-    border-color: #198754; /* verde bootstrap */
+    border-color: #198754; 
     box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.25);
 }
 
@@ -1041,7 +984,7 @@ Swal.fire({
     height: 120px;
     border-radius: 8px;
     overflow: hidden;
-    border: 2px solid #198754; /* verde fijo */
+    border: 2px solid #198754; 
     background: #f8f9fa;
 }
 

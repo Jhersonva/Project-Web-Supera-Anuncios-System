@@ -602,7 +602,7 @@
                     @endif
                 </div>
 
-                <!-- IMÁGENES DE GALERIA -->
+                <!-- IMÁGENES -->
                 <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="imagesContainer">
 
                     <label class="fw-semibold mb-2">Imágenes del anuncio</label>
@@ -2145,7 +2145,6 @@ document.addEventListener("DOMContentLoaded", () => {
             hidden.value = document.getElementById("premiere_publication_switch").checked ? 1 : 0;
             calculateDatesAndCosts();
         });
-
         safeListener("semi_new_publication", "change", calculateDatesAndCosts);
         safeListener("new_publication", "change", calculateDatesAndCosts);
         safeListener("available_publication", "change", calculateDatesAndCosts);

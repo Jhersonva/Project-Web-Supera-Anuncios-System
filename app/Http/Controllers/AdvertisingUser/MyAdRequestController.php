@@ -607,6 +607,31 @@ class MyAdRequestController extends Controller
             }
         }
 
+        // ================================
+        // AGREGAR NUEVAS IMÁGENES (EDIT)
+        // ================================
+        if ($request->hasFile('images')) {
+
+            $path = public_path('images/advertisementss');
+            if (!file_exists($path)) {
+                mkdir($path, 0777, true);
+            }
+
+            $currentCount = $ad->images()->count();
+
+            // descontar las imágenes marcadas para eliminar
+            if ($request->filled('remove_images')) {
+                $idsToDelete = json_decode($request->remove_images, true);
+
+                if (is_array($idsToDelete)) {
+                    $currentCount -= count($idsToDelete);
+                    if ($currentCount < 0) {
+                        $currentCount = 0;
+                    }
+                }
+            }
+        }
+
         // GUARDAR RESTO DE DATOS
         // Actualizar datos del usuario
         $user = $ad->user;
