@@ -321,8 +321,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const form = this.closest('form'); 
 
             Swal.fire({
-                title: '¿Estás seguro?',
-                text: "Esta acción no se puede deshacer.",
+                title: '¿Eliminar anuncio?',
+                html: `
+                    <p class="mb-2">Esta acción no se puede deshacer.</p>
+                    <small class="text-muted">
+                        ⚠️ Si el anuncio se encuentra en estado 
+                        <strong>pendiente</strong> de aprobación, 
+                        el monto pagado será <strong>devuelto al usuario anunciante</strong>.
+                    </small>
+                `,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
@@ -332,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then((result) => {
                 if (result.isConfirmed) {
-                    form.submit(); 
+                    form.submit();
                 }
             });
         });

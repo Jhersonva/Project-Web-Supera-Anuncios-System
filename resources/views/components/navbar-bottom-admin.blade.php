@@ -16,11 +16,12 @@
         <i class="fa-solid fa-table-cells-large"></i><br>
         Hist. Anuncios
 
-        <span id="badge-ads"
-            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-            style="display:none">
-            0
-        </span>
+        @if($pendingAdsCount > 0)
+            <span id="badge-ads"
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                {{ $pendingAdsCount }}
+            </span>
+        @endif
     </a>
 
     <!-- SOLICITUD DE RECARGAS -->

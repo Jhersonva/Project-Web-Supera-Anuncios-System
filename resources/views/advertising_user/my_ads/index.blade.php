@@ -398,7 +398,14 @@
 function confirmDelete(id) {
     Swal.fire({
         title: "¿Eliminar anuncio?",
-        text: "Esta acción no se puede deshacer.",
+        html: `
+            <p class="mb-2">Esta acción no se puede deshacer.</p>
+            <small class="text-muted">
+                ⚠️ Si el anuncio se encuentra en estado 
+                <strong>pendiente</strong> de aprobación, 
+                se realizará la devolución del monto pagado por el anuncio.
+            </small>
+        `,
         icon: "warning",
         showCancelButton: true,
         confirmButtonColor: "#d33",

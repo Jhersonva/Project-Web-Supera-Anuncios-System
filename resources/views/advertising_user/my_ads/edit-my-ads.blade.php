@@ -47,17 +47,21 @@
 
     <!-- FORMULARIO -->
     @php
-        $isPublished = isset($ad) && $ad->status === 'publicado';
+        $lockEdit = in_array($ad->status, ['publicado', 'pendiente']);
     @endphp
 
     <form action="{{ route('my-ads.updateAd', $ad->id) }}" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="return_to" value="{{ url()->previous() }}">
         @csrf
 
+        <input type="hidden" name="category_id" value="{{ $ad->ad_categories_id }}">
+        <input type="hidden" name="subcategory_id" value="{{ $ad->ad_subcategories_id }}">
+        <input type="hidden" name="days_active" value="{{ $ad->days_active }}">
+
         {{-- CATEGORÍA --}}
         <div class="field-card">
             <label class="fw-semibold mb-2">Categoría</label>
-            <select id="categorySelect" name="category_id" class="form-select">
+            <select id="categorySelect" name="category_id" class="form-select" disabled>    
                 <option value="">-- Selecciona --</option>
                 @foreach($categories as $cat)
                     <option value="{{ $cat->id }}" {{ $ad->ad_categories_id == $cat->id ? 'selected' : '' }}>
@@ -1169,42 +1173,73 @@ document.addEventListener("input", (e) => {
 // Script de no editar campos con status de publicado
 document.addEventListener('DOMContentLoaded', () => {
 
-    const IS_PUBLISHED = @json($isPublished);
-    if (!IS_PUBLISHED) return;
+    const STATUS = @json($ad->status);
 
-    // CAMPOS QUE SÍ SE PUEDEN EDITAR
-    const allowedNames = [
-        'district',
-        'province',
-        'department',
-        'contact_location',
-        'whatsapp',
-        'call_phone',
-        '_token',
-        '_method',
-        'return_to'
-    ];
+    /* =========================
+       SI ESTÁ PUBLICADO
+       ========================= */
+    if (STATUS === 'publicado') {
 
-    document.querySelectorAll('input, select, textarea, button').forEach(el => {
+        // CAMPOS QUE SÍ SE PUEDEN EDITAR
+        const editableFields = [
+            'district',
+            'province',
+            'department',
+            'contact_location',
+            'whatsapp',
+            'call_phone'
+        ];
 
-        // permitir submit
-        if (el.type === 'submit') return;
+        document.querySelectorAll('input, select, textarea, button').forEach(el => {
 
-        // permitir CSRF y method
-        if (allowedNames.includes(el.name)) return;
+            // permitir submit y tokens
+            if (el.type === 'submit') return;
+            if (['_token', '_method', 'return_to'].includes(el.name)) return;
 
-        // 🔒 bloquear todo lo demás
-        el.disabled = true;
-        el.classList.add('disabled');
-    });
+            // si está en la whitelist → permitir
+            if (editableFields.includes(el.name)) {
+                el.disabled = false;
+                return;
+            }
 
-    // ❌ uploads imágenes
-    document.getElementById('newImagesInput')?.setAttribute('disabled', true);
+            // todo lo demás bloqueado
+            el.disabled = true;
+            el.classList.add('disabled');
+        });
 
-    // ❌ botones eliminar imágenes
-    document.querySelectorAll('.delete-img-btn').forEach(btn => {
-        btn.style.display = 'none';
-    });
+        // IMÁGENES BLOQUEADAS
+        document.getElementById('newImagesInput')?.setAttribute('disabled', true);
+
+        document.querySelectorAll('.delete-img-btn').forEach(btn => {
+            btn.style.display = 'none';
+        });
+
+        return;
+    }
+
+    /* =========================
+       SI ESTÁ PENDIENTE
+       ========================= */
+    if (STATUS === 'pendiente') {
+
+        document.getElementById('categorySelect')?.setAttribute('disabled', true);
+        document.getElementById('subcategorySelect')?.setAttribute('disabled', true);
+        document.getElementById('days_active')?.setAttribute('disabled', true);
+
+        [
+            'urgent_publication',
+            'featured_publication',
+            'premiere_publication_switch',
+            'semi_new_publication',
+            'new_publication',
+            'available_publication',
+            'top_publication'
+        ].forEach(id => {
+            document.getElementById(id)?.setAttribute('disabled', true);
+        });
+
+        // imágenes SÍ permitidas en pendiente
+    }
 
 });
 </script>
