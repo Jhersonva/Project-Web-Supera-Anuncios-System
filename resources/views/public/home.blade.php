@@ -603,15 +603,14 @@
     min-height: 630px;  
 }
 
-/* Banner panorámico */
-.ad-card-horizontal .home-card-img {
+/* Banner panorámico OR max-height: 320px;   */
+.home-card-img {
     width: 100%;
-    height: 250px;
-    object-fit: cover;
-    object-position: center;
-    border-bottom: 1px solid #eee;
+    height: auto;          
+    max-height: 420px;  
+    object-fit: contain;   
     background-color: #f3f3f3;
-    transition: height 0.3s;
+    display: block;
 }
 
 /* Contenido del anuncio */

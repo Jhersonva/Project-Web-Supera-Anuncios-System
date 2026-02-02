@@ -455,6 +455,15 @@ function goToPage(type, page) {
         });
 }
 
+function formatAmount(amount) {
+    if (amount === null || amount === undefined) return '';
+
+    return Number(amount).toLocaleString('es-PE', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    });
+}
+
 function createAdCard(ad){
     const images = ad.images.length
         ? ad.images.map(i => '/' + i.image)
@@ -569,7 +578,7 @@ function createAdCard(ad){
                     <p class="fw-bold ${amountVisible === 0 ? 'text-secondary' : 'text-success'}">
                         ${
                             amountVisible === 1
-                                ? `${currencySymbol} ${ad.amount}`
+                                ? `${currencySymbol} ${formatAmount(ad.amount)}`
                                 : ad.amount_text
                                     ? `${currencySymbol} ${ad.amount_text}`
                                     : 'No especificado'

@@ -22,11 +22,17 @@
     </a>
 
 
-    <h3 class="fw-bold mb-3 text-center">Crear Nuevo Anuncio</h3>
-    <p class="text-secondary text-center mb-4">
-        Completa la información para la publicación de tu anuncio.
-    </p>
-
+    @if(isset($ad))
+        <h3 class="fw-bold mb-3 text-center">Editar Anuncio (Borrador)</h3>
+        <p class="text-secondary text-center mb-4">
+            Puedes completar y ajustar la información de tu anuncio antes de publicarlo.
+        </p>
+    @else
+        <h3 class="fw-bold mb-3 text-center">Crear Nuevo Anuncio</h3>
+        <p class="text-secondary text-center mb-4">
+            Completa la información para la publicación de tu anuncio.
+        </p>
+    @endif
 
     <div class="row mt-4">
 
@@ -47,12 +53,15 @@
                             </option>
                         @endforeach
                     </select>
+                    @if(isset($ad))
+                        <input type="hidden" name="category_id" value="{{ $ad->ad_categories_id }}">
+                    @endif
                 </div>
 
-                {{-- SUBCATEGORÍA --}}
+                {{-- SUB-CATEGORIA --}}
                 <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="subcatContainer">
                     <label class="fw-semibold mb-2">Selecciona una Subcategoría</label>
-                    <select id="subcategorySelect" name="subcategory_id" class="form-select">
+                    <select id="subcategorySelect" name="subcategory_id" class="form-select" {{ isset($ad) ? 'disabled' : '' }}>
                         <option value="">-- Selecciona --</option>
 
                         @foreach($subcategories as $sub)
@@ -62,6 +71,13 @@
                             </option>
                         @endforeach
                     </select>
+
+                    @if(isset($ad))
+                        <input type="hidden" name="subcategory_id" value="{{ $ad->ad_subcategories_id }}">
+                        <small class="text-muted d-block mt-1">
+                            La categoría y subcategoría no pueden modificarse en un borrador.
+                        </small>
+                    @endif
                 </div>
 
                 {{-- Título --}}
@@ -313,10 +329,9 @@
                         step="1"
                         name="days_active"
                         id="days_active"
-                        class="form-control"
+                        class="form-control {{ isset($ad) && $ad->status === 'draft' ? 'input-draft' : '' }}"
                         value="{{ old('days_active', $ad->days_active ?? 2) }}"
-                        data-min="2"
-                        required
+                        {{ isset($ad) && $ad->status === 'draft' ? 'readonly' : '' }}
                     >
 
                     <small class="text-muted">
@@ -359,8 +374,8 @@
                     >
                 </div>
 
-                <!-- PUBLICACIÓN URGENTE -->
-                <div class="field-card d-none" id="urgentContainer">
+                <!-- PUBLICACIÓN URGENTE LISTO-->
+                <div class="field-card d-none {{ isset($ad) && $ad->status === 'draft' ? 'draft-locked' : '' }}" id="urgentContainer">
 
                     <label class="fw-semibold">¿Publicación urgente?</label>
 
@@ -370,7 +385,8 @@
                             id="urgent_publication_switch"
                             name="urgent_publication"
                             value="1"
-                            {{ isset($ad) && $ad->urgent_publication ? 'checked' : '' }}>
+                            {{ isset($ad) && $ad->urgent_publication ? 'checked' : '' }}
+                            {{ isset($ad) && $ad->status === 'draft' ? 'disabled' : '' }}>
 
                         <input
                             type="hidden"
@@ -388,8 +404,8 @@
                     </small>
                 </div>
 
-                <!-- PUBLICACIÓN DESTACADA -->
-                <div class="field-card d-none" id="featuredContainer">
+                <!-- PUBLICACIÓN DESTACADO LISTO-->
+                <div class="field-card d-none {{ isset($ad) && $ad->status === 'draft' ? 'draft-locked' : '' }}" id="featuredContainer">
 
 
                     <label class="fw-semibold">¿Publicación destacada?</label>
@@ -398,10 +414,16 @@
                         <input
                             class="form-check-input"
                             type="checkbox"
-                            id="featured_publication"
-                            name="featured_publication"
-                            value="1"
+                            id="featured_publication_switch"
                             {{ isset($ad) && $ad->featured_publication ? 'checked' : '' }}
+                            {{ isset($ad) && $ad->status === 'draft' ? 'disabled' : '' }}
+                        >
+
+                        <input
+                            type="hidden"
+                            name="featured_publication"
+                            id="featured_publication"
+                            value="{{ isset($ad) && $ad->featured_publication ? 1 : 0 }}"
                         >
                         <label class="form-check-label" for="featured_publication">
                             Activar publicación como destacada
@@ -413,8 +435,8 @@
                     </small>
                 </div>
 
-                <!-- PUBLICACIÓN ESTRENO -->
-                <div class="field-card d-none" id="premiereContainer">
+                <!-- PUBLICACIÓN ESTRENO LISTO-->
+                <div class="field-card d-none {{ isset($ad) && $ad->status === 'draft' ? 'draft-locked' : '' }}" id="premiereContainer">
 
                     <label class="fw-semibold">¿Publicación en estreno?</label>
 
@@ -424,6 +446,7 @@
                             type="checkbox"
                             id="premiere_publication_switch"
                             {{ isset($ad) && $ad->premiere_publication ? 'checked' : '' }}
+                            {{ isset($ad) && $ad->status === 'draft' ? 'disabled' : '' }}
                         >
 
                         <input 
@@ -443,21 +466,28 @@
                     </small>
                 </div>
 
-                <!-- PUBLICACIÓN SEMI-NUEVO -->
-                <div class="field-card d-none" id="semiNewContainer">
+                <!-- PUBLICACIÓN SEMI-NUEVO LISTO-->
+                <div class="field-card d-none {{ isset($ad) && $ad->status === 'draft' ? 'draft-locked' : '' }}"
+                    id="semiNewContainer">
 
                     <label class="fw-semibold">¿Publicación seminuevo?</label>
 
                     <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox"
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
                             id="semi_new_publication_switch"
-                            {{ isset($ad) && $ad->semi_new_publication ? 'checked' : '' }}>
-                        
-                        <input type="hidden"
+                            {{ isset($ad) && $ad->semi_new_publication ? 'checked' : '' }}
+                            {{ isset($ad) && $ad->status === 'draft' ? 'disabled' : '' }}
+                        >
+
+                        <input
+                            type="hidden"
                             name="semi_new_publication"
                             id="semi_new_publication"
-                            value="{{ isset($ad) && $ad->semi_new_publication ? 1 : 0 }}">
-                        
+                            value="{{ isset($ad) && $ad->semi_new_publication ? 1 : 0 }}"
+                        >
+
                         <label class="form-check-label" for="semi_new_publication_switch">
                             Activar publicación como seminuevo
                         </label>
@@ -469,16 +499,27 @@
                 </div>
 
                 <!-- PUBLICACIÓN NUEVA -->
-                <div class="field-card d-none" id="newContainer">
+                <div class="field-card d-none {{ isset($ad) && $ad->status === 'draft' ? 'draft-locked' : '' }}" id="newContainer">
 
                     <label class="fw-semibold">¿Publicación nueva?</label>
 
                     <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox"
-                            id="new_publication"
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="new_publication_switch"
+                            {{ isset($ad) && $ad->new_publication ? 'checked' : '' }}
+                            {{ isset($ad) && $ad->status === 'draft' ? 'disabled' : '' }}
+                        >
+
+                        <input
+                            type="hidden"
                             name="new_publication"
-                            value="1" {{ isset($ad) && $ad->new_publication ? 'checked' : '' }}>
-                        <label class="form-check-label" for="new_publication">
+                            id="new_publication"
+                            value="{{ isset($ad) && $ad->new_publication ? 1 : 0 }}"
+                        >
+
+                        <label class="form-check-label" for="new_publication_switch">
                             Activar publicación como nuevo
                         </label>
                     </div>
@@ -488,18 +529,29 @@
                     </small>
                 </div>
 
-                <!-- PUBLICACIÓN DISPONIBLE -->
-                <div class="field-card d-none" id="availableContainer">
+                <!-- PUBLICACIÓN DISPONIBLE LISTO-->
+                <div class="field-card d-none {{ isset($ad) && $ad->status === 'draft' ? 'draft-locked' : '' }}"
+                    id="availableContainer">
 
                     <label class="fw-semibold">¿Publicación disponible?</label>
 
                     <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox"
-                            id="available_publication"
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="available_publication_switch"
+                            {{ isset($ad) && $ad->available_publication ? 'checked' : '' }}
+                            {{ isset($ad) && $ad->status === 'draft' ? 'disabled' : '' }}
+                        >
+
+                        <input
+                            type="hidden"
                             name="available_publication"
-                            value="1"
-                            {{ isset($ad) && $ad->available_publication ? 'checked' : '' }}>
-                        <label class="form-check-label" for="available_publication">
+                            id="available_publication"
+                            value="{{ isset($ad) && $ad->available_publication ? 1 : 0 }}"
+                        >
+
+                        <label class="form-check-label" for="available_publication_switch">
                             Activar publicación como disponible
                         </label>
                     </div>
@@ -509,18 +561,29 @@
                     </small>
                 </div>
 
-                <!-- PUBLICACIÓN TOP -->
-                <div class="field-card d-none" id="topContainer">
+                <!-- PUBLICACIÓN TOP LISTO -->
+                <div class="field-card d-none {{ isset($ad) && $ad->status === 'draft' ? 'draft-locked' : '' }}" id="topContainer">
 
                     <label class="fw-semibold">¿Publicación TOP?</label>
 
                     <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox"
-                            id="top_publication"
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="top_publication_switch"
+                            {{ isset($ad) && $ad->top_publication ? 'checked' : '' }}
+                            {{ isset($ad) && $ad->status === 'draft' ? 'disabled' : '' }}
+                        >
+
+                        <input
+                            type="hidden"
                             name="top_publication"
-                            value="1" {{ isset($ad) && $ad->top_publication ? 'checked' : '' }}>
-                        <label class="form-check-label" for="top_publication">
-                             Activar publicación como TOP
+                            id="top_publication"
+                            value="{{ isset($ad) && $ad->top_publication ? 1 : 0 }}"
+                        >
+
+                        <label class="form-check-label" for="top_publication_switch">
+                            Activar publicación como TOP
                         </label>
                     </div>
 
@@ -642,6 +705,11 @@
                 <!-- IMÁGENES -->
                 <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="imagesContainer">
 
+                    {{-- PREVIEW NUEVAS IMÁGENES --}}
+                    <div id="newImagesPreview"
+                        class="d-flex flex-wrap gap-2 mt-3">
+                    </div>
+
                     <label class="fw-semibold mb-2">Imágenes del anuncio</label>
                     <hr>
 
@@ -654,7 +722,7 @@
                         class="form-control"
                         accept="image/*"
                         multiple
-                        required>
+                        {{ isset($ad) && $ad->images->count() ? '' : 'required' }}>
 
                     <small class="text-muted d-block">
                         Máximo 5 imágenes. Si subes nuevas, se agregarán al anuncio.
@@ -904,6 +972,24 @@ window.ALERTS = @json($alertsPrepared);
 
 <script>
 
+document.addEventListener('DOMContentLoaded', () => {
+
+    if (FORM_MODE !== 'edit') return;
+
+    const categorySelect    = document.getElementById('categorySelect');
+    const subcategorySelect = document.getElementById('subcategorySelect');
+
+    if (categorySelect) {
+        categorySelect.disabled = true;
+        categorySelect.classList.add('bg-light');
+    }
+
+    if (subcategorySelect) {
+        subcategorySelect.disabled = true;
+        subcategorySelect.classList.add('bg-light');
+    }
+});
+
 let imagesToDelete = [];
 
 function updateDeleteButtons() {
@@ -945,6 +1031,20 @@ function markImageForRemoval(id, btn) {
         JSON.stringify(imagesToDelete);
 
     updateDeleteButtons();
+}
+
+function updateImageRequirement() {
+
+    const existingImages = document.querySelectorAll(
+        '#existingImagesWrapper .image-wrapper:not(.to-remove)'
+    );
+
+    const imageInput = document.getElementById('ownImagesInput');
+
+    if (!imageInput) return;
+
+    // Si no quedan imágenes existentes → exigir al menos 1
+    imageInput.required = existingImages.length === 0;
 }
 
 function updatePublishButton(totalCost) {
@@ -1558,13 +1658,13 @@ function updatePreview() {
         amount_visible: parseInt(amountVisibleInput.value),
 
 
-        featured_publication: document.querySelector("#featured_publication")?.checked ? 1 : 0,
+        featured_publication: document.querySelector("#featured_publication_switch")?.checked ? 1 : 0,
         urgent_publication: document.querySelector("#urgent_publication_switch")?.checked ? 1 : 0,
         premiere_publication: document.querySelector("#premiere_publication_switch")?.checked ? 1 : 0,
         semi_new_publication: document.querySelector("#semi_new_publication_switch")?.checked ? 1 : 0,
-        new_publication: document.querySelector("#new_publication")?.checked ? 1 : 0,
-        available_publication: document.querySelector("#available_publication")?.checked ? 1 : 0,
-        top_publication: document.querySelector("#top_publication")?.checked ? 1 : 0,
+        new_publication: document.querySelector("#new_publication_switch")?.checked ? 1 : 0,
+        available_publication: document.querySelector("#available_publication_switch")?.checked ? 1 : 0,
+        top_publication: document.querySelector("#top_publication_switch")?.checked ? 1 : 0,
 
         subcategory: {
             name: document.querySelector("#subcategorySelect option:checked")?.textContent || "Subcategoría"
@@ -1696,7 +1796,7 @@ document.addEventListener('DOMContentLoaded', () => {
     syncButtonWithCheckbox();
 });
 
-
+const previewContainer = document.getElementById('newImagesPreview');
 
 // Seleccionar Categoria y Sub
 document.addEventListener("DOMContentLoaded", () => {
@@ -1723,35 +1823,88 @@ document.addEventListener("DOMContentLoaded", () => {
 
     imageInput.addEventListener('change', function (e) {
 
-        const newFiles = Array.from(e.target.files);
+        let newFiles = Array.from(e.target.files);
 
-        // Total si se agregan
-        const totalFiles = selectedFiles.length + newFiles.length;
+        // Cuántas imágenes aún puedo agregar
+        const remainingSlots = MAX_IMAGES - selectedFiles.length;
 
-        if (totalFiles > MAX_IMAGES) {
-
-            // ALERTA (usa SweetAlert2 si ya lo tienes)
+        if (remainingSlots <= 0) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Límite de imágenes',
-                text: 'Solo se permiten máximo 5 imágenes.',
+                text: `Solo se permiten máximo ${MAX_IMAGES} imágenes.`,
                 confirmButtonText: 'Entendido'
             });
-
-            // Limpiar selección nueva (no borra las anteriores)
             imageInput.value = '';
             return;
         }
 
-        // Agregar archivos válidos al buffer
-        selectedFiles = selectedFiles.concat(newFiles);
+        // Si el usuario seleccionó más de las permitidas
+        if (newFiles.length > remainingSlots) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Límite de imágenes',
+                text: `Solo se cargarán las primeras ${remainingSlots} imágenes.`,
+                confirmButtonText: 'Entendido'
+            });
 
-        // Reconstruir FileList
+            // Cortamos el array a las permitidas
+            newFiles = newFiles.slice(0, remainingSlots);
+        }
+
+        // Agregar y renderizar
+        newFiles.forEach(file => {
+            selectedFiles.push(file);
+            renderImagePreview(file);
+        });
+
+        syncFileInput();
+    });
+
+    function renderImagePreview(file) {
+
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'position-relative';
+            wrapper.style.width = '120px';
+            wrapper.style.height = '120px';
+
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'rounded border';
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.innerHTML = '×';
+            btn.className = 'btn btn-danger btn-sm position-absolute top-0 end-0';
+            btn.style.transform = 'translate(40%, -40%)';
+
+            btn.onclick = () => {
+                selectedFiles = selectedFiles.filter(f => f !== file);
+                wrapper.remove();
+                syncFileInput();
+            };
+
+            wrapper.appendChild(img);
+            wrapper.appendChild(btn);
+            previewContainer.appendChild(wrapper);
+        };
+
+        reader.readAsDataURL(file);
+    }
+
+    function syncFileInput() {
         const dataTransfer = new DataTransfer();
         selectedFiles.forEach(file => dataTransfer.items.add(file));
-
         imageInput.files = dataTransfer.files;
-    });
+    }
+
 
     const modal = new bootstrap.Modal(
         document.getElementById('modalSubcategoryImages')
@@ -1803,6 +1956,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // RESET IMÁGENES
     function resetImages() {
+
+        if (previewContainer) previewContainer.innerHTML = '';
+        selectedFiles = [];
 
         if (imagesGrid) imagesGrid.innerHTML = '';
         if (selectedInput) selectedInput.value = '';
@@ -1972,14 +2128,14 @@ function calculateDatesAndCosts(forceMin = false) {
 
     let total = subcatPrice * days;
 
-    // ===== EXTRAS =====
+    // ===== EXTRAS FRONTEND =====
     if (document.getElementById("urgent_publication_switch")?.checked) {total += urgentPrice;}
-    if (document.getElementById("featured_publication")?.checked) total += featuredPrice;
+    if (document.getElementById("featured_publication_switch")?.checked) total += featuredPrice;
     if (document.getElementById("premiere_publication_switch")?.checked) total += premierePrice;
     if (document.getElementById("semi_new_publication_switch")?.checked) total += semiNewPrice;
-    if (document.getElementById("new_publication")?.checked) total += newPrice;
-    if (document.getElementById("available_publication")?.checked) total += availablePrice;
-    if (document.getElementById("top_publication")?.checked) total += topPrice;
+    if (document.getElementById("new_publication_switch")?.checked) total += newPrice;
+    if (document.getElementById("available_publication_switch")?.checked) total += availablePrice;
+    if (document.getElementById("top_publication_switch")?.checked) total += topPrice;
 
     // ===== ELEMENTOS VISUALES =====
     document.getElementById("pricePerDay").value = `S/. ${subcatPrice.toFixed(2)}`;
@@ -2254,17 +2410,31 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function bindSwitchCalculation(switchId, hiddenId = null) {
+    function bindSwitch(switchId, hiddenId) {
         const sw = document.getElementById(switchId);
-        const hidden = hiddenId ? document.getElementById(hiddenId) : null;
+        const hidden = document.getElementById(hiddenId);
 
-        if (!sw) return;
+        if (!sw || !hidden) return;
 
-        // sincronizar estado inicial
-        if (hidden) hidden.value = sw.checked ? 1 : 0;
+        // estado inicial
+        hidden.value = sw.checked ? 1 : 0;
 
         sw.addEventListener('change', () => {
-            if (hidden) hidden.value = sw.checked ? 1 : 0;
+            hidden.value = sw.checked ? 1 : 0;
+            calculateDatesAndCosts();
+        });
+    }
+
+    function bindSwitchCalculation(switchId, hiddenId) {
+        const sw = document.getElementById(switchId);
+        const hidden = document.getElementById(hiddenId);
+
+        if (!sw || !hidden) return;
+
+        hidden.value = sw.checked ? 1 : 0;
+
+        sw.addEventListener("change", () => {
+            hidden.value = sw.checked ? 1 : 0;
             calculateDatesAndCosts();
         });
     }
@@ -2273,10 +2443,10 @@ document.addEventListener("DOMContentLoaded", () => {
     bindSwitchCalculation('premiere_publication_switch', 'premiere_publication');
     bindSwitchCalculation('semi_new_publication_switch', 'semi_new_publication');
 
-    bindSwitchCalculation('featured_publication');
-    bindSwitchCalculation('new_publication');
-    bindSwitchCalculation('available_publication');
-    bindSwitchCalculation('top_publication');
+    bindSwitchCalculation('featured_publication_switch', 'featured_publication');
+    bindSwitchCalculation('new_publication_switch', 'new_publication');
+    bindSwitchCalculation('available_publication_switch', 'available_publication');
+    bindSwitchCalculation('top_publication_switch', 'top_publication');
 
     // Cargar campos automáticamente al editar
     if (FORM_MODE === 'edit' && adDataFromServer) {
@@ -2313,14 +2483,20 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("semi_new_publication_switch").checked =
             !!adDataFromServer.semi_new_publication;
 
-        document.getElementById("new_publication").checked =
+        document.getElementById("new_publication_switch").checked =
             !!adDataFromServer.new_publication;
+
+        document.getElementById("new_publication").value =
+            adDataFromServer.new_publication ? 1 : 0;
 
         document.getElementById("available_publication").checked =
             !!adDataFromServer.available_publication;
 
-        document.getElementById("top_publication").checked =
+        document.getElementById("top_publication_switch").checked =
             !!adDataFromServer.top_publication;
+
+        document.getElementById("top_publication").value =
+            adDataFromServer.top_publication ? 1 : 0;
         
         updateDeleteButtons();
 
@@ -2394,7 +2570,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 confirmReceiptBtn.classList.remove("d-none");
-
 
 // Actualizar preview al escribir datos
 document.addEventListener("input", function (e) {
@@ -2570,6 +2745,31 @@ function updateReceiptPreview() {
 </script>
 
 <style>
+
+    /*Estilo de bloqueo de input con estado draft*/
+    .input-draft {
+        background-color: #f1f3f5;   
+        color: #6c757d;             
+        cursor: not-allowed;
+    }
+
+    /* Bloqueo visual de tags en draft */
+    .field-card.draft-locked {
+        background-color: #f8f9fa;
+        border: 1px dashed #ced4da;
+    }
+
+    .field-card.draft-locked .form-check-input {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .field-card.draft-locked label,
+    .field-card.draft-locked small {
+        color: #6c757d !important;
+    }
+
+    
 
     /* =========================
    GRID DE IMÁGENES DEL MODAL

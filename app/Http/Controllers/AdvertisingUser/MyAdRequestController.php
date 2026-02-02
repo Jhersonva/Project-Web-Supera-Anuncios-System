@@ -171,7 +171,7 @@ class MyAdRequestController extends Controller
             'department'      => 'required|string|max:255',
             'province'        => 'required|string|max:255',
             'district'        => 'required|string|max:255',
-            'contact_location'=> 'required|string|max:255',
+            'contact_location'=> 'nullable|string|max:255',
 
             'whatsapp'        => 'required|string|max:9',
             'call_phone'      => 'required|string|max:9',
@@ -184,7 +184,7 @@ class MyAdRequestController extends Controller
 
             // IMÁGENES OBLIGATORIAS
             'images'          => 'required|array|min:1|max:5',
-            'images.*'        => 'image|mimes:jpg,jpeg,png,webp|max:4096',
+            'images.*'        => 'image|mimes:jpg,jpeg,png,webp|max:8192',
 
             // CAMPOS DINÁMICOS (OBLIGATORIOS)
             'dynamic'         => 'nullable|array',
@@ -565,7 +565,7 @@ class MyAdRequestController extends Controller
                 'days_active'     => 'required|integer|min:2',
 
                 'images'          => 'nullable|array|max:5',
-                'images.*'        => 'image|mimes:jpg,jpeg,png,webp|max:4096',
+                'images.*'        => 'image|mimes:jpg,jpeg,png,webp|max:8192',
 
                 'dynamic'         => 'nullable|array',
             ]);
@@ -755,7 +755,8 @@ class MyAdRequestController extends Controller
 
             if ($request->filled('remove_images')) {
 
-                $idsToRemove = json_decode($request->remove_images, true);
+                $idsToRemove = explode(',', $request->remove_images);
+
 
                 if (is_array($idsToRemove)) {
 
@@ -926,7 +927,7 @@ class MyAdRequestController extends Controller
             'amount' => 'required_if:amount_visible,1|nullable|numeric|min:0',
             'remove_images' => 'nullable|string',
             'images'        => 'nullable|array|max:5',
-            'images.*'      => 'image|mimes:jpg,jpeg,png,webp|max:4096',
+            'images.*'      => 'image|mimes:jpg,jpeg,png,webp|max:8192',
         ]);
 
         $user = auth()->user();
