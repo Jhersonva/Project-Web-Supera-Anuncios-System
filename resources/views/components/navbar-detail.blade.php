@@ -2,8 +2,8 @@
 <nav class="navbar bg-white px-3 shadow-sm fixed-top d-flex justify-content-between align-items-center">
 
     {{-- IZQUIERDA: BOTÓN VOLVER --}}
-    <a href="{{ url()->previous() ?? route('home') }}" class="text-dark">
-        <i class="fa-solid fa-arrow-left fs-5"></i>
+    <a href="javascript:void(0)" onclick="history.back()" class="text-dark">
+       <i class="fa-solid fa-arrow-left fs-5"></i>
     </a>
 
     {{-- CENTRO: TÍTULO --}}
