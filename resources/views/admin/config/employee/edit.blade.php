@@ -4,164 +4,196 @@
 
 @section('content')
 
-<div class="container mt-5 mb-5">
+<style>
+    .profile-card {
+        border-radius: 20px;
+        padding: 30px;
+    }
+    .profile-label {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+</style>
+
+<div class="container mt-4">
 
     {{-- VOLVER --}}
     <a href="{{ route('admin.config.employees') }}" class="text-dark">
         <i class="fa-solid fa-arrow-left fs-5"></i>
     </a>
 
-    <h4 class="fw-bold text-center mb-2">Editar Empleado</h4>
-    <p class="text-muted text-center mb-4">
-        Modifique los datos del empleado seleccionado.
-    </p>
+    <h4 class="fw-bold text-center mb-3">Editar Empleado</h4>
 
-    <div class="card shadow-sm border-0 p-4" style="border-radius: 16px;">
+    <div class="card shadow-sm profile-card">
 
-        <form action="{{ route('admin.config.employees.update', $employee) }}" method="POST">
+        <form action="{{ route('admin.config.employees.update', $employee) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
-            <div class="row g-4">
+            <!-- IMAGEN DE PERFIL -->
+            <div class="text-center mb-4">
 
-                {{-- NOMBRE / EMAIL --}}
+                <label for="profile_image" class="position-relative d-inline-block" style="cursor:pointer;">
+
+                    <div class="position-relative d-inline-block">
+
+                        <img
+                            id="profilePreview"
+                            src="{{ $employee->profile_image
+                                ? asset($employee->profile_image)
+                                : asset('assets/img/profile-image/default-user.png') }}"
+                            class="rounded-circle border border-2 border-primary"
+                            style="width:120px; height:120px; object-fit:cover;"
+                        >
+
+                        {{-- ICONO EDITAR --}}
+                        <span
+                            class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle p-2"
+                            style="transform: translate(20%, 20%);">
+                            <i class="fa-solid fa-camera"></i>
+                        </span>
+
+                    </div>
+
+                    <input type="file"
+                        name="profile_image"
+                        id="profile_image"
+                        class="d-none"
+                        accept="image/*">
+                </label>
+
+            </div>
+
+
+            <!-- GRID 2 COLUMNAS -->
+            <div class="row g-3">
+
+                {{-- NOMBRE --}}
                 <div class="col-md-6">
-                    <label class="form-label fw-semibold">Nombre completo</label>
+                    <label class="profile-label">Nombre completo</label>
                     <input type="text" name="full_name" class="form-control"
                         value="{{ $employee->full_name }}" required>
                 </div>
 
+                {{-- EMAIL --}}
                 <div class="col-md-6">
-                    <label class="form-label fw-semibold">
-                        Email
-                        <span class="text-danger">*</span>
+                    <label class="profile-label">
+                        Correo <span class="text-danger">*</span>
                     </label>
                     <input type="email" name="email" class="form-control"
                         value="{{ $employee->email }}" required>
-                    <small class="text-muted">
-                        Este email será utilizado para ingresar al sistema
-                    </small>
                 </div>
 
-
-                {{-- DNI / LOCALIDAD / WHATSAPP --}}
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">DNI</label>
-                    <input
-                        type="text"
-                        name="dni"
-                        class="form-control"
+                {{-- DNI --}}
+                <div class="col-md-6">
+                    <label class="profile-label">DNI</label>
+                    <input type="text" name="dni" class="form-control"
                         value="{{ $employee->dni }}"
                         inputmode="numeric"
                         pattern="[0-9]{8}"
                         maxlength="8"
                         placeholder="XXXXXXXX"
-                        required
-                    >
+                        required>
                 </div>
 
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Localidad</label>
+                {{-- LOCALIDAD --}}
+                <div class="col-md-6">
+                    <label class="profile-label">Localidad</label>
                     <input type="text" name="locality" class="form-control"
                         value="{{ $employee->locality }}">
                 </div>
 
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">WhatsApp</label>
-                    <input
-                        type="text"
-                        name="whatsapp"
-                        class="form-control"
+                {{-- WHATSAPP --}}
+                <div class="col-md-6">
+                    <label class="profile-label">WhatsApp</label>
+                    <input type="text" name="whatsapp" class="form-control"
                         value="{{ $employee->whatsapp }}"
                         inputmode="numeric"
-                        pattern="[0-9]{9}"
                         maxlength="9"
-                        placeholder="9XXXXXXXX"
-                    >
+                        placeholder="9XXXXXXXX">
                 </div>
 
                 {{-- LLAMADAS --}}
                 <div class="col-md-6">
-                    <label class="form-label fw-semibold">Número de llamadas</label>
-                    <input
-                        type="text"
-                        name="call_phone"
-                        class="form-control"
+                    <label class="profile-label">Teléfono para llamadas</label>
+                    <input type="text" name="call_phone" class="form-control"
                         value="{{ $employee->call_phone }}"
                         inputmode="numeric"
-                        pattern="[0-9]{9}"
                         maxlength="9"
-                        placeholder="9XXXXXXXX"
-                    >
+                        placeholder="9XXXXXXXX">
                 </div>
 
-                 {{-- ROL DEL USUARIO --}}
+                {{-- ROL --}}
                 <div class="col-md-6">
-                    <label class="form-label fw-semibold">Rol del usuario</label>
-                    <select name="role_id" class="form-select" required 
+                    <label class="profile-label">Rol del usuario</label>
+                    <select name="role_id" class="form-select" required
                         @if(auth()->user()->role_id !== 1) disabled @endif>
                         <option value="">Seleccione un rol</option>
                         <option value="1" {{ $employee->role_id == 1 ? 'selected' : '' }}>Administrador</option>
                         <option value="3" {{ $employee->role_id == 3 ? 'selected' : '' }}>Empleado</option>
                     </select>
-                    @if(auth()->user()->role_id !== 1)
-                        <small class="text-muted">Solo los administradores pueden cambiar el rol</small>
-                    @endif
                 </div>
 
                 {{-- CONTRASEÑA --}}
                 <div class="col-md-6">
-                    <label class="form-label fw-semibold">
+                    <label class="profile-label">
                         Nueva contraseña
                         <small class="text-muted">(opcional)</small>
                     </label>
                     <input type="password" name="password" class="form-control">
-                    <small class="text-muted">
-                        Si se modifica, esta será la nueva contraseña de acceso
-                    </small>
                 </div>
 
-                {{-- DIRECCIÓN --}}
+                {{-- DIRECCIÓN (OCUPA 2 COLUMNAS) --}}
                 <div class="col-md-12">
-                    <label class="form-label fw-semibold">Dirección</label>
+                    <label class="profile-label">Dirección</label>
                     <input type="text" name="address" class="form-control"
                         value="{{ $employee->address }}">
                 </div>
 
             </div>
 
-
-            <div class="text-end mt-4">
-                <button class="btn btn-primary px-4">
-                    <i class="fa-solid fa-save me-2"></i> Guardar Cambios
-                </button>
-            </div>
+            <button class="btn btn-primary w-100 rounded-pill mt-4 py-2">
+                Guardar cambios
+            </button>
 
         </form>
 
     </div>
-
 </div>
 
 <script>
-// Validación: solo números y longitud exacta
 document.querySelectorAll(
-    'input[name="dni"], input[name="ruc"], input[name="call_phone"], input[name="whatsapp"]'
+    'input[name="dni"], input[name="call_phone"], input[name="whatsapp"]'
 ).forEach(input => {
 
     input.addEventListener('input', function () {
         let max = 0;
 
         if (this.name === 'dni') max = 8;
-        if (this.name === 'ruc') max = 11;
         if (this.name === 'call_phone') max = 9;
         if (this.name === 'whatsapp') max = 9;
 
-        this.value = this.value
-            .replace(/[^0-9]/g, '')
-            .slice(0, max);
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, max);
     });
 
+});
+
+document.getElementById('profile_image').addEventListener('change', function (e) {
+
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        alert('Selecciona una imagen válida');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = e => {
+        document.getElementById('profilePreview').src = e.target.result;
+    };
+
+    reader.readAsDataURL(file);
 });
 </script>
 

@@ -167,6 +167,17 @@
                 </p>
             @endif
 
+            @if($r->status === 'pendiente')
+                <form action="{{ route('recharges.destroy', $r->id) }}" method="POST" class="mt-2 delete-recharge-form">
+                    @csrf
+                    @method('DELETE')
+
+                    <button type="button" class="btn btn-outline-danger btn-sm w-100 btn-delete-recharge">
+                        <i class="fa-solid fa-trash"></i> Eliminar historial
+                    </button>
+                </form>
+            @endif
+
         </div>
         @endforeach
 
@@ -309,6 +320,28 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     @endif
 
+});
+
+document.querySelectorAll('.btn-delete-recharge').forEach(btn => {
+    btn.addEventListener('click', function () {
+
+        const form = this.closest('form');
+
+        Swal.fire({
+            title: '¿Eliminar recarga?',
+            text: 'Esta acción no se puede deshacer.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
+    });
 });
 
 </script>

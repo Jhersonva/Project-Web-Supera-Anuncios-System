@@ -339,6 +339,18 @@
                     </p>
                 @endif
 
+                <form action="{{ route('admin.reload-request.destroy', $r->id) }}"
+                    method="POST"
+                    class="mt-3 delete-recharge-admin-form">
+                    @csrf
+                    @method('DELETE')
+
+                    <button type="button"
+                            class="btn btn-outline-danger w-100 btn-delete-recharge-admin">
+                        <i class="fa-solid fa-trash"></i> Eliminar del historial
+                    </button>
+                </form>
+
             </div>
             @endforeach
         @endif
@@ -423,6 +435,29 @@ document.addEventListener("DOMContentLoaded", function () {
     @endif
 
 });
+
+document.querySelectorAll('.btn-delete-recharge-admin').forEach(btn => {
+    btn.addEventListener('click', function () {
+
+        const form = this.closest('form');
+
+        Swal.fire({
+            title: '¿Eliminar recarga?',
+            text: 'Esta acción eliminará también el comprobante.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
+    });
+});
+
 </script>
 
 @endsection

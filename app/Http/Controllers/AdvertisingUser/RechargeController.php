@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Recharge;
 use App\Models\PaymentMethod;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 
 class RechargeController extends Controller
 {
@@ -65,6 +66,23 @@ class RechargeController extends Controller
 
         return redirect()->back()
             ->with('success', 'Tu solicitud de recarga fue enviada correctamente.');
+    }
+
+    public function destroy($id)
+    {
+        $recharge = Recharge::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        // Eliminar imagen física
+        if ($recharge->img_cap_pago && File::exists(public_path($recharge->img_cap_pago))) {
+            File::delete(public_path($recharge->img_cap_pago));
+        }
+
+        // Eliminar registro
+        $recharge->delete();
+
+        return redirect()->back()->with('success', 'Historial de recarga eliminado correctamente.');
     }
 }
     

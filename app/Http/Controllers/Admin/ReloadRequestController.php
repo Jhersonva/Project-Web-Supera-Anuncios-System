@@ -9,6 +9,7 @@ use App\Models\CashBox;
 use App\Models\CashMovement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 
 class ReloadRequestController extends Controller
 {
@@ -151,4 +152,18 @@ class ReloadRequestController extends Controller
         return back()->with('info', 'Recarga rechazada.');
     }
 
+    public function destroy($id)
+    {
+        $recarga = Recharge::findOrFail($id);
+
+        // Eliminar imagen física
+        if ($recarga->img_cap_pago && File::exists(public_path($recarga->img_cap_pago))) {
+            File::delete(public_path($recarga->img_cap_pago));
+        }
+
+        // Eliminar registro
+        $recarga->delete();
+
+        return back()->with('success', 'Recarga eliminada del historial correctamente.');
+    }
 }

@@ -36,11 +36,9 @@ class ClientController extends Controller
     {
         $rules = [
             'email'          => 'required|email|unique:users,email,' . $client->id,
-            'phone'          => 'nullable|string|max:20',
             'locality'       => 'nullable|string|max:150',
-            'whatsapp'       => 'nullable|string|max:20',
-            'call_phone'     => 'nullable|string|max:20',
-            'contact_email'  => 'nullable|email|max:150',
+            'whatsapp'       => 'nullable|string|max:9',
+            'call_phone'     => 'nullable|string|max:9',
             'address'        => 'nullable|string|max:200',
             'profile_image'  => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ];
@@ -60,11 +58,9 @@ class ClientController extends Controller
 
         $data = $request->only([
             'email',
-            'phone',
             'locality',
             'whatsapp',
             'call_phone',
-            'contact_email',
             'address',
         ]);
 

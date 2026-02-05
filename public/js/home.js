@@ -167,6 +167,22 @@ function filterAdsFull(titleQuery, locationQuery, categoryId, subcategoryId) {
     if (categoryId) url += `category_id=${categoryId}&`;
     if (subcategoryId) url += `subcategory_id=${subcategoryId}&`;
 
+    // Guardar filtro SOLO si es Servicios → Privados
+    if (
+        categoryId === window.SERVICIOS_CATEGORY_ID &&
+        subcategoryId === window.PRIVADOS_SUBCATEGORY_ID
+    ) {
+        localStorage.setItem('private_services_filter', JSON.stringify({
+            titleQuery,
+            locationQuery,
+            categoryId,
+            subcategoryId
+        }));
+    } else {
+        // cualquier otra búsqueda limpia el guardado
+        localStorage.removeItem('private_services_filter');
+    }
+
     fetch(url)
         .then(res => res.json())
         .then(data => {
@@ -335,6 +351,40 @@ function showAdultServicesSearchAlert(onAccept) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+
+    // Restaurar filtro Servicios → Privados si existe
+    const savedFilter = localStorage.getItem('private_services_filter');
+
+    if (savedFilter) {
+        const {
+            titleQuery,
+            locationQuery,
+            categoryId,
+            subcategoryId
+        } = JSON.parse(savedFilter);
+
+        inputSearch.value   = titleQuery ?? '';
+        inputLocation.value = locationQuery ?? '';
+        selectCategory.value = categoryId;
+
+        // cargar subcategorías
+        selectSubcategory.innerHTML = '<option value="">Todas las subcategorías</option>';
+        allSubcategories
+            .filter(sub => sub.ad_categories_id == categoryId)
+            .forEach(sub => {
+                const option = document.createElement('option');
+                option.value = sub.id;
+                option.textContent = sub.name;
+                selectSubcategory.appendChild(option);
+            });
+
+        selectSubcategory.value = subcategoryId;
+
+        // ejecutar búsqueda automáticamente
+        filterAdsFull(titleQuery, locationQuery, categoryId, subcategoryId);
+        return; // evita loadAds()
+    }
+
     loadAds();
 });
 

@@ -328,6 +328,7 @@ Route::middleware(['auth'])->group(function () {
         */
         Route::get('/recharges', [RechargeController::class, 'index'])->name('recharges.index');
         Route::post('/recharges', [RechargeController::class, 'store'])->name('recharges.store');
+        Route::delete('/recharges/{id}', [RechargeController::class, 'destroy'])->name('recharges.destroy');
 
         /*
         |--------------------------------------------------------------------------
@@ -387,6 +388,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/reload-request/{id}/approve', [ReloadRequestController::class, 'approve'])->name('admin.reload-request.approve');
         Route::post('/reload-request/{id}/reject', [ReloadRequestController::class, 'reject'])->name('admin.reload-request.reject');
         Route::get('/reload-request/pending-count', [ReloadRequestController::class, 'pendingCount'])->name('admin.reload-request.pending-count');
+        Route::delete('/reload-request/{id}/delete', [ReloadRequestController::class, 'destroy'])->name('admin.reload-request.destroy');
 
         // Configuración
         Route::get('/config', [ConfigController::class, 'index'])->name('admin.config');

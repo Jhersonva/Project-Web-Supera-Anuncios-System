@@ -75,8 +75,6 @@
                 </label>
             </div>
 
-
-
             <!-- GRID 2 COLUMNAS -->
             <div class="row g-3">
 
@@ -89,8 +87,18 @@
 
                     <div class="col-md-6">
                         <label class="profile-label">DNI</label>
-                        <input type="text" class="form-control" name="dni"
-                            value="{{ old('dni', $client->dni) }}" required>
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="dni"
+                            value="{{ old('dni', $client->dni) }}"
+                            inputmode="numeric"
+                            pattern="[0-9]{8}"
+                            maxlength="8"
+                            placeholder="XXXXXXXX"
+                            title="El DNI debe contener exactamente 8 números"
+                            required
+                        >
                     </div>
 
                     <div class="col-md-6">
@@ -113,8 +121,18 @@
 
                     <div class="col-md-6">
                         <label class="profile-label">RUC</label>
-                        <input type="text" class="form-control" name="ruc"
-                            value="{{ old('ruc', $client->ruc) }}" required>
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="ruc"
+                            value="{{ old('ruc', $client->ruc) }}"
+                            inputmode="numeric"
+                            pattern="[0-9]{11}"
+                            maxlength="11"
+                            placeholder="XXXXXXXXXXX"
+                            title="El RUC debe contener exactamente 11 números"
+                            required
+                        >
                     </div>
                 @endif
 
@@ -125,12 +143,6 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="profile-label">Teléfono</label>
-                    <input type="text" class="form-control" name="phone"
-                        value="{{ old('phone', $client->phone) }}">
-                </div>
-
-                <div class="col-md-6">
                     <label class="profile-label">Localidad</label>
                     <input type="text" class="form-control" name="locality"
                         value="{{ old('locality', $client->locality) }}">
@@ -138,23 +150,35 @@
 
                 <div class="col-md-6">
                     <label class="profile-label">WhatsApp</label>
-                    <input type="text" class="form-control" name="whatsapp"
-                        value="{{ old('whatsapp', $client->whatsapp) }}">
+                    <input
+                        type="text"
+                        class="form-control"
+                        name="whatsapp"
+                        value="{{ old('whatsapp', $client->whatsapp) }}"
+                        inputmode="numeric"
+                        pattern="[0-9]{9}"
+                        maxlength="9"
+                        placeholder="9XXXXXXXX"
+                        title="El número de WhatsApp debe tener 9 dígitos"
+                    >
                 </div>
 
                 <div class="col-md-6">
                     <label class="profile-label">Teléfono para llamadas</label>
-                    <input type="text" class="form-control" name="call_phone"
-                        value="{{ old('call_phone', $client->call_phone) }}">
+                    <input
+                        type="text"
+                        class="form-control"
+                        name="call_phone"
+                        value="{{ old('call_phone', $client->call_phone) }}"
+                        inputmode="numeric"
+                        pattern="[0-9]{9}"
+                        maxlength="9"
+                        placeholder="9XXXXXXXX"
+                        title="El número de llamadas debe tener 9 dígitos"
+                    >
                 </div>
 
                 <div class="col-md-6">
-                    <label class="profile-label">Correo de contacto</label>
-                    <input type="email" class="form-control" name="contact_email"
-                        value="{{ old('contact_email', $client->contact_email) }}">
-                </div>
-
-                <div class="col-md-12">
                     <label class="profile-label">Dirección</label>
                     <input type="text" class="form-control" name="address"
                         value="{{ old('address', $client->address) }}">
@@ -191,6 +215,27 @@
 </div>
 
 <script>
+
+document.querySelectorAll(
+    'input[name="dni"], input[name="ruc"], input[name="call_phone"], input[name="whatsapp"]'
+).forEach(input => {
+
+    input.addEventListener('input', function () {
+
+        let max = 0;
+
+        if (this.name === 'dni') max = 8;
+        if (this.name === 'ruc') max = 11;
+        if (this.name === 'call_phone') max = 9;
+        if (this.name === 'whatsapp') max = 9;
+
+        this.value = this.value
+            .replace(/[^0-9]/g, '')
+            .slice(0, max);
+    });
+
+});
+
 document.getElementById('profile_image').addEventListener('change', function (e) {
 
     const file = e.target.files[0];

@@ -4,6 +4,7 @@
 
 @section('content')
 
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <div class="container mt-5 mb-5">
@@ -72,22 +73,34 @@
                         <table class="table align-middle mb-0">
                             <tbody>
                                 @foreach($admins as $admin)
-                                    <tr>
-                                        <td class="fw-semibold">{{ $admin->full_name }}</td>
-                                        <td>{{ $admin->email }}</td>
-                                        <td>{{ $admin->dni }}</td>
-                                        <td>{{ $admin->phone }}</td>
-                                        <td>{{ $admin->locality }}</td>
-                                        <td>
-                                            <span class="badge bg-primary">ADMIN</span>
-                                        </td>
-                                        <td class="text-end">
-                                            <a href="{{ route('admin.config.employees.edit', $admin) }}"
-                                            class="btn btn-sm btn-primary">
-                                                Editar Perfil
-                                            </a>
-                                        </td>
-                                    </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <img
+                                                src="{{ $admin->profile_image
+                                                    ? asset($admin->profile_image)
+                                                    : asset('assets/img/profile-image/default-user.png') }}"
+                                                class="rounded-circle"
+                                                style="width:38px;height:38px;object-fit:cover;"
+                                            >
+                                            <span class="fw-semibold">{{ $admin->full_name }}</span>
+                                        </div>
+                                    </td>
+
+                                    <td>{{ $admin->email }}</td>
+                                    <td>{{ $admin->dni }}</td>
+                                    <td>{{ $admin->phone }}</td>
+                                    <td>{{ $admin->locality }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">ADMIN</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{{ route('admin.config.employees.edit', $admin) }}"
+                                        class="btn btn-sm btn-primary">
+                                            Editar Perfil
+                                        </a>
+                                    </td>
+                                </tr>
                                 @endforeach
                             </tbody>
                         </table>
@@ -115,7 +128,19 @@
                 <tbody>
                     @foreach ($employees as $emp)
                         <tr>
-                            <td class="fw-semibold">{{ $emp->full_name }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <img
+                                        src="{{ $emp->profile_image
+                                            ? asset($emp->profile_image)
+                                            : asset('assets/img/profile-image/default-user.png') }}"
+                                        class="rounded-circle"
+                                        style="width:38px;height:38px;object-fit:cover;"
+                                    >
+                                    <span class="fw-semibold">{{ $emp->full_name }}</span>
+                                </div>
+                            </td>
+
                             <td>{{ $emp->email }}</td>
                             <td>{{ $emp->dni }}</td>
                             <td>{{ $emp->phone }}</td>
@@ -182,7 +207,16 @@
                                     </h6>
 
                                     <div class="small mt-2">
-                                        <div><strong>Nombre:</strong> {{ $admin->full_name }}</div>
+                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                            <img
+                                                src="{{ $emp->profile_image
+                                                    ? asset($emp->profile_image)
+                                                    : asset('assets/img/profile-image/default-user.png') }}"
+                                                class="rounded-circle"
+                                                style="width:48px;height:48px;object-fit:cover;"
+                                            >
+                                            <h6 class="fw-bold m-0">{{ $emp->full_name }}</h6>
+                                        </div>
                                         <div><strong>Email:</strong> {{ $admin->email }}</div>
                                         <div><strong>DNI:</strong> {{ $admin->dni }}</div>
                                     </div>

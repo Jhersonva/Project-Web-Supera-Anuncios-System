@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\File;
 
 class EmployeeController extends Controller
 {
@@ -49,6 +50,7 @@ class EmployeeController extends Controller
             'call_phone' => 'nullable|digits:9',
             'password'   => 'required|min:6',
             'role_id'    => 'required|in:1,3',
+            'profile_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ], [
             // full_name
             'full_name.required' => 'El nombre completo es obligatorio.',
@@ -74,7 +76,7 @@ class EmployeeController extends Controller
             'password.min'      => 'La contraseña debe contener al menos 6 caracteres.',
         ]);
 
-        User::create([
+        $data = [
             'role_id'    => $request->role_id,
             'full_name'  => $request->full_name,
             'email'      => $request->email,
@@ -85,7 +87,26 @@ class EmployeeController extends Controller
             'address'    => $request->address,
             'password'   => Hash::make($request->password),
             'is_active'  => true
-        ]);
+        ];
+
+        // ============================
+        // IMAGEN DE PERFIL (IGUAL A CLIENTE)
+        // ============================
+        if ($request->hasFile('profile_image')) {
+
+            $path = public_path('assets/img/profile-image');
+
+            if (!File::exists($path)) {
+                File::makeDirectory($path, 0755, true);
+            }
+
+            $filename = 'user_' . time() . '.' . $request->profile_image->extension();
+            $request->profile_image->move($path, $filename);
+
+            $data['profile_image'] = 'assets/img/profile-image/' . $filename;
+        }
+
+        User::create($data);
 
         return redirect()
             ->route('admin.config.employees')
@@ -110,6 +131,7 @@ class EmployeeController extends Controller
             'whatsapp'   => 'nullable|digits:9',
             'call_phone' => 'nullable|digits:9',
             'password'   => 'nullable|min:6',
+            'profile_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             // Si es admin, validar role_id
             'role_id'    => auth()->user()->role_id === 1 ? 'required|in:1,3' : '',
         ], [
@@ -144,6 +166,32 @@ class EmployeeController extends Controller
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
+        }
+
+        // ============================
+        // IMAGEN DE PERFIL (IGUAL A CLIENTE)
+        // ============================
+        if ($request->hasFile('profile_image')) {
+
+            $path = public_path('assets/img/profile-image');
+
+            // Crear carpeta si no existe
+            if (!File::exists($path)) {
+                File::makeDirectory($path, 0755, true);
+            }
+
+            // Eliminar imagen anterior
+            if ($employee->profile_image && File::exists(public_path($employee->profile_image))) {
+                File::delete(public_path($employee->profile_image));
+            }
+
+            // Guardar nueva imagen
+            $filename = 'user_' . $employee->id . '_' . time() . '.' .
+                        $request->profile_image->extension();
+
+            $request->profile_image->move($path, $filename);
+
+            $data['profile_image'] = 'assets/img/profile-image/' . $filename;
         }
 
         $employee->update($data);
