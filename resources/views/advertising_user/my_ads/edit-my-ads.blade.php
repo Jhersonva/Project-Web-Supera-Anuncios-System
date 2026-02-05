@@ -46,14 +46,22 @@
     </p>
 
     <!-- FORMULARIO -->
+    @php
+        $lockEdit = in_array($ad->status, ['publicado', 'pendiente']);
+    @endphp
+
     <form action="{{ route('my-ads.updateAd', $ad->id) }}" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="return_to" value="{{ url()->previous() }}">
         @csrf
 
+        <input type="hidden" name="category_id" value="{{ $ad->ad_categories_id }}">
+        <input type="hidden" name="subcategory_id" value="{{ $ad->ad_subcategories_id }}">
+        <input type="hidden" name="days_active" value="{{ $ad->days_active }}">
+
         {{-- CATEGORÍA --}}
         <div class="field-card">
             <label class="fw-semibold mb-2">Categoría</label>
-            <select id="categorySelect" name="category_id" class="form-select">
+            <select id="categorySelect" name="category_id" class="form-select" disabled>    
                 <option value="">-- Selecciona --</option>
                 @foreach($categories as $cat)
                     <option value="{{ $cat->id }}" {{ $ad->ad_categories_id == $cat->id ? 'selected' : '' }}>
@@ -559,6 +567,10 @@
             @if($ad->images->count())
                 <div class="d-flex flex-wrap gap-2 mb-3">
 
+                    @php
+                        $imagesCount = $ad->images->count();
+                    @endphp
+
                     @foreach($ad->images as $image)
                         <div class="position-relative image-wrapper">
 
@@ -574,12 +586,15 @@
                                 </span>
                             @endif
 
-                            <button
-                                type="button"
-                                class="delete-img-btn"
-                                onclick="markImageForRemoval({{ $image->id }}, this)">
-                                ×
-                            </button>
+                            {{-- SOLO mostrar X si hay más de 1 imagen --}}
+                            @if($imagesCount > 1)
+                                <button
+                                    type="button"
+                                    class="delete-img-btn"
+                                    onclick="markImageForRemoval({{ $image->id }}, this)">
+                                    ×
+                                </button>
+                            @endif
 
                         </div>
                     @endforeach
@@ -667,23 +682,6 @@
                     class="form-control"
                     value="{{ $ad->full_name }}">
             </div>
-{{--
-            <hr class="my-4">
-
-            
-            <h5 class="fw-bold mb-2">Previsualización del Comprobante</h5>
-
-            <div class="p-3 border rounded bg-light" id="receiptPreview"></div>
-
-            {{-- PDF generado 
-            @if($ad->receipt_file)
-                <a href="{{ asset($ad->receipt_file) }}"
-                target="_blank"
-                class="btn btn-outline-primary btn-sm mt-3 w-100">
-                    <i class="fa-solid fa-file-pdf"></i>
-                    Ver comprobante generado
-                </a>
-            @endif--}}
 
         </div>
 
@@ -720,18 +718,37 @@ if (removeInput) {
     removeInput.value = '';
 }
 
-function markImageForRemoval(id, btn) {
+function markImageForRemoval(imageId, btn) {
 
     const wrapper = btn.closest('.image-wrapper');
-    wrapper.classList.add('removed');
-    wrapper.style.opacity = '0.4';
 
-    if (!imagesToDelete.includes(id)) {
-        imagesToDelete.push(id);
+    // imágenes visibles actuales (no eliminadas)
+    const remainingImages =
+        document.querySelectorAll('.image-wrapper:not(.removed)').length;
+
+    // si es la última, no permitir
+    if (remainingImages <= 1) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Acción no permitida',
+            text: 'El anuncio debe tener al menos una imagen.',
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#dc3545'
+        });
+        return;
     }
 
-    document.getElementById('remove_images').value =
-        JSON.stringify(imagesToDelete);
+    // marcar visualmente como eliminada
+    wrapper.classList.add('removed');
+    wrapper.style.opacity = '0.4';
+    btn.style.display = 'none';
+
+    // actualizar hidden input
+    const input = document.getElementById('remove_images');
+    let removed = input.value ? input.value.split(',') : [];
+
+    removed.push(imageId);
+    input.value = removed.join(',');
 }
 
 // LÓGICA PARA SINCRONIZAR SWITCH DE PUBLICACIÓN
@@ -1153,38 +1170,78 @@ document.addEventListener("input", (e) => {
     }
 });
 
-/*
-function updateReceiptPreview() {
+// Script de no editar campos con status de publicado
+document.addEventListener('DOMContentLoaded', () => {
 
-    const type = receiptType.value;
-    let html = `<strong>Tipo:</strong> ${type.toUpperCase()}<br>`;
+    const STATUS = @json($ad->status);
 
-    if (type === "boleta") {
-        html += `
-            <strong>DNI:</strong> ${document.querySelector("[name='dni']").value || "-"}<br>
-            <strong>Cliente:</strong> ${document.getElementById("boleta_full_name").value || "-"}<br>
-        `;
+    /* =========================
+       SI ESTÁ PUBLICADO
+       ========================= */
+    if (STATUS === 'publicado') {
+
+        // CAMPOS QUE SÍ SE PUEDEN EDITAR
+        const editableFields = [
+            'district',
+            'province',
+            'department',
+            'contact_location',
+            'whatsapp',
+            'call_phone'
+        ];
+
+        document.querySelectorAll('input, select, textarea, button').forEach(el => {
+
+            // permitir submit y tokens
+            if (el.type === 'submit') return;
+            if (['_token', '_method', 'return_to'].includes(el.name)) return;
+
+            // si está en la whitelist → permitir
+            if (editableFields.includes(el.name)) {
+                el.disabled = false;
+                return;
+            }
+
+            // todo lo demás bloqueado
+            el.disabled = true;
+            el.classList.add('disabled');
+        });
+
+        // IMÁGENES BLOQUEADAS
+        document.getElementById('newImagesInput')?.setAttribute('disabled', true);
+
+        document.querySelectorAll('.delete-img-btn').forEach(btn => {
+            btn.style.display = 'none';
+        });
+
+        return;
     }
 
-    if (type === "factura") {
-        html += `
-            <strong>RUC:</strong> ${document.querySelector("[name='ruc']").value || "-"}<br>
-            <strong>Razón Social:</strong> ${document.querySelector("[name='company_name']").value || "-"}<br>
-            <strong>Dirección:</strong> ${document.querySelector("[name='address']").value || "-"}<br>
-        `;
+    /* =========================
+       SI ESTÁ PENDIENTE
+       ========================= */
+    if (STATUS === 'pendiente') {
+
+        document.getElementById('categorySelect')?.setAttribute('disabled', true);
+        document.getElementById('subcategorySelect')?.setAttribute('disabled', true);
+        document.getElementById('days_active')?.setAttribute('disabled', true);
+
+        [
+            'urgent_publication',
+            'featured_publication',
+            'premiere_publication_switch',
+            'semi_new_publication',
+            'new_publication',
+            'available_publication',
+            'top_publication'
+        ].forEach(id => {
+            document.getElementById(id)?.setAttribute('disabled', true);
+        });
+
+        // imágenes SÍ permitidas en pendiente
     }
 
-    if (type === "nota_venta") {
-        html += `
-            <strong>Cliente:</strong> ${document.getElementById("nota_full_name").value || "-"}<br>
-        `;
-    }
-
-    html += `<small class="text-muted">Este comprobante ya fue generado.</small>`;
-
-    receiptPreview.innerHTML = html;
-}*/
-
+});
 </script>
 
 @if (session('success'))

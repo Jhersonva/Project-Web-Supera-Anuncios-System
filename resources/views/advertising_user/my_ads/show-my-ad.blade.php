@@ -286,7 +286,7 @@
                 Monto / Precio / Sueldo:<br>
 
                 @if($ad->amount_visible == 1)
-                    {{ $currencySymbol }} {{ number_format($ad->amount, 2) }}
+                    {{ $currencySymbol }} {{ number_format($ad->amount, 0) }}
                 @elseif(!empty($ad->amount_text))
                     {{ $currencySymbol }} {{ $ad->amount_text }}
                 @else

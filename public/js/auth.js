@@ -10,7 +10,6 @@ document.querySelectorAll(".toggle-pass").forEach(btn => {
     });
 });
 
-
 /* LOGIN */
 const loginForm = document.getElementById("loginForm");
 
@@ -22,35 +21,33 @@ if (loginForm) {
         const password = document.getElementById("loginPass").value;
         const errorBox = document.getElementById("loginError");
 
-        const res = await fetch("/auth/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
-                "Accept": "application/json"
-            },
-            body: JSON.stringify({ email, password })
-        });
+        errorBox.classList.add("d-none");
 
-        const data = await res.json();
+        try {
+            const res = await fetch("/auth/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify({ email, password })
+            });
 
-        if (!res.ok) {
+            const data = await res.json();
+
+            if (!res.ok) {
+                errorBox.classList.remove("d-none");
+                errorBox.textContent = data.message || "Error al iniciar sesión";
+                return;
+            }
+
+            // UNA SOLA REDIRECCIÓN
+            window.location.href = data.redirect;
+
+        } catch (err) {
             errorBox.classList.remove("d-none");
-            errorBox.textContent = data.message;
-            return;
+            errorBox.textContent = "Error de conexión con el servidor";
         }
-
-        if (data.showPrivacy) {
-            sessionStorage.setItem('showPrivacy', '1');
-        }
-
-        const redirectUrl =
-            sessionStorage.getItem('redirect_after_login') || data.redirect;
-
-        // limpiar para no reutilizar
-        sessionStorage.removeItem('redirect_after_login');
-
-        window.location.href = redirectUrl;
-
     });
 }

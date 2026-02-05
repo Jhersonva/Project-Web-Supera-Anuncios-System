@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use App\Models\SystemSetting;
 use App\Models\PrivacyPolicySetting;
 use App\Models\User;
+use App\Models\Advertisement;
 use Carbon\Carbon;
 
 class AppServiceProvider extends ServiceProvider
@@ -38,6 +39,16 @@ class AppServiceProvider extends ServiceProvider
             }
 
             $view->with('birthdays', $birthdays);
+
+            $pendingAdsCount = Advertisement::where('status', 'pendiente')
+                ->where(function ($q) {
+                    $q->whereNull('expires_at')
+                    ->orWhere('expires_at', '>=', now());
+                })
+                ->count();
+
+            $view->with('pendingAdsCount', $pendingAdsCount);
+
         });
     }
 }

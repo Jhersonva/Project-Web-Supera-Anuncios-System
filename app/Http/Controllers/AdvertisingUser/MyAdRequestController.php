@@ -13,6 +13,8 @@ use App\Models\Setting;
 use App\Models\Alert;
 use App\Models\AdSubcategoryImage;
 use App\Models\AdultContentPublishTerm;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use App\Support\AdPrices;
@@ -171,7 +173,7 @@ class MyAdRequestController extends Controller
             'department'      => 'required|string|max:255',
             'province'        => 'required|string|max:255',
             'district'        => 'required|string|max:255',
-            'contact_location'=> 'required|string|max:255',
+            'contact_location'=> 'nullable|string|max:255',
 
             'whatsapp'        => 'required|string|max:9',
             'call_phone'      => 'required|string|max:9',
@@ -184,7 +186,7 @@ class MyAdRequestController extends Controller
 
             // IMÁGENES OBLIGATORIAS
             'images'          => 'required|array|min:1|max:5',
-            'images.*'        => 'image|mimes:jpg,jpeg,png,webp|max:4096',
+            'images.*'        => 'image|mimes:jpg,jpeg,png,webp|max:8192',
 
             // CAMPOS DINÁMICOS (OBLIGATORIOS)
             'dynamic'         => 'nullable|array',
@@ -426,7 +428,7 @@ class MyAdRequestController extends Controller
             $pdf = Pdf::loadView('public.pdf.receipt', [
                 'ad' => $ad,
                 'user' => $user,
-                'finalPrice' => $finalPrice
+                'finalPrice' => $finalPrice,
             ]);
 
             file_put_contents($receiptPath, $pdf->output());
@@ -435,7 +437,6 @@ class MyAdRequestController extends Controller
                 'receipt_file' => "proof_payment/{$receiptFile}"
             ]);
         }
-
 
         // CAMPOS DINÁMICOS
         if ($request->has('dynamic')) {
@@ -457,15 +458,19 @@ class MyAdRequestController extends Controller
             $path = public_path('images/advertisementss');
             if (!file_exists($path)) mkdir($path, 0777, true);
 
+            $manager = new ImageManager(new Driver());
+
             foreach ($request->file('images') as $index => $file) {
 
-                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $file->move($path, $filename);
+                $filename = time().'_'.uniqid().'.webp';
+
+                $image = $manager->read($file);
+                $image->toWebp(85)->save($path.'/'.$filename);
 
                 AdvertisementImage::create([
                     'advertisementss_id' => $ad->id,
-                    'image' => 'images/advertisementss/' . $filename,
-                    'is_main' => $index == 0
+                    'image' => 'images/advertisementss/'.$filename,
+                    'is_main' => $index === 0
                 ]);
             }
         }
@@ -565,7 +570,7 @@ class MyAdRequestController extends Controller
                 'days_active'     => 'required|integer|min:2',
 
                 'images'          => 'nullable|array|max:5',
-                'images.*'        => 'image|mimes:jpg,jpeg,png,webp|max:4096',
+                'images.*'        => 'image|mimes:jpg,jpeg,png,webp|max:8192',
 
                 'dynamic'         => 'nullable|array',
             ]);
@@ -755,7 +760,8 @@ class MyAdRequestController extends Controller
 
             if ($request->filled('remove_images')) {
 
-                $idsToRemove = json_decode($request->remove_images, true);
+                $idsToRemove = explode(',', $request->remove_images);
+
 
                 if (is_array($idsToRemove)) {
 
@@ -772,14 +778,15 @@ class MyAdRequestController extends Controller
                 }
             }
 
-            
-            // SUBIR NUEVAS IMÁGENES (SIN BORRAR LAS EXISTENTES)
+            // SUBIR NUEVAS IMÁGENES (CONVERSIÓN A WEBP) SUBIR NUEVAS IMÁGENES (SIN BORRAR LAS EXISTENTES)
             if ($request->hasFile('images')) {
 
                 $path = public_path('images/advertisementss');
                 if (!file_exists($path)) {
                     mkdir($path, 0777, true);
                 }
+
+                $manager = new ImageManager(new Driver());
 
                 // contar cuántas imágenes quedan
                 $currentCount = AdvertisementImage::where('advertisementss_id', $ad->id)->count();
@@ -788,8 +795,10 @@ class MyAdRequestController extends Controller
 
                     if ($currentCount >= 5) break;
 
-                    $filename = time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
-                    $file->move($path, $filename);
+                    $filename = time().'_'.uniqid().'.webp';
+
+                    $image = $manager->read($file);
+                    $image->toWebp(85)->save($path.'/'.$filename);
 
                     AdvertisementImage::create([
                         'advertisementss_id' => $ad->id,
@@ -926,7 +935,7 @@ class MyAdRequestController extends Controller
             'amount' => 'required_if:amount_visible,1|nullable|numeric|min:0',
             'remove_images' => 'nullable|string',
             'images'        => 'nullable|array|max:5',
-            'images.*'      => 'image|mimes:jpg,jpeg,png,webp|max:4096',
+            'images.*'      => 'image|mimes:jpg,jpeg,png,webp|max:8192',
         ]);
 
         $user = auth()->user();
