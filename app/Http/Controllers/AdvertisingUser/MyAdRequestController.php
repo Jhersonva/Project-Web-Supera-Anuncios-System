@@ -185,8 +185,9 @@ class MyAdRequestController extends Controller
             'days_active'     => 'required|integer|min:2',
 
             // IMÁGENES OBLIGATORIAS
-            'images'          => 'required|array|min:1|max:5',
-            'images.*'        => 'image|mimes:jpg,jpeg,png,webp|max:8192',
+            'images'   => 'nullable|array|max:5',
+            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:8192',
+            'crop_data' => 'nullable|string',
 
             // CAMPOS DINÁMICOS (OBLIGATORIOS)
             'dynamic'         => 'nullable|array',
@@ -452,24 +453,38 @@ class MyAdRequestController extends Controller
             }
         }
 
-        // IMÁGENES
         if ($request->hasFile('images')) {
 
-            $path = public_path('images/advertisementss');
-            if (!file_exists($path)) mkdir($path, 0777, true);
-
-            $manager = new ImageManager(new Driver());
+            $cropData = json_decode($request->crop_data, true) ?? [];
 
             foreach ($request->file('images') as $index => $file) {
 
-                $filename = time().'_'.uniqid().'.webp';
+                if (!$file->isValid()) continue;
 
+                $filename = time().'_'.uniqid().'.webp';
+                $path = public_path('images/advertisementss/'.$filename);
+
+                $manager = new ImageManager(new Driver());
                 $image = $manager->read($file);
-                $image->toWebp(85)->save($path.'/'.$filename);
+
+                if (!empty($cropData[$index]['cropData'])) {
+
+                    $crop = $cropData[$index]['cropData'];
+
+                    $image->crop(
+                        (int) $crop['width'],
+                        (int) $crop['height'],
+                        (int) $crop['x'],
+                        (int) $crop['y']
+                    );
+                }
+
+                $image->toWebp(85)->save($path);
 
                 AdvertisementImage::create([
                     'advertisementss_id' => $ad->id,
                     'image' => 'images/advertisementss/'.$filename,
+                    'crop_data' => $cropData[$index] ?? null,
                     'is_main' => $index === 0
                 ]);
             }

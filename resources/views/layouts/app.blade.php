@@ -190,7 +190,7 @@
     if (window.PROFILE_COMPLETE) return;
 
     const STORAGE_KEY = 'profile_alert_last_shown';
-    const MINUTES_DELAY = 1; // 🔥 TEST: cada 1 minuto
+    const MINUTES_DELAY = 1; // 
 
     const now = Date.now();
     const lastShown = localStorage.getItem(STORAGE_KEY);

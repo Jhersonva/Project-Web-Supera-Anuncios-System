@@ -700,18 +700,31 @@
                     </div>
                 @endif
 
-                <input type="hidden" name="remove_images" id="remove_images">
-
                 <!-- IMÁGENES -->
                 <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="imagesContainer">
 
-                    {{-- PREVIEW NUEVAS IMÁGENES --}}
+                    {{-- PREVIEW NUEVAS IMÁGENES 
                     <div id="newImagesPreview"
                         class="d-flex flex-wrap gap-2 mt-3">
-                    </div>
+                    </div>--}}
 
                     <label class="fw-semibold mb-2">Imágenes del anuncio</label>
                     <hr>
+
+                     <!-- PREVIEW + CROP 
+                    <div class="cropper-wrapper d-none" id="cropperBox">
+                        <img id="cropImagePreview">
+                    </div>-->
+
+                    <button
+                        type="button"
+                        class="btn btn-outline-primary mt-2"
+                        id="openCropperBtn"
+                        disabled
+                    >
+                        🖼️ Cuadrar imagen
+                    </button>
+
 
                     {{-- SUBIR NUEVAS IMÁGENES --}}
                     <label class="fw-semibold mt-3">Agregar o reemplazar imágenes</label>
@@ -722,7 +735,15 @@
                         class="form-control"
                         accept="image/*"
                         multiple
-                        {{ isset($ad) && $ad->images->count() ? '' : 'required' }}>
+                        >
+                    
+                    <!-- DATA DE CROP -->
+                    <input type="hidden" name="crop_data" id="crop_data">
+
+                    <!-- PREVIEW MINI -->
+                    <div id="newImagesPreview"
+                        class="d-flex flex-wrap gap-2 mt-3">
+                    </div>
 
                     <small class="text-muted d-block">
                         Máximo 5 imágenes. Si subes nuevas, se agregarán al anuncio.
@@ -891,7 +912,8 @@
 
 <!--Modal Elegir de la Galeria de Imagenes-->
 <div class="modal fade" id="modalSubcategoryImages" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
+
         <div class="modal-content">
 
             <div class="modal-header">
@@ -920,6 +942,38 @@
     </div>
 </div>
 
+<!-- MODAL CROPPER -->
+<div class="modal fade" id="cropperModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Ajustar imagen</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <div class="d-flex gap-2 mb-3 flex-wrap" id="thumbsContainer"></div>
+
+        <div class="cropper-wrapper">
+          <img id="cropImagePreview">
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancelar
+        </button>
+        <button class="btn btn-primary" id="confirmCrop">
+          Confirmar
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
@@ -969,8 +1023,346 @@ window.ALERTS = @json($alertsPrepared);
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.css">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 
 <script>
+let cropper = null;
+let cropData = [];
+let files = [];
+let imagesState = [];
+let currentIndex = null;
+let previewRenderVersion = 0;
+let MAX_IMAGES = 5;
+
+const modalEl = document.getElementById('cropperModal');
+const modal = new bootstrap.Modal(modalEl);
+
+const fileInput = document.getElementById('ownImagesInput');
+const openCropperBtn = document.getElementById('openCropperBtn');
+const cropImg = document.getElementById('cropImagePreview');
+
+function getActiveImagesCount() {
+    return imagesState.filter(img => !img.deleted).length;
+}
+
+
+function syncFileInputFromState() {
+
+    const dataTransfer = new DataTransfer();
+
+    imagesState
+        .filter(img => !img.deleted)
+        .forEach(img => dataTransfer.items.add(img.file));
+
+    fileInput.files = dataTransfer.files;
+}
+
+/* cargar imágenes */
+fileInput.addEventListener('change', e => {
+
+    const incomingFiles = Array.from(e.target.files);
+    const activeCount   = getActiveImagesCount();
+    const remaining     = MAX_IMAGES - activeCount;
+
+    if (remaining <= 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Límite alcanzado',
+            text: `Solo puedes subir ${MAX_IMAGES} imagen${MAX_IMAGES > 1 ? 'es' : ''}`
+        });
+
+        //fileInput.value = '';
+        return;
+    }
+
+    let filesToAdd = incomingFiles.slice(0, remaining);
+
+    if (incomingFiles.length > remaining) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Demasiadas imágenes',
+            text: `Solo se agregarán ${remaining} imagen${remaining > 1 ? 'es' : ''}`
+        });
+    }
+
+    filesToAdd.forEach(file => {
+        imagesState.push({
+            file,
+            cropData: null,
+            canvasData: null,
+            cropBoxData: null,
+            deleted: false
+        });
+    });
+
+    renderNewImagesPreview();
+    syncFileInputFromState();
+    updateCropperButtonState();
+    updatePreview();
+
+    //fileInput.value = '';
+});
+
+function renderNewImagesPreview() {
+
+    previewContainer.innerHTML = '';
+    previewRenderVersion++;
+    const currentVersion = previewRenderVersion;
+
+    imagesState.forEach((img, index) => {
+
+        if (img.deleted) return;
+
+        const reader = new FileReader();
+
+        reader.onload = e => {
+
+            // render viejo → ignorar
+            if (currentVersion !== previewRenderVersion) return;
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'position-relative';
+            wrapper.style.width = '120px';
+            wrapper.style.height = '120px';
+
+            const image = document.createElement('img');
+            image.src = e.target.result;
+            image.className = 'rounded border';
+            image.style.width = '100%';
+            image.style.height = '100%';
+            image.style.objectFit = 'cover';
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.innerHTML = '×';
+            btn.className = 'btn btn-danger btn-sm position-absolute top-0 end-0';
+            btn.style.transform = 'translate(40%, -40%)';
+
+            btn.onclick = () => {
+                img.deleted = true;
+                renderNewImagesPreview();
+                syncFileInputFromState();
+                updateCropperButtonState();
+                updatePreview();
+            };
+
+            wrapper.appendChild(image);
+            wrapper.appendChild(btn);
+            previewContainer.appendChild(wrapper);
+        };
+
+        reader.readAsDataURL(img.file);
+    });
+}
+
+/* abrir modal */
+openCropperBtn.addEventListener('click', () => {
+
+    const thumbs = document.getElementById('thumbsContainer');
+    thumbs.innerHTML = '';
+
+    imagesState.forEach((img, index) => {
+        if (img.deleted) return;
+
+        const reader = new FileReader();
+        reader.onload = e => {
+            const thumb = document.createElement('img');
+            thumb.src = e.target.result;
+            thumb.className = 'crop-thumb';
+            thumb.onclick = () => {
+                saveCurrentCrop();  
+                loadImage(index);   
+            };
+            thumbs.appendChild(thumb);
+        };
+        reader.readAsDataURL(img.file);
+    });
+
+    // CLAVE
+    currentIndex = imagesState.findIndex(img => !img.deleted);
+
+    modal.show();
+});
+
+modalEl.addEventListener('shown.bs.modal', () => {
+    loadImage(currentIndex);
+});
+
+modalEl.addEventListener('hide.bs.modal', () => {
+    saveCurrentCrop();
+});
+
+let lastLoadedIndex = null;
+
+/* cargar imagen en cropper */
+function loadImage(index) {
+    currentIndex = index;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        cropImg.src = reader.result;
+
+        cropImg.addEventListener('cropend', saveCurrentCrop);
+        cropImg.addEventListener('zoom', saveCurrentCrop);
+        cropImg.addEventListener('move', saveCurrentCrop);
+
+        if (cropper) cropper.destroy();
+
+        cropper = new Cropper(cropImg, {
+            aspectRatio: 4 / 3,
+            viewMode: 1, 
+            dragMode: 'move',    
+
+            autoCrop: true,
+            autoCropArea: 0.85,
+
+            background: true,
+            modal: true,          
+            highlight: true,      
+
+            cropBoxMovable: false,
+            cropBoxResizable: false,
+
+            guides: false,
+            center: false,
+
+            zoomable: true,
+            movable: true,
+
+            ready() {
+                const instance = this.cropper;
+                const container = instance.getContainerData();
+                const imageData = instance.getImageData();
+                const saved = imagesState[index];
+
+                instance.setDragMode('move');
+
+                // VALIDAR IMAGEN MUY PEQUEÑA
+                if (imageData.naturalWidth < 600 || imageData.naturalHeight < 400) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Imagen muy pequeña',
+                        text: 'La imagen debe tener al menos 600 × 400 px'
+                    });
+
+                    // cerrar modal y limpiar cropper
+                    instance.destroy();
+                    cropper = null;
+                    modal.hide();
+                    return;
+                }
+
+                //  SI YA EXISTE ESTADO → RESTAURAR Y SALIR
+                if (saved.canvasData && saved.cropBoxData) {
+                    instance.setCanvasData(saved.canvasData);
+                    instance.setCropBoxData(saved.cropBoxData);
+                    return;
+                }
+
+                // SOLO PRIMERA VEZ
+                const isVertical = imageData.naturalHeight > imageData.naturalWidth;
+
+                let scale = Math.min(
+                    container.width / imageData.naturalWidth,
+                    container.height / imageData.naturalHeight
+                ) * 0.85;
+
+                if (isVertical) scale *= 0.85;
+
+                instance.setCanvasData({
+                    width: imageData.naturalWidth * scale,
+                    height: imageData.naturalHeight * scale,
+                    left: (container.width - imageData.naturalWidth * scale) / 2,
+                    top: (container.height - imageData.naturalHeight * scale) / 2,
+                });
+
+                const cropWidth  = container.width * 0.96;
+                const cropHeight = container.height * 0.96;
+
+                instance.setCropBoxData({
+                    width: cropWidth,
+                    height: cropHeight,
+                    left: (container.width - cropWidth) / 2,
+                    top: (container.height - cropHeight) / 2,
+                });
+            }
+
+        });
+
+        function bindCropperEvents() {
+            cropImg.addEventListener('cropend', saveCurrentCrop);
+            cropImg.addEventListener('zoom', saveCurrentCrop);
+            cropImg.addEventListener('move', saveCurrentCrop);
+        }
+
+        /*
+        cropImg.addEventListener('mousedown', () => {
+            if (cropper) {
+                cropper.setDragMode('move');
+                bindCropperEvents();
+
+            }
+        });*/
+
+    };
+
+    reader.readAsDataURL(imagesState[index].file);
+}
+
+function saveCurrentCrop() {
+    if (!cropper || currentIndex === null) return;
+
+    imagesState[currentIndex].canvasData  = cropper.getCanvasData();
+    imagesState[currentIndex].cropBoxData = cropper.getCropBoxData();
+}
+
+/* confirmar encuadre */
+document.getElementById('confirmCrop').addEventListener('click', () => {
+    if (currentIndex === null) return;
+
+    imagesState[currentIndex].cropData = cropper.getData(true);
+
+    Swal.fire({
+        icon: 'success',
+        title: 'Imagen ajustada',
+        timer: 900,
+        showConfirmButton: false
+    });
+});
+
+function updateCropperButtonState() {
+    const activeImages = imagesState.filter(img => !img.deleted).length;
+    openCropperBtn.disabled = activeImages === 0;
+}
+
+document.getElementById('adForm').addEventListener('submit', function (e) {
+
+    const existingImages = document.querySelectorAll(
+        '#existingImagesWrapper .image-wrapper:not(.removed)'
+    ).length;
+
+    const newImages = imagesState.filter(img => !img.deleted).length;
+
+    const totalImages = existingImages + newImages;
+
+    if (totalImages === 0) {
+        e.preventDefault();
+
+        Swal.fire({
+            icon: 'warning',
+            title: 'Imagen requerida',
+            text: 'Debes subir al menos una imagen para publicar el anuncio'
+        });
+
+        return false;
+    }
+
+});
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -1156,23 +1548,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const form = document.getElementById('adForm');
 
-    form.addEventListener('submit', function (e) {
+    if (!form) return;
 
-        // obtener el total REAL desde el resumen
-        const totalText = document
-            .getElementById('summaryTotalCost')
-            ?.textContent
-            ?.replace('S/.', '')
-            ?.trim();
+    form.addEventListener('submit', function(e) {
 
-        const finalPrice = parseFloat(totalText || 0);
+        // Guardar estado de todas las imágenes abiertas o no
+        imagesState.forEach((img, index) => {
+            if (!img.deleted && cropper && index === currentIndex) {
+                img.cropData = cropper.getData(true);
+                img.canvasData = cropper.getCanvasData();
+                img.cropBoxData = cropper.getCropBoxData();
+            }
+        });
 
-        // SI NO PASA LA VALIDACIÓN → BLOQUEAMOS SUBMIT
-        if (!checkBalanceBeforeSubmit(finalPrice)) {
-            e.preventDefault();
-            return false;
-        }
+        // Solo enviar imágenes con cropData
+        const cleanCropData = imagesState
+            .filter(img => !img.deleted)
+            .map(img => ({
+                cropData: img.cropData,
+                canvasData: img.canvasData,
+                cropBoxData: img.cropBoxData
+            }));
+
+        document.getElementById('crop_data').value = JSON.stringify(cleanCropData);
+
+        syncFileInputFromState();
     });
+
 });
 
 function checkBalanceBeforeSubmit(finalPrice) {
@@ -1414,7 +1816,6 @@ function showAdultServicesAlert() {
     });
 }
 
-let MAX_IMAGES = 5;
 let isEmpleosCategory = false;
 let previewCarouselIndex = 0;
 let previewCarouselTimer = null;
@@ -1520,8 +1921,8 @@ function getCurrencySymbol(currency) {
 // CREA LA CARD DE PREVISUALIZACIÓN
 function createAdCard(ad) {
 
-    const img = ad.images.length > 0
-        ? ad.images[previewCarouselIndex]?.image || ad.images[0].image
+    const img = ad.images.length
+        ? ad.images[0].image
         : "/assets/img/not-found-image/failed-image.jpg";
 
     return `
@@ -1637,6 +2038,11 @@ function createAdCard(ad) {
     `;
 }
 
+function getPreviewImagesFromState() {
+    return imagesState
+        .filter(img => !img.deleted)
+        .map(img => URL.createObjectURL(img.file));
+}
 
 //PREVIEW DEL ANUNCIO
 function updatePreview() {
@@ -1672,7 +2078,7 @@ function updatePreview() {
 
         images: [
             ...referenceImages.map(img => ({ image: img })),
-            ...previewImages.map(img => ({ image: img }))
+            ...getPreviewImagesFromState().map(img => ({ image: img }))
         ],
 
         whatsapp: "{{ auth()->user()->whatsapp ?? '' }}",
@@ -1819,92 +2225,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let tempSelectedImages = [];
     const imageInput = document.getElementById('ownImagesInput');
     let MAX_IMAGES = 5;
-    let selectedFiles = [];
-
-    imageInput.addEventListener('change', function (e) {
-
-        let newFiles = Array.from(e.target.files);
-
-        // Cuántas imágenes aún puedo agregar
-        const remainingSlots = MAX_IMAGES - selectedFiles.length;
-
-        if (remainingSlots <= 0) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Límite de imágenes',
-                text: `Solo se permiten máximo ${MAX_IMAGES} imágenes.`,
-                confirmButtonText: 'Entendido'
-            });
-            imageInput.value = '';
-            return;
-        }
-
-        // Si el usuario seleccionó más de las permitidas
-        if (newFiles.length > remainingSlots) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Límite de imágenes',
-                text: `Solo se cargarán las primeras ${remainingSlots} imágenes.`,
-                confirmButtonText: 'Entendido'
-            });
-
-            // Cortamos el array a las permitidas
-            newFiles = newFiles.slice(0, remainingSlots);
-        }
-
-        // Agregar y renderizar
-        newFiles.forEach(file => {
-            selectedFiles.push(file);
-            renderImagePreview(file);
-        });
-
-        syncFileInput();
-    });
-
-    function renderImagePreview(file) {
-
-        const reader = new FileReader();
-
-        reader.onload = function (e) {
-
-            const wrapper = document.createElement('div');
-            wrapper.className = 'position-relative';
-            wrapper.style.width = '120px';
-            wrapper.style.height = '120px';
-
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            img.className = 'rounded border';
-            img.style.width = '100%';
-            img.style.height = '100%';
-            img.style.objectFit = 'cover';
-
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.innerHTML = '×';
-            btn.className = 'btn btn-danger btn-sm position-absolute top-0 end-0';
-            btn.style.transform = 'translate(40%, -40%)';
-
-            btn.onclick = () => {
-                selectedFiles = selectedFiles.filter(f => f !== file);
-                wrapper.remove();
-                syncFileInput();
-            };
-
-            wrapper.appendChild(img);
-            wrapper.appendChild(btn);
-            previewContainer.appendChild(wrapper);
-        };
-
-        reader.readAsDataURL(file);
-    }
-
-    function syncFileInput() {
-        const dataTransfer = new DataTransfer();
-        selectedFiles.forEach(file => dataTransfer.items.add(file));
-        imageInput.files = dataTransfer.files;
-    }
-
 
     const modal = new bootstrap.Modal(
         document.getElementById('modalSubcategoryImages')
@@ -1953,32 +2273,6 @@ document.addEventListener("DOMContentLoaded", () => {
         updatePreview();
     });
 
-
-    // RESET IMÁGENES
-    function resetImages() {
-
-        if (previewContainer) previewContainer.innerHTML = '';
-        selectedFiles = [];
-
-        if (imagesGrid) imagesGrid.innerHTML = '';
-        if (selectedInput) selectedInput.value = '';
-
-        previewBox?.classList.add('d-none');
-        imagesContainer?.classList.add('d-none');
-
-        tempSelectedImages = [];
-        selectedFiles = []; 
-
-        imageInput.value = '';
-
-        if (previewList) previewList.innerHTML = '';
-
-        referenceImages = [];
-
-        updatePreview();
-    }
-
-
     // RESET TAGS
     function resetTags() {
         Object.values(tagMap).forEach(tag => {
@@ -2016,7 +2310,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const selectedText = this.options[this.selectedIndex]?.textContent;
 
         isEmpleosCategory = selectedText === 'Empleos';
-        MAX_IMAGES = isEmpleosCategory ? 1 : 5;
+        //MAX_IMAGES = isEmpleosCategory ? 1 : 5;
 
         // Ajustar input de imágenes propias
         const ownImagesInput = document.getElementById('ownImagesInput');
@@ -2036,7 +2330,7 @@ document.addEventListener("DOMContentLoaded", () => {
         subcatContainer.classList.add('d-none');
 
         resetTags();
-        resetImages();
+        //resetImages();
 
         if (!categoryId) return;
 
@@ -2056,7 +2350,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 subcatSelect.onchange = function () {
 
                     resetTags();
-                    resetImages();
+                    //resetImages();
 
                     const categoryId = categorySelect.value;
                     const subId = this.value;
@@ -2745,6 +3039,58 @@ function updateReceiptPreview() {
 </script>
 
 <style>
+    /* CONTENEDOR DEL CROPPER */
+    .cropper-wrapper {
+        width: 100%;
+        height: 65vh;           
+        background: #2b2b2b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* IMAGEN */
+    .cropper-wrapper img {
+        max-width: 100%;
+        max-height: 100%;
+        display: block;
+    }
+
+    /* THUMBS */
+    .crop-thumb {
+        width: 70px;
+        height: 70px;
+        object-fit: cover;
+        cursor: pointer;
+        border-radius: 6px;
+        border: 2px solid #ddd;
+    }
+
+    .crop-thumb:hover {
+        border-color: #0d6efd;
+    }
+
+    /* MOBILE */
+    @media (max-width: 576px) {
+
+        .modal-body {
+            padding: 0.5rem;
+        }
+
+        .cropper-wrapper {
+            height: 78vh;    
+        }
+
+        #thumbsContainer {
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .crop-thumb {
+            width: 56px;
+            height: 56px;
+        }
+    }
 
     /*Estilo de bloqueo de input con estado draft*/
     .input-draft {

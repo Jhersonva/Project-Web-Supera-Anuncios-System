@@ -9,7 +9,12 @@ class AdvertisementImage extends Model
     protected $fillable = [
         'advertisementss_id',
         'image',
-        'is_main'
+        'is_main',
+        'crop_data'
+    ];
+
+    protected $casts = [
+        'crop_data' => 'array'
     ];
 
     public function advertisement()
