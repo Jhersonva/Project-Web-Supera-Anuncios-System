@@ -21,9 +21,11 @@
     .main-img{
         width: 100%;
         height: 320px;
-        object-fit: contain;      
-        background: #f5f5f5;     
+        object-fit: contain !important;
+        object-position: center center !important;
+        background: #f5f5f5;
         border-radius: 12px;
+        max-height: none !important;
     }
 
     .thumb-img{
@@ -75,8 +77,23 @@
 
     {{-- GALERÍA DE IMÁGENES --}}
     <div class="mb-4">
-        <img id="mainImage" class="main-img" 
-             src="{{ asset($ad->mainImage->image ?? 'images/noimage.jpg') }}">
+        <div class="main-image-wrapper">
+            <img id="mainImage"
+                class="main-img"
+                src="{{ asset($ad->mainImage->image ?? 'images/noimage.jpg') }}">
+        </div>
+
+        <style>
+            .main-image-wrapper{
+    width: 100%;
+    height: 320px;
+    overflow: visible; /* CLAVE */
+    background: #f5f5f5;
+    border-radius: 12px;
+}
+
+        </style>
+
 
         <div class="d-flex gap-2 mt-3 flex-wrap">
             @foreach ($ad->images as $img)

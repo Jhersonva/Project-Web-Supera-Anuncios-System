@@ -442,17 +442,24 @@ function renderAds(data) {
 function initAdCarousels() {
 
     document.querySelectorAll('.carousel-container').forEach(container => {
+
         if (container.dataset.started === '1') return;
-        const images = container.dataset.images.split('|');
-        if (images.length <= 1) return;
         container.dataset.started = '1';
 
-        let index = 0;
+        const images = JSON.parse(container.dataset.images);
+        const crops  = JSON.parse(container.dataset.crops);
+
+        if (images.length <= 1) return;
+
         const img = container.querySelector('.carousel-image');
+        let index = 0;
+
+        applyCrop(img, crops[0]);
 
         setInterval(() => {
             index = (index + 1) % images.length;
             img.src = images[index];
+            applyCrop(img, crops[index]);
         }, 3000);
     });
 }
@@ -514,10 +521,35 @@ function formatAmount(amount) {
     });
 }
 
+function applyCrop(img, crop) {
+    if (!crop || !crop.width || !crop.height) {
+        // Imagen normal
+        img.style.transform = '';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        return;
+    }
+
+    const boxHeight = 230;
+    const scale = boxHeight / crop.height;
+
+    img.style.width = 'auto';
+    img.style.height = 'auto';
+    img.style.objectFit = 'unset';
+
+    img.style.transform = `
+        scale(${scale})
+        translate(-${crop.x}px, -${crop.y}px)
+    `;
+}
+
 function createAdCard(ad){
     const images = ad.images.length
         ? ad.images.map(i => '/' + i.image)
         : ['assets/img/not-found-image/failed-image.jpg'];
+
+    const crops = ad.images.map(i => i.crop_data ?? null);
 
     const subcategory = ad.subcategory?.name ?? "Sin subcategoría";
 
@@ -542,10 +574,14 @@ function createAdCard(ad){
 
             <div class="position-relative">
 
-                <div class="carousel-container"
-                    data-images="${images.join('|')}">
-                    <img src="${images[0]}" class="w-100 home-card-img carousel-image">
+                <div class="carousel-container card-crop-box"
+                    data-images='${JSON.stringify(images)}'
+                    data-crops='${JSON.stringify(crops)}'>
+
+                    <img src="${images[0]}" class="carousel-image">
                 </div>
+
+
 
                 ${ad.top_publication == 1 ? `<div class="badge-top">TOP</div>`
                     : ad.urgent_publication

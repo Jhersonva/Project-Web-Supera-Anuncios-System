@@ -81,11 +81,36 @@
                             <td width="80">
                                 @php
                                     $image = $ad->images->first();
+                                    $crop = $image?->crop_data;
+
+                                    $thumbSize = 70;
+
+                                    if ($crop && isset($crop['width'])) {
+                                        $scale = $thumbSize / $crop['width'];
+                                    } else {
+                                        $scale = 1;
+                                    }
                                 @endphp
 
-                                <img src="{{ asset($image->image ?? 'assets/img/not-found-image/failed-image.jpg') }}"
-                                    class="rounded"
-                                    width="70">
+                                @if($image)
+                                    <div class="img-crop-box">
+                                        <img
+                                            src="{{ asset($image->image) }}"
+                                            style="
+                                                transform:
+                                                    scale({{ $scale }})
+                                                    translate(
+                                                        -{{ $crop['x'] ?? 0 }}px,
+                                                        -{{ $crop['y'] ?? 0 }}px
+                                                    );
+                                            "
+                                        >
+                                    </div>
+                                @else
+                                    <div class="img-crop-box">
+                                        <img src="{{ asset('assets/img/not-found-image/failed-image.jpg') }}">
+                                    </div>
+                                @endif
                             </td>
 
                             <td class="fw-semibold">{{ $ad->title }}</td>
@@ -171,14 +196,39 @@
                     <div class="card-body">
 
                         {{-- Imagen --}}
-                        <div class="mb-3 text-center">
+                        <div class="mb-3 d-flex justify-content-center">
                             @php
                                 $image = $ad->images->first();
+                                $crop  = $image?->crop_data;
+
+                                $thumbSize = 90; // un poco más grande en móvil
+
+                                if ($crop && isset($crop['width'])) {
+                                    $scale = $thumbSize / $crop['width'];
+                                } else {
+                                    $scale = 1;
+                                }
                             @endphp
 
-                            <img src="{{ asset($image->image ?? 'assets/img/not-found-image/failed-image.jpg') }}"
-                                class="rounded"
-                                width="90">
+                            @if($image)
+                                <div class="img-crop-box img-crop-box-mobile">
+                                    <img
+                                        src="{{ asset($image->image) }}"
+                                        style="
+                                            transform:
+                                                scale({{ $scale }})
+                                                translate(
+                                                    -{{ $crop['x'] ?? 0 }}px,
+                                                    -{{ $crop['y'] ?? 0 }}px
+                                                );
+                                        "
+                                    >
+                                </div>
+                            @else
+                                <div class="img-crop-box img-crop-box-mobile">
+                                    <img src="{{ asset('assets/img/not-found-image/failed-image.jpg') }}">
+                                </div>
+                            @endif
                         </div>
 
                         <h6 class="fw-bold">{{ $ad->title }}</h6>
@@ -350,6 +400,26 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
+.img-crop-box {
+    width: 70px;
+    height: 70px;
+    overflow: hidden;
+    position: relative;
+}
+
+.img-crop-box img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    max-width: none;
+    transform-origin: top left;
+}
+
+.img-crop-box-mobile {
+    width: 90px;
+    height: 90px;
+}
+
 @media (max-width: 768px) {
     .desktop-table { display: none !important; }
     .mobile-card { display: block !important; }

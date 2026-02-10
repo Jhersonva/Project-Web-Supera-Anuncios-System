@@ -467,24 +467,13 @@ class MyAdRequestController extends Controller
                 $manager = new ImageManager(new Driver());
                 $image = $manager->read($file);
 
-                if (!empty($cropData[$index]['cropData'])) {
-
-                    $crop = $cropData[$index]['cropData'];
-
-                    $image->crop(
-                        (int) $crop['width'],
-                        (int) $crop['height'],
-                        (int) $crop['x'],
-                        (int) $crop['y']
-                    );
-                }
-
+                // NO crop aquí
                 $image->toWebp(85)->save($path);
 
                 AdvertisementImage::create([
                     'advertisementss_id' => $ad->id,
                     'image' => 'images/advertisementss/'.$filename,
-                    'crop_data' => $cropData[$index] ?? null,
+                    'crop_data' => $cropData[$index]['cropData'] ?? null,
                     'is_main' => $index === 0
                 ]);
             }
@@ -942,6 +931,9 @@ class MyAdRequestController extends Controller
         if ($ad->user_id !== auth()->id()) abort(403);
         if ($ad->status !== 'draft') abort(403);
 
+        // Recibir crop_data enviado desde JS
+        $cropPayload = json_decode($request->input('crop_data', '[]'), true);
+
         $request->validate([
             'title' => 'required|string|max:70',
             'description' => 'required|string',
@@ -1187,6 +1179,30 @@ class MyAdRequestController extends Controller
                 ]);
 
                 $currentCount++;
+            }
+        }
+
+        foreach ($cropPayload as $imgCrop) {
+            if (!empty($imgCrop['id'])) {
+                $img = AdvertisementImage::find($imgCrop['id']);
+                if ($img && $img->advertisementss_id == $ad->id) {
+
+                    // 🔹 Log anterior
+                    Log::info("Crop antiguo imagen ID {$img->id}", [
+                        'existing_crop_data' => $img->crop_data
+                    ]);
+
+                    // 🔹 Log recibido
+                    Log::info("Crop recibido para actualizar imagen ID {$img->id}", [
+                        'new_crop_data' => $imgCrop['crop_data']
+                    ]);
+
+                    // Guardar las nuevas coordenadas
+                    $img->crop_data = json_encode($imgCrop['crop_data']);
+                    $img->save();
+                }
+            } else {
+                Log::warning("Crop recibido sin ID de imagen", ['payload' => $imgCrop]);
             }
         }
 
