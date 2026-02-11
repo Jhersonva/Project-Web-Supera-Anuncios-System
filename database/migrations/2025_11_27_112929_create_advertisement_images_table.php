@@ -10,9 +10,8 @@ return new class extends Migration
     {
         Schema::create('advertisement_images', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('advertisementss_id')
-                ->constrained('advertisementss')
-                ->onDelete('cascade');
+            $table->foreignId('advertisementss_id')->constrained('advertisementss')->onDelete('cascade');
+            $table->uuid('uid')->nullable(); // si quieres usar UUID para identificar imágenes en el frontend
             $table->string('image'); 
             $table->boolean('is_main')->default(false); 
             $table->json('crop_data')->nullable();

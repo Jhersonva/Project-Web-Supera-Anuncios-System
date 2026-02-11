@@ -674,11 +674,10 @@
     position: absolute;
     top: 0;
     left: 0;
-
     max-width: none;
     max-height: none;
-
     transform-origin: top left;
 }
+
 
 </style>

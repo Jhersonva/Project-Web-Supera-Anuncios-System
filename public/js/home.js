@@ -522,17 +522,34 @@ function formatAmount(amount) {
 }
 
 function applyCrop(img, crop) {
+
+    const container = img.closest('.card-crop-box');
+    const boxWidth  = container.offsetWidth;
+    const boxHeight = container.offsetHeight;
+
+    // Si no hay crop → mostrar imagen normal adaptada
     if (!crop || !crop.width || !crop.height) {
-        // Imagen normal
+
         img.style.transform = '';
         img.style.width = '100%';
         img.style.height = '100%';
         img.style.objectFit = 'cover';
+        img.style.top = '0';
+        img.style.left = '0';
+
         return;
     }
 
-    const boxHeight = 230;
-    const scale = boxHeight / crop.height;
+    /*
+        El crop fue creado en proporción 450/430
+        Entonces escalamos según el ancho del crop
+    */
+
+    const scaleX = boxWidth  / crop.width;
+    const scaleY = boxHeight / crop.height;
+
+    // usamos el mayor para cubrir completamente el box
+    const scale = Math.max(scaleX, scaleY);
 
     img.style.width = 'auto';
     img.style.height = 'auto';
@@ -542,6 +559,8 @@ function applyCrop(img, crop) {
         scale(${scale})
         translate(-${crop.x}px, -${crop.y}px)
     `;
+
+    img.style.transformOrigin = 'top left';
 }
 
 function createAdCard(ad){

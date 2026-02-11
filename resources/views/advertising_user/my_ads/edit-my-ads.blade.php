@@ -50,7 +50,7 @@
         $lockEdit = in_array($ad->status, ['publicado', 'pendiente']);
     @endphp
 
-    <form action="{{ route('my-ads.updateAd', $ad->id) }}" method="POST" enctype="multipart/form-data">
+    <form id="adForm" action="{{ route('my-ads.updateAd', $ad->id) }}" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="return_to" value="{{ url()->previous() }}">
         @csrf
 
@@ -564,37 +564,53 @@
 
             <label class="fw-semibold mb-2">Imágenes del anuncio</label>
 
-            @if($ad->images->count())
-                <div class="d-flex flex-wrap gap-2 mb-3">
+            <button
+                type="button"
+                class="btn btn-outline-primary mt-2 mb-3"
+                id="openCropperBtn"
+                disabled
+            >
+                🖼️ Cuadrar imagen
+            </button>
 
-                    @php
-                        $imagesCount = $ad->images->count();
-                    @endphp
+            <!-- IMÁGENES EXISTENTES -->
+            @if(isset($ad) && $ad->images->count())
+                <div class="d-flex flex-wrap gap-2 mb-3" id="existingImagesWrapper">
 
                     @foreach($ad->images as $image)
-                        <div class="position-relative image-wrapper">
+                        <div class="position-relative image-wrapper"
+                            data-image-id="{{ $image->id }}">
 
-                            <img
-                                src="{{ asset($image->image) }}"
-                                class="rounded border"
-                                style="width:120px;height:120px;object-fit:cover;"
-                            >
+                            @php
+                                $crop = is_array($image->crop_data) ? $image->crop_data : null;
+                            @endphp
+
+                            <div class="draft-crop-box">
+                                <img
+                                    src="{{ asset($image->image) }}"
+                                    @if($crop)
+                                        style="
+                                            transform:
+                                                scale({{ 120 / $crop['width'] }})
+                                                translate(-{{ $crop['x'] }}px, -{{ $crop['y'] }}px);
+                                        "
+                                    @else
+                                        style="width:100%;height:100%;object-fit:cover;"
+                                    @endif
+                                >
+                            </div>
 
                             @if($image->is_main)
                                 <span class="badge bg-primary position-absolute top-0 start-0">
-                                    Principal
+                                Principal
                                 </span>
                             @endif
 
-                            {{-- SOLO mostrar X si hay más de 1 imagen --}}
-                            @if($imagesCount > 1)
-                                <button
-                                    type="button"
-                                    class="delete-img-btn"
-                                    onclick="markImageForRemoval({{ $image->id }}, this)">
-                                    ×
-                                </button>
-                            @endif
+                            <button type="button"
+                                class="delete-img-btn"
+                                onclick="markImageForRemoval({{ $image->id }}, this)">
+                            ×
+                            </button>
 
                         </div>
                     @endforeach
@@ -612,7 +628,7 @@
             <input
                 type="file"
                 name="images[]"
-                id="newImagesInput"
+                id="ownImagesInput"
                 class="form-control"
                 accept="image/*"
                 multiple
@@ -623,6 +639,7 @@
             </small>
         </div>
 
+        <input type="hidden" name="crop_data" id="crop_data">
         <input type="hidden" name="remove_images" id="remove_images">
 
         {{-- COMPROBANTE DE PAGO --}}
@@ -686,7 +703,7 @@
         </div>
 
         <!-- BOTÓN -->
-        <button class="btn btn-danger w-100 py-2 fw-semibold mt-3" id="submitBtn">
+        <button type="button" class="btn btn-danger w-100 py-2 fw-semibold mt-3" id="submitBtn">
             Guardar Cambios
         </button>
 
@@ -694,9 +711,332 @@
 
 </div>
 
+<!-- MODAL CROPPER -->
+<div class="modal fade" id="cropperModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Ajustar imagen</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <div class="d-flex gap-2 mb-3 flex-wrap" id="thumbsContainer"></div>
+
+        <div class="cropper-wrapper">
+          <img id="cropImagePreview">
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancelar
+        </button>
+        <button class="btn btn-primary" id="confirmCrop">
+          Confirmar
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.css">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+
+@php
+$existingImages = $ad->images->map(function ($img) {
+    return [
+        'id'       => $img->id,
+        'src'      => asset($img->image),
+        'cropData' => $img->crop_data,
+        'is_main'  => $img->is_main,
+    ];
+})->values();
+@endphp
 
 <script>
+const previewContainer = document.getElementById('newImagesPreview');
+const fileInput = document.getElementById('ownImagesInput');
+
+let cropper = null;
+let imagesState = [];
+let currentIndex = null;
+let tempCropBuffer = {};
+
+const modalEl = document.getElementById('cropperModal');
+const modal   = new bootstrap.Modal(modalEl);
+
+const openCropperBtn = document.getElementById('openCropperBtn');
+const cropImg = document.getElementById('cropImagePreview');
+
+function updateCropperButtonState() {
+    const active = imagesState.filter(i => !i.deleted).length;
+    openCropperBtn.disabled = active === 0;
+}
+
+fileInput.addEventListener('change', e => {
+
+    const incomingFiles = Array.from(e.target.files);
+    const activeCount = imagesState.filter(i => !i.deleted).length;
+    const remaining = MAX_IMAGES - activeCount;
+
+    if (remaining <= 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Límite alcanzado',
+            text: `Solo puedes subir ${MAX_IMAGES} imágenes`
+        });
+        return;
+    }
+
+    incomingFiles.slice(0, remaining).forEach(file => {
+        imagesState.push({
+            uid: crypto.randomUUID(),
+            file,
+            src: null,
+            cropData: null,
+            deleted: false,
+            isExisting: false
+        });
+    });
+
+    renderNewImagesPreview();
+    updateCropperButtonState();
+});
+
+function renderNewImagesPreview() {
+
+    previewContainer.innerHTML = '';
+
+    imagesState.forEach((img, index) => {
+
+        if (img.deleted || img.isExisting) return;
+
+        const reader = new FileReader();
+
+        reader.onload = e => {
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'position-relative';
+            wrapper.style.width = '120px';
+            wrapper.style.height = '120px';
+
+            const image = document.createElement('img');
+            image.src = e.target.result;
+            image.className = 'rounded border';
+            image.style.width = '100%';
+            image.style.height = '100%';
+            image.style.objectFit = 'cover';
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.innerHTML = '×';
+            btn.className = 'delete-img-btn';
+
+            btn.onclick = () => {
+                img.deleted = true;
+                renderNewImagesPreview();
+                updateCropperButtonState();
+            };
+
+            wrapper.appendChild(image);
+            wrapper.appendChild(btn);
+            previewContainer.appendChild(wrapper);
+        };
+
+        reader.readAsDataURL(img.file);
+    });
+}
+
+/* ABRIR MODAL */
+openCropperBtn.addEventListener('click', () => {
+
+    const thumbs = document.getElementById('thumbsContainer');
+    thumbs.innerHTML = '';
+
+    imagesState.forEach((img, index) => {
+        if (img.deleted) return;
+
+        const t = document.createElement('img');
+        t.className = 'crop-thumb';
+        if (img.file) {
+            const reader = new FileReader();
+            reader.onload = e => t.src = e.target.result;
+            reader.readAsDataURL(img.file);
+        } else {
+            t.src = img.src;
+        }
+
+
+        t.onclick = () => {
+            saveTempCrop();   
+            loadImage(index);
+        };
+
+        thumbs.appendChild(t);
+    });
+
+    currentIndex = imagesState.findIndex(i => !i.deleted);
+    modal.show();
+});
+
+modalEl.addEventListener('shown.bs.modal', () => {
+    loadImage(currentIndex);
+});
+
+//modalEl.addEventListener('hide.bs.modal', saveCurrentCrop);
+modalEl.addEventListener('hide.bs.modal', () => {
+
+    // descartar todo lo temporal
+    tempCropBuffer = {};
+
+    if (cropper) {
+        cropper.destroy();
+        cropper = null;
+    }
+});
+
+
+/* CARGAR IMAGEN */
+function loadImage(index) {
+    currentIndex = index;
+    const img = imagesState[index];
+
+    if (img.file) {
+        const reader = new FileReader();
+        reader.onload = e => initCropper(e.target.result, index);
+        reader.readAsDataURL(img.file);
+    } else {
+        initCropper(img.src, index);
+    }
+}
+
+function initCropper(src, index) {
+
+    cropImg.src = src;
+    if (cropper) cropper.destroy();
+
+    cropper = new Cropper(cropImg, {
+        aspectRatio: 700 / 380,
+        viewMode: 1,
+        dragMode: 'move',
+        autoCrop: true,
+        autoCropArea: 1,
+        cropBoxMovable: false,
+        cropBoxResizable: false,
+        zoomable: true,
+        movable: true,
+
+        ready() {
+            const saved = imagesState[index];
+
+            // prioridad: buffer temporal
+            if (tempCropBuffer[index]) {
+                cropper.setData(tempCropBuffer[index]);
+            }
+            // si no hay buffer, usar crop definitivo
+            else if (saved?.cropData) {
+                cropper.setData(saved.cropData);
+            }
+        }
+    });
+}
+
+function saveTempCrop() {
+    if (!cropper || currentIndex === null) return;
+
+    tempCropBuffer[currentIndex] = cropper.getData(true);
+}
+
+function saveCurrentCrop() {
+    if (!cropper || currentIndex === null) return;
+    imagesState[currentIndex].cropData = cropper.getData(true);
+}
+
+/* CONFIRMAR ENCUADRE */
+document.getElementById('confirmCrop').addEventListener('click', () => {
+
+    if (!cropper) return;
+
+    // guardar la imagen actual en buffer
+    saveTempCrop();
+
+    // pasar TODO el buffer a definitivo
+    Object.keys(tempCropBuffer).forEach(index => {
+        imagesState[index].cropData = tempCropBuffer[index];
+    });
+
+    // limpiar buffer
+    tempCropBuffer = {};
+
+    Swal.fire({
+        icon: 'success',
+        title: 'Imágenes ajustadas',
+        timer: 900,
+        showConfirmButton: false
+    });
+
+    modal.hide();
+});
+
+const FORM_MODE = 'edit';
+const existingImagesFromServer = @json($existingImages);
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    if (FORM_MODE !== 'edit') return;
+
+    if (existingImagesFromServer.length) {
+        existingImagesFromServer.forEach(img => {
+            imagesState.push({
+                uid: 'db-' + img.id,
+                id: img.id,
+                file: null,
+                src: img.src,
+                cropData: img.cropData ?? null,
+                canvasData: null,
+                cropBoxData: null,
+                deleted: false,
+                isExisting: true
+            });
+        });
+
+        updateCropperButtonState();
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    const submitBtn = document.getElementById('submitBtn');
+    const form      = document.getElementById('adForm');
+
+    if (!submitBtn || !form) return;
+
+    submitBtn.addEventListener('click', () => {
+
+        const cropPayload = imagesState
+            .filter(img => !img.deleted)
+            .map(img => ({
+                id: img.id ?? null,
+                uid: img.uid,
+                cropData: img.cropData
+            }));
+
+        document.getElementById('crop_data').value =
+            JSON.stringify(cropPayload);
+
+        form.submit();
+    });
+});
 
 /* Validación de campos WhatsApp y llamadas */
 document.querySelectorAll('input[name="whatsapp"], input[name="call_phone"]').forEach(input => {
@@ -1118,7 +1458,7 @@ function removeNewImage(index) {
     renderNewImages();
 }
 
-/* Reemplazar archivos reales antes de enviar */
+/* Reemplazar archivos reales antes de enviar 
 document.querySelector('form').addEventListener('submit', function (e) {
 
     if (newImages.length === 0) return;
@@ -1126,7 +1466,7 @@ document.querySelector('form').addEventListener('submit', function (e) {
     const dt = new DataTransfer();
     newImages.forEach(file => dt.items.add(file));
     input.files = dt.files;
-});
+});*/
 
 // LÓGICA DE COMPROBANTE DE PAGO
 const receiptType     = document.getElementById("receipt_type");
@@ -1242,6 +1582,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 });
+
+
+
+
+
 </script>
 
 @if (session('success'))
@@ -1268,6 +1613,85 @@ Swal.fire({
 
 
 <style>
+
+/* CONTENEDOR CROPPER */
+.cropper-wrapper {
+    width: 100%;
+    height: 430px;
+    background: #2b2b2b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cropper-wrapper img {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* THUMBS */
+.crop-thumb {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    cursor: pointer;
+    border-radius: 6px;
+    border: 2px solid #ddd;
+}
+
+.crop-thumb:hover {
+    border-color: #0d6efd;
+}
+
+/* GRID EDIT */
+.image-wrapper {
+    position: relative;
+}
+
+.draft-crop-box {
+    width: 120px;
+    height: 120px;
+    overflow: hidden;
+    border-radius: 6px;
+    background: #eee;
+}
+
+.draft-crop-box img {
+    transform-origin: top left;
+}
+
+/* BOTÓN X */
+.delete-img-btn {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    z-index: 10;
+}
+
+/* MOBILE */
+@media (max-width: 576px) {
+    .modal-body {
+        padding: 0.5rem;
+    }
+
+    .cropper-wrapper {
+        height: 78vh;
+    }
+
+    .crop-thumb {
+        width: 56px;
+        height: 56px;
+    }
+}
+
 .image-wrapper {
     position: relative;
 }

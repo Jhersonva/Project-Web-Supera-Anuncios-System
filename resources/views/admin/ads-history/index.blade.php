@@ -81,36 +81,46 @@
                             <td width="80">
                                 @php
                                     $image = $ad->images->first();
-                                    $crop = $image?->crop_data;
-
-                                    $thumbSize = 70;
-
-                                    if ($crop && isset($crop['width'])) {
-                                        $scale = $thumbSize / $crop['width'];
-                                    } else {
-                                        $scale = 1;
-                                    }
+                                    $crop  = $image?->crop_data;
                                 @endphp
 
                                 @if($image)
                                     <div class="img-crop-box">
-                                        <img
-                                            src="{{ asset($image->image) }}"
-                                            style="
-                                                transform:
-                                                    scale({{ $scale }})
-                                                    translate(
-                                                        -{{ $crop['x'] ?? 0 }}px,
-                                                        -{{ $crop['y'] ?? 0 }}px
-                                                    );
-                                            "
-                                        >
+                                        @if($crop && isset($crop['width']))
+                                            @php
+                                                $thumbSize = 70;
+                                                $scale = $thumbSize / $crop['width'];
+                                            @endphp
+
+                                            <img
+                                                src="{{ asset($image->image) }}"
+                                                style="
+                                                    transform:
+                                                        scale({{ $scale }})
+                                                        translate(
+                                                            -{{ $crop['x'] }}px,
+                                                            -{{ $crop['y'] }}px
+                                                        );
+                                                "
+                                            >
+                                        @else
+                                            {{-- SIN CROP: imagen completa --}}
+                                            <img
+                                                src="{{ asset($image->image) }}"
+                                                style="
+                                                    width: 100%;
+                                                    height: 100%;
+                                                    object-fit: cover;
+                                                "
+                                            >
+                                        @endif
                                     </div>
                                 @else
                                     <div class="img-crop-box">
                                         <img src="{{ asset('assets/img/not-found-image/failed-image.jpg') }}">
                                     </div>
                                 @endif
+
                             </td>
 
                             <td class="fw-semibold">{{ $ad->title }}</td>
@@ -200,29 +210,38 @@
                             @php
                                 $image = $ad->images->first();
                                 $crop  = $image?->crop_data;
-
-                                $thumbSize = 90; // un poco más grande en móvil
-
-                                if ($crop && isset($crop['width'])) {
-                                    $scale = $thumbSize / $crop['width'];
-                                } else {
-                                    $scale = 1;
-                                }
                             @endphp
 
                             @if($image)
                                 <div class="img-crop-box img-crop-box-mobile">
-                                    <img
-                                        src="{{ asset($image->image) }}"
-                                        style="
-                                            transform:
-                                                scale({{ $scale }})
-                                                translate(
-                                                    -{{ $crop['x'] ?? 0 }}px,
-                                                    -{{ $crop['y'] ?? 0 }}px
-                                                );
-                                        "
-                                    >
+                                    @if($crop && isset($crop['width']))
+                                        @php
+                                            $thumbSize = 90;
+                                            $scale = $thumbSize / $crop['width'];
+                                        @endphp
+
+                                        <img
+                                            src="{{ asset($image->image) }}"
+                                            style="
+                                                transform:
+                                                    scale({{ $scale }})
+                                                    translate(
+                                                        -{{ $crop['x'] }}px,
+                                                        -{{ $crop['y'] }}px
+                                                    );
+                                            "
+                                        >
+                                    @else
+                                        {{-- SIN CROP --}}
+                                        <img
+                                            src="{{ asset($image->image) }}"
+                                            style="
+                                                width: 100%;
+                                                height: 100%;
+                                                object-fit: cover;
+                                            "
+                                        >
+                                    @endif
                                 </div>
                             @else
                                 <div class="img-crop-box img-crop-box-mobile">

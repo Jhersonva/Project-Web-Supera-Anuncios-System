@@ -1079,6 +1079,7 @@ let imagesState = [];
 let currentIndex = null;
 let previewRenderVersion = 0;
 let MAX_IMAGES = 5;
+let tempCropBuffer = {}; 
 
 const modalEl = document.getElementById('cropperModal');
 const modal = new bootstrap.Modal(modalEl);
@@ -1222,7 +1223,7 @@ openCropperBtn.addEventListener('click', () => {
         }
 
         thumb.onclick = () => {
-            saveCurrentCrop();
+            saveTempCrop();  
             loadImage(index);
         };
 
@@ -1240,7 +1241,14 @@ modalEl.addEventListener('shown.bs.modal', () => {
 });
 
 modalEl.addEventListener('hide.bs.modal', () => {
-    saveCurrentCrop();
+
+    // descartar todo lo temporal
+    tempCropBuffer = {};
+
+    if (cropper) {
+        cropper.destroy();
+        cropper = null;
+    }
 });
 
 let lastLoadedIndex = null;
@@ -1265,29 +1273,72 @@ function initCropper(src, index) {
     if (cropper) cropper.destroy();
 
     cropper = new Cropper(cropImg, {
-        aspectRatio: 4 / 3,
+        // UNA SOLA PROPORCIÓN (CARD REAL)
+        aspectRatio: 700 / 380,
+
         viewMode: 1,
         dragMode: 'move',
+
         autoCrop: true,
-        autoCropArea: 0.85,
+        autoCropArea: 1,
+
         background: true,
         modal: true,
+
+        // EL MARCO NO SE MUEVE NI SE REDIMENSIONA
         cropBoxMovable: false,
         cropBoxResizable: false,
+
         guides: false,
         center: false,
+
+        // EL USUARIO AJUSTA LA IMAGEN
         zoomable: true,
         movable: true,
+
         ready() {
-            const saved = imagesState[index];
-            if (saved.canvasData && saved.cropBoxData) {
-                this.cropper.setCanvasData(saved.canvasData);
-                this.cropper.setCropBoxData(saved.cropBoxData);
+            const instance = this.cropper;
+            const container = instance.getContainerData();
+            const imageData = instance.getImageData();
+
+            // Calcular el marco más grande posible
+            const maxWidth  = container.width;
+            const maxHeight = container.height;
+
+            let cropWidth  = maxWidth;
+            let cropHeight = cropWidth / (700 / 380);
+
+            if (cropHeight > maxHeight) {
+                cropHeight = maxHeight;
+                cropWidth  = cropHeight * (700 / 380);
             }
+
+            instance.setCropBoxData({
+                width: cropWidth,
+                height: cropHeight,
+                left: (container.width  - cropWidth)  / 2,
+                top:  (container.height - cropHeight) / 2
+            });
+
+            // Restaurar crop guardado
+            // prioridad: buffer temporal
+            if (tempCropBuffer[index]) {
+                instance.setData(tempCropBuffer[index]);
+            }
+            // si no hay buffer, usar crop guardado
+            else if (imagesState[index]?.cropData) {
+                instance.setData(imagesState[index].cropData);
+            }
+
         }
     });
 }
 
+function saveTempCrop() {
+    if (!cropper || currentIndex === null) return;
+
+    tempCropBuffer[currentIndex] = cropper.getData(true);
+}
 
 function saveCurrentCrop() {
     if (!cropper || currentIndex === null) return;
@@ -1299,16 +1350,28 @@ function saveCurrentCrop() {
 
 /* confirmar encuadre */
 document.getElementById('confirmCrop').addEventListener('click', () => {
-    if (currentIndex === null) return;
 
-    imagesState[currentIndex].cropData = cropper.getData(true);
+    if (!cropper) return;
+
+    // guardar la imagen actual en buffer
+    saveTempCrop();
+
+    // pasar TODO el buffer a definitivo
+    Object.keys(tempCropBuffer).forEach(index => {
+        imagesState[index].cropData = tempCropBuffer[index];
+    });
+
+    // limpiar buffer
+    tempCropBuffer = {};
 
     Swal.fire({
         icon: 'success',
-        title: 'Imagen ajustada',
+        title: 'Imágenes ajustadas',
         timer: 900,
         showConfirmButton: false
     });
+
+    modal.hide();
 });
 
 function updateCropperButtonState() {
@@ -1521,30 +1584,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!form) return;
 
-    form.addEventListener('submit', function(e) {
-
-        // Guardar estado de todas las imágenes abiertas o no
-        imagesState.forEach((img, index) => {
-            if (!img.deleted && cropper && index === currentIndex) {
-                img.cropData = cropper.getData(true);
-                img.canvasData = cropper.getCanvasData();
-                img.cropBoxData = cropper.getCropBoxData();
-            }
-        });
-
-        // Solo enviar imágenes con cropData
-        const cleanCropData = imagesState
-            .filter(img => !img.deleted)
-            .map(img => ({
-                cropData: img.cropData,
-                canvasData: img.canvasData,
-                cropBoxData: img.cropBoxData
-            }));
-
-        document.getElementById('crop_data').value = JSON.stringify(cleanCropData);
-
-        syncFileInputFromState();
-    });
 
 });
 
@@ -1554,6 +1593,8 @@ document.getElementById('submitAdBtn').addEventListener('click', function () {
     const cropPayload = imagesState
         .filter(img => !img.deleted)
         .map(img => ({
+            id: img.id ?? null,
+            uid: img.uid,                
             cropData: img.cropData
         }));
 
@@ -3041,7 +3082,7 @@ function updateReceiptPreview() {
     /* CONTENEDOR DEL CROPPER */
     .cropper-wrapper {
         width: 100%;
-        height: 65vh;           
+        height: 430px;          
         background: #2b2b2b;
         display: flex;
         align-items: center;
@@ -3161,10 +3202,16 @@ function updateReceiptPreview() {
         background: red;
     }
 
+    .card {
+        width: 100%;
+        max-width: 700px;
+        margin: 0 auto;   
+    }
+
     /* Imagen de la card */
     .card img {
         width: 100%;
-        height: 400px; 
+        height: 220px; 
         object-fit: cover; 
         border-bottom: 1px solid #eee;
         background-color: #f3f3f3;

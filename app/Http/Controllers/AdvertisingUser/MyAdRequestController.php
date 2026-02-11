@@ -531,10 +531,11 @@ class MyAdRequestController extends Controller
     {
 
         $ad = Advertisement::with(['images', 'fields_values'])->findOrFail($id);
+        $cropPayload = json_decode($request->input('crop_data', '[]'), true);
         
         // Si está publicado, solo permitir ciertos campos
         $isPublished = $ad->status === 'publicado';
-
+        
         $user = auth()->user();
 
         if ($isPublished) {
@@ -795,6 +796,13 @@ class MyAdRequestController extends Controller
                 // contar cuántas imágenes quedan
                 $currentCount = AdvertisementImage::where('advertisementss_id', $ad->id)->count();
 
+                $cropPayload = json_decode($request->crop_data, true) ?? [];
+
+                // solo UIDs de imágenes NUEVAS (id === null)
+                $newUids = collect($cropPayload)
+                    ->filter(fn ($i) => empty($i['id']) && !empty($i['uid']))
+                    ->values();
+
                 foreach ($request->file('images') as $index => $file) {
 
                     if ($currentCount >= 5) break;
@@ -804,16 +812,61 @@ class MyAdRequestController extends Controller
                     $image = $manager->read($file);
                     $image->toWebp(85)->save($path.'/'.$filename);
 
+                    $cropPayload = json_decode($request->crop_data, true) ?? [];
+
+                    // SOLO crops de imágenes nuevas (id === null)
+                    $newCrops = collect($cropPayload)
+                        ->filter(fn ($i) => empty($i['id']) && !empty($i['uid']))
+                        ->values();
+
+                    $cropInfo = $newCrops->get($index);
+
                     AdvertisementImage::create([
                         'advertisementss_id' => $ad->id,
-                        'image' => 'images/advertisementss/'.$filename,
-                        'is_main' => $currentCount === 0
+                        'image'     => 'images/advertisementss/'.$filename,
+                        'is_main'   => $currentCount === 0,
+                        'uid'       => $cropInfo['uid'] ?? null,
+                        'crop_data' => $cropInfo['cropData'] ?? null,
                     ]);
 
                     $currentCount++;
                 }
             }
         }
+
+        $cropPayload = json_decode($request->crop_data, true) ?? [];
+
+        foreach ($cropPayload as $imgCrop) {
+
+            // IMAGEN EXISTENTE
+            if (!empty($imgCrop['id'])) {
+
+                $img = AdvertisementImage::where('id', $imgCrop['id'])
+                    ->where('advertisementss_id', $ad->id)
+                    ->first();
+
+                if ($img) {
+                    $img->crop_data = $imgCrop['cropData'] ?? null;
+                    $img->save();
+                }
+
+                continue;
+            }
+
+            // IMAGEN NUEVA (buscar por UID)
+            if (!empty($imgCrop['uid'])) {
+
+                $img = AdvertisementImage::where('uid', $imgCrop['uid'])
+                    ->where('advertisementss_id', $ad->id)
+                    ->first();
+
+                if ($img) {
+                    $img->crop_data = $imgCrop['cropData'] ?? null;
+                    $img->save();
+                }
+            }
+        }
+
 
         // ASEGURAR IMAGEN PRINCIPAL
         $hasMain = AdvertisementImage::where('advertisementss_id', $ad->id)
@@ -1165,44 +1218,63 @@ class MyAdRequestController extends Controller
                 $ad->id
             )->count();
 
-            foreach ($request->file('images') as $file) {
+            $cropPayload = json_decode($request->crop_data, true) ?? [];
+
+            $newImagesPayload = collect($cropPayload)
+                ->filter(fn ($img) => empty($img['id']) && !empty($img['uid']))
+                ->values();
+
+            foreach ($request->file('images') as $index => $file) {
 
                 if ($currentCount >= 5) break;
 
                 $filename = time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
                 $file->move($path, $filename);
 
+                $uidFromJs = $newImagesPayload[$index]['uid'] ?? null;
+
                 AdvertisementImage::create([
                     'advertisementss_id' => $ad->id,
                     'image' => 'images/advertisementss/'.$filename,
-                    'is_main' => $currentCount === 0
+                    'crop_data' => null,
+                    'is_main' => $currentCount === 0,
+                    'uid' => $uidFromJs
                 ]);
 
                 $currentCount++;
             }
         }
 
+        $cropPayload = json_decode($request->crop_data, true) ?? [];
+
         foreach ($cropPayload as $imgCrop) {
+
+            // IMAGEN EXISTENTE
             if (!empty($imgCrop['id'])) {
-                $img = AdvertisementImage::find($imgCrop['id']);
-                if ($img && $img->advertisementss_id == $ad->id) {
 
-                    // 🔹 Log anterior
-                    Log::info("Crop antiguo imagen ID {$img->id}", [
-                        'existing_crop_data' => $img->crop_data
-                    ]);
+                $img = AdvertisementImage::where('id', $imgCrop['id'])
+                    ->where('advertisementss_id', $ad->id)
+                    ->first();
 
-                    // 🔹 Log recibido
-                    Log::info("Crop recibido para actualizar imagen ID {$img->id}", [
-                        'new_crop_data' => $imgCrop['crop_data']
-                    ]);
-
-                    // Guardar las nuevas coordenadas
-                    $img->crop_data = json_encode($imgCrop['crop_data']);
+                if ($img) {
+                    $img->crop_data = $imgCrop['cropData'] ?? null;
                     $img->save();
                 }
-            } else {
-                Log::warning("Crop recibido sin ID de imagen", ['payload' => $imgCrop]);
+
+                continue;
+            }
+
+            // IMAGEN NUEVA → buscar por UID
+            if (!empty($imgCrop['uid'])) {
+
+                $img = AdvertisementImage::where('uid', $imgCrop['uid'])
+                    ->where('advertisementss_id', $ad->id)
+                    ->first();
+
+                if ($img) {
+                    $img->crop_data = $imgCrop['cropData'] ?? null;
+                    $img->save();
+                }
             }
         }
 
