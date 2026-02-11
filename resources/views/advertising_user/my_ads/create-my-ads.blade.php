@@ -1629,20 +1629,28 @@ function checkBalanceBeforeSubmit(finalPrice) {
             html: `
                 <p>Tu saldo actual es <strong>S/. ${userBalance.toFixed(2)}</strong></p>
                 <p>El costo del anuncio es <strong>S/. ${finalPrice.toFixed(2)}</strong></p>
-                <p class="text-danger fw-bold">Necesitas recargar saldo</p>
+                <hr>
+                <p class="text-warning fw-bold mb-1">
+                    ⚠️ No tienes saldo suficiente.
+                </p>
+                <p>
+                    Si continúas, el anuncio se guardará como 
+                    <strong>borrrador</strong>.
+                </p>
+                <p class="text-danger fw-bold">
+                    Luego deberás ir a <u>Recargar saldo</u> para poder publicarlo.
+                </p>
             `,
             showCancelButton: true,
-            confirmButtonText: '💳 Guardar como borrador',
+            confirmButtonText: '💾 Guardar como borrador',
             cancelButtonText: '❌ Salir',
 
-            // Colores
             confirmButtonColor: '#28a745', 
             cancelButtonColor: '#dc3545', 
-
             reverseButtons: true,
         }).then(result => {
 
-            // IR A RECARGAR (guardar como draft)
+            // GUARDAR COMO BORRADOR
             if (result.isConfirmed) {
                 document.getElementById('save_as_draft').value = 1;
                 document.getElementById('adForm').submit();
@@ -1659,6 +1667,7 @@ function checkBalanceBeforeSubmit(finalPrice) {
 
     return true;
 }
+
     
 /*Logica de cuando el usuario ingresa a la vista de create con saldo 0*/
 document.addEventListener('DOMContentLoaded', function () {
