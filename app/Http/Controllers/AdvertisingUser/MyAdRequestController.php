@@ -163,6 +163,16 @@ class MyAdRequestController extends Controller
     public function store(Request $request)
     { 
 
+    Log::info('===== STORE DEBUG START =====');
+
+    Log::info('FILES ALL:', $request->allFiles());
+    Log::info('HAS FILE images:', ['hasFile' => $request->hasFile('images')]);
+    Log::info('FILE images RAW:', $request->file('images'));
+    Log::info('INPUT images:', $request->input('images'));
+    Log::info('CROP DATA:', ['crop_data' => $request->crop_data]);
+
+    Log::info('===== STORE DEBUG END =====');
+
         $request->validate([
             'category_id'     => 'required|exists:ad_categories,id',
             'subcategory_id'  => 'required|exists:ad_subcategories,id',
@@ -455,29 +465,48 @@ class MyAdRequestController extends Controller
 
         if ($request->hasFile('images')) {
 
-            $cropData = json_decode($request->crop_data, true) ?? [];
+    Log::info('ENTRÓ A hasFile');
 
-            foreach ($request->file('images') as $index => $file) {
+    $files = $request->file('images');
 
-                if (!$file->isValid()) continue;
+    Log::info('TOTAL FILES COUNT:', ['count' => count($files)]);
 
-                $filename = time().'_'.uniqid().'.webp';
-                $path = public_path('images/advertisementss/'.$filename);
+    foreach ($files as $index => $file) {
 
-                $manager = new ImageManager(new Driver());
-                $image = $manager->read($file);
+        Log::info('Procesando archivo:', [
+            'index' => $index,
+            'originalName' => $file->getClientOriginalName(),
+            'size' => $file->getSize(),
+            'valid' => $file->isValid()
+        ]);
 
-                // NO crop aquí
-                $image->toWebp(85)->save($path);
-
-                AdvertisementImage::create([
-                    'advertisementss_id' => $ad->id,
-                    'image' => 'images/advertisementss/'.$filename,
-                    'crop_data' => $cropData[$index]['cropData'] ?? null,
-                    'is_main' => $index === 0
-                ]);
-            }
+        if (!$file->isValid()) {
+            Log::warning('Archivo inválido');
+            continue;
         }
+
+        $filename = time().'_'.uniqid().'.webp';
+        $path = public_path('images/advertisementss/'.$filename);
+
+        $manager = new ImageManager(new Driver());
+        $image = $manager->read($file);
+        $image->toWebp(85)->save($path);
+
+        AdvertisementImage::create([
+            'advertisementss_id' => $ad->id,
+            'image' => 'images/advertisementss/'.$filename,
+            'crop_data' => null,
+            'is_main' => $index === 0
+        ]);
+
+        Log::info('Imagen guardada:', ['filename' => $filename]);
+    }
+
+} else {
+
+    Log::warning('NO ENTRÓ A hasFile(images)');
+}
+
 
         return redirect()
             ->route('my-ads.index')

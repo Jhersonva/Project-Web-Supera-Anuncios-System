@@ -1040,27 +1040,6 @@ window.ALERTS = @json($alertsPrepared);
         }
     });
 
-    /* Script para el botón de envío del anuncio */
-    document.getElementById('submitAdBtn').addEventListener('click', function () {
-
-        const btn = this;
-
-        // Si ya está deshabilitado, no hacer nada
-        if (btn.disabled) return;
-
-        // Deshabilitar inmediatamente
-        btn.disabled = true;
-
-        // Cambiar texto para feedback visual
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
-
-        // Opcional: marcar publish
-        document.getElementById('publishInput').value = 1;
-
-        // Enviar formulario
-        document.getElementById('adForm').submit();
-    });
-
     const FORM_MODE = "{{ isset($ad) ? 'edit' : 'create' }}";
     const existingImagesFromServer = @json($existingImages);
     const fieldsFromServer = @json($fields ?? []);
@@ -1118,56 +1097,54 @@ function syncFileInputFromState() {
     const dataTransfer = new DataTransfer();
 
     imagesState
-        .filter(img => !img.deleted)
-        .forEach(img => dataTransfer.items.add(img.file));
+        .filter(img => !img.deleted && img.file) 
+        .forEach(img => {
+            dataTransfer.items.add(img.file);
+        });
 
     fileInput.files = dataTransfer.files;
 }
 
-/* cargar imágenes */
-fileInput.addEventListener('change', e => {
+fileInput.addEventListener('click', function (e) {
 
-    const incomingFiles = Array.from(e.target.files);
-    const activeCount   = getActiveImagesCount();
-    const remaining     = MAX_IMAGES - activeCount;
+    const activeCount = getActiveImagesCount();
 
-    if (remaining <= 0) {
+    if (activeCount >= MAX_IMAGES) {
+
+        e.preventDefault();
+        e.stopPropagation();
+
         Swal.fire({
             icon: 'warning',
             title: 'Límite alcanzado',
-            text: `Solo puedes subir ${MAX_IMAGES} imagen${MAX_IMAGES > 1 ? 'es' : ''}`
+            text: `Solo puedes subir ${MAX_IMAGES} imágenes`
         });
 
-        return;
+        return false;
     }
+});
 
-    let filesToAdd = incomingFiles.slice(0, remaining);
+/* cargar imágenes */
+fileInput.addEventListener('change', e => {
 
-    if (incomingFiles.length > remaining) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Demasiadas imágenes',
-            text: `Solo se agregarán ${remaining} imagen${remaining > 1 ? 'es' : ''}`
-        });
-    }
+    const file = e.target.files[0];
+    if (!file) return;
 
-    filesToAdd.forEach(file => {
-        imagesState.push({
-            uid: crypto.randomUUID(), 
-            file,
-            cropData: null,
-            canvasData: null,
-            cropBoxData: null,
-            deleted: false
-        });
+    imagesState.push({
+        uid: crypto.randomUUID(),
+        file: file,
+        cropData: null,
+        canvasData: null,
+        cropBoxData: null,
+        deleted: false
     });
+
+    fileInput.value = '';
 
     renderNewImagesPreview();
     syncFileInputFromState();
     updateCropperButtonState();
     updatePreview();
-
-    //fileInput.value = '';
 });
 
 function renderNewImagesPreview() {
@@ -1508,10 +1485,6 @@ function updatePublishButton(totalCost) {
     }
 }
 
-document.getElementById('submitAdBtn').addEventListener('click', function () {
-    document.getElementById('publishInput').value = 1;
-});
-
 const premiereSwitch = document.getElementById('premiere_publication_switch');
 const premiereInput  = document.getElementById('premiere_publication');
 
@@ -1609,19 +1582,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.getElementById('submitAdBtn').addEventListener('click', function () {
 
-    // SERIALIZAR CROPS AQUÍ
+    const btn = this;
+
+    if (btn.disabled) return;
+
+    // SERIALIZAR CROPS
     const cropPayload = imagesState
         .filter(img => !img.deleted)
         .map(img => ({
             id: img.id ?? null,
-            uid: img.uid,                
+            uid: img.uid,
             cropData: img.cropData
         }));
 
     document.getElementById('crop_data').value =
         JSON.stringify(cropPayload);
 
-    // total REAL del resumen
     const totalText = document.getElementById('summaryTotalCost')?.textContent || '0';
     const finalPrice = parseFloat(
         totalText.replace('S/.', '').trim()
@@ -1630,6 +1606,10 @@ document.getElementById('submitAdBtn').addEventListener('click', function () {
     if (!checkBalanceBeforeSubmit(finalPrice)) {
         return;
     }
+
+    // Si sí tiene saldo suficiente
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
 
     document.getElementById('save_as_draft').value = 0;
     document.getElementById('publishInput').value = 1;

@@ -631,7 +631,6 @@
                 id="ownImagesInput"
                 class="form-control"
                 accept="image/*"
-                multiple
             >
 
             <small class="text-muted d-block">
@@ -783,31 +782,58 @@ function updateCropperButtonState() {
     openCropperBtn.disabled = active === 0;
 }
 
-fileInput.addEventListener('change', e => {
+fileInput.addEventListener('click', function (e) {
 
-    const incomingFiles = Array.from(e.target.files);
     const activeCount = imagesState.filter(i => !i.deleted).length;
-    const remaining = MAX_IMAGES - activeCount;
 
-    if (remaining <= 0) {
+    if (activeCount >= MAX_IMAGES) {
+
+        e.preventDefault();
+        e.stopPropagation();
+
         Swal.fire({
             icon: 'warning',
             title: 'Límite alcanzado',
             text: `Solo puedes subir ${MAX_IMAGES} imágenes`
         });
+
+        return false;
+    }
+});
+
+fileInput.addEventListener('change', e => {
+
+    const incomingFiles = Array.from(e.target.files);
+    const activeCount = imagesState.filter(i => !i.deleted).length;
+
+    if (activeCount >= MAX_IMAGES) {
+
+        Swal.fire({
+            icon: 'warning',
+            title: 'Límite alcanzado',
+            text: `Solo puedes subir ${MAX_IMAGES} imágenes`
+        });
+
+        fileInput.value = '';
         return;
     }
 
-    incomingFiles.slice(0, remaining).forEach(file => {
-        imagesState.push({
-            uid: crypto.randomUUID(),
-            file,
-            src: null,
-            cropData: null,
-            deleted: false,
-            isExisting: false
-        });
+    // SOLO 1 POR 1
+    const file = incomingFiles[0];
+    if (!file) return;
+
+    imagesState.push({
+        uid: crypto.randomUUID(),
+        file,
+        src: null,
+        cropData: null,
+        deleted: false,
+        isExisting: false
     });
+
+    syncFileInputFromState();
+
+    fileInput.value = '';
 
     renderNewImagesPreview();
     updateCropperButtonState();
@@ -844,6 +870,7 @@ function renderNewImagesPreview() {
 
             btn.onclick = () => {
                 img.deleted = true;
+                syncFileInputFromState();
                 renderNewImagesPreview();
                 updateCropperButtonState();
             };
@@ -855,6 +882,19 @@ function renderNewImagesPreview() {
 
         reader.readAsDataURL(img.file);
     });
+}
+
+function syncFileInputFromState() {
+
+    const dataTransfer = new DataTransfer();
+
+    imagesState
+        .filter(img => !img.deleted && img.file) 
+        .forEach(img => {
+            dataTransfer.items.add(img.file);
+        });
+
+    fileInput.files = dataTransfer.files;
 }
 
 /* ABRIR MODAL */
@@ -1021,8 +1061,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!submitBtn || !form) return;
 
-    submitBtn.addEventListener('click', () => {
+    submitBtn.addEventListener('click', function () {
 
+        if (this.disabled) return;
+
+        // SINCRONIZAR FILES FINAL
+        const dt = new DataTransfer();
+
+        imagesState
+            .filter(img => !img.deleted && img.file)
+            .forEach(img => {
+                dt.items.add(img.file);
+            });
+
+        fileInput.files = dt.files;
+
+        // SERIALIZAR CROPS
         const cropPayload = imagesState
             .filter(img => !img.deleted)
             .map(img => ({
@@ -1034,9 +1088,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('crop_data').value =
             JSON.stringify(cropPayload);
 
+        // DEBUG (puedes quitar luego)
+        console.log("Archivos a enviar:", fileInput.files.length);
+
+        // BLOQUEAR BOTÓN
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+
         form.submit();
     });
 });
+
 
 /* Validación de campos WhatsApp y llamadas */
 document.querySelectorAll('input[name="whatsapp"], input[name="call_phone"]').forEach(input => {
@@ -1403,71 +1465,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 
-let newImages = [];
-
-const input = document.getElementById('newImagesInput');
-const preview = document.getElementById('newImagesPreview');
-
-input.addEventListener('change', function () {
-
-    const files = Array.from(this.files);
-
-    const currentCount =
-        document.querySelectorAll('.image-wrapper:not(.removed)').length;
-
-    if (currentCount + newImages.length + files.length > MAX_IMAGES) {
-        alert(`Máximo ${MAX_IMAGES} imágenes en total`);
-        return;
-    }
-
-    files.forEach(file => newImages.push(file));
-
-    renderNewImages();
-});
-
-function renderNewImages() {
-
-    preview.innerHTML = '';
-
-    newImages.forEach((file, index) => {
-
-        const reader = new FileReader();
-
-        reader.onload = e => {
-            const div = document.createElement('div');
-            div.classList.add('image-wrapper');
-
-            div.innerHTML = `
-                <img src="${e.target.result}"
-                     class="rounded border"
-                     style="width:120px;height:120px;object-fit:cover;">
-                <button type="button"
-                    class="delete-img-btn"
-                    onclick="removeNewImage(${index})">×</button>
-            `;
-
-            preview.appendChild(div);
-        };
-
-        reader.readAsDataURL(file);
-    });
-}
-
-function removeNewImage(index) {
-    newImages.splice(index, 1);
-    renderNewImages();
-}
-
-/* Reemplazar archivos reales antes de enviar 
-document.querySelector('form').addEventListener('submit', function (e) {
-
-    if (newImages.length === 0) return;
-
-    const dt = new DataTransfer();
-    newImages.forEach(file => dt.items.add(file));
-    input.files = dt.files;
-});*/
-
 // LÓGICA DE COMPROBANTE DE PAGO
 const receiptType     = document.getElementById("receipt_type");
 const boletaFields    = document.getElementById("boletaFields");
@@ -1547,12 +1544,6 @@ document.addEventListener('DOMContentLoaded', () => {
             el.classList.add('disabled');
         });
 
-        // IMÁGENES BLOQUEADAS
-        document.getElementById('newImagesInput')?.setAttribute('disabled', true);
-
-        document.querySelectorAll('.delete-img-btn').forEach(btn => {
-            btn.style.display = 'none';
-        });
 
         return;
     }
