@@ -619,6 +619,7 @@
             @endif
 
             {{-- PREVIEW DE NUEVAS IMÁGENES (UNA SOLA VEZ) --}}
+            <label class="fw-semibold mb-2">Preview de las Imágenes</label>
             <div id="newImagesPreview" class="d-flex flex-wrap gap-2 mt-3"></div>
 
             <hr>
@@ -710,17 +711,31 @@
 
 </div>
 
-<!-- MODAL CROPPER -->
-<div class="modal fade" id="cropperModal" tabindex="-1">
+<!-- MODAL CROPPER EDIT -->
+<div class="modal fade" id="cropperModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
 
       <div class="modal-header">
         <h5 class="modal-title">Ajustar imagen</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <!-- Se eliminó la X -->
       </div>
 
       <div class="modal-body">
+
+        <div class="alert alert-light border rounded-3 mb-3 small">
+
+            <div class="fw-semibold mb-1">
+                📌 Ajusta la imagen para tu anuncio
+            </div>
+
+            <ul class="mb-0 ps-3">
+                <li>El área dentro del marco es lo que se mostrará en el anuncio.</li>
+                <li>Puedes mover la imagen para centrar lo más importante.</li>
+                <li>El tamaño visible tiene proporción horizontal optimizada para las tarjetas.</li>
+                <li>Todo lo que quede fuera del marco no será visible.</li>
+            </ul>
+        </div>
 
         <div class="d-flex gap-2 mb-3 flex-wrap" id="thumbsContainer"></div>
 
@@ -728,17 +743,18 @@
           <img id="cropImagePreview">
         </div>
 
+        <div class="text-center text-muted small mt-2">
+            Vista previa con proporción real del anuncio (700 x 380)
+        </div>
+
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">
-          Cancelar
-        </button>
+        <!-- Se eliminó Cancelar -->
         <button class="btn btn-primary" id="confirmCrop">
           Confirmar
         </button>
       </div>
-
     </div>
   </div>
 </div>
@@ -782,6 +798,13 @@ function updateCropperButtonState() {
     openCropperBtn.disabled = active === 0;
 }
 
+// OCULTAR CARGAR IMÁGENES EXISTENTES AL ESTADO
+document.addEventListener('DOMContentLoaded', () => {
+    if (openCropperBtn) {
+        openCropperBtn.style.display = 'none';
+    }
+});
+
 fileInput.addEventListener('click', function (e) {
 
     const activeCount = imagesState.filter(i => !i.deleted).length;
@@ -803,40 +826,50 @@ fileInput.addEventListener('click', function (e) {
 
 fileInput.addEventListener('change', e => {
 
-    const incomingFiles = Array.from(e.target.files);
+    const file = e.target.files[0];
+    if (!file) return;
+
     const activeCount = imagesState.filter(i => !i.deleted).length;
 
-    if (activeCount >= MAX_IMAGES) {
-
+    if (activeCount >= 5) {
         Swal.fire({
             icon: 'warning',
             title: 'Límite alcanzado',
-            text: `Solo puedes subir ${MAX_IMAGES} imágenes`
+            text: 'Solo puedes subir 5 imágenes'
         });
-
         fileInput.value = '';
         return;
     }
 
-    // SOLO 1 POR 1
-    const file = incomingFiles[0];
-    if (!file) return;
-
-    imagesState.push({
+    const newImage = {
         uid: crypto.randomUUID(),
-        file,
+        file: file,
         src: null,
         cropData: null,
         deleted: false,
         isExisting: false
-    });
+    };
 
-    syncFileInputFromState();
+    imagesState.push(newImage);
 
     fileInput.value = '';
 
-    renderNewImagesPreview();
-    updateCropperButtonState();
+    // ABRIR MODAL SOLO CON ESTA IMAGEN
+    currentIndex = imagesState.length - 1;
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+
+        modal.show();
+
+        setTimeout(() => {
+            initCropper(reader.result, currentIndex);
+        }, 200);
+
+    };
+
+    reader.readAsDataURL(file);
 });
 
 function renderNewImagesPreview() {
@@ -1005,27 +1038,25 @@ function saveCurrentCrop() {
 /* CONFIRMAR ENCUADRE */
 document.getElementById('confirmCrop').addEventListener('click', () => {
 
-    if (!cropper) return;
+    if (!cropper || currentIndex === null) return;
 
-    // guardar la imagen actual en buffer
-    saveTempCrop();
+    // guardar crop directo
+    imagesState[currentIndex].cropData = cropper.getData(true);
 
-    // pasar TODO el buffer a definitivo
-    Object.keys(tempCropBuffer).forEach(index => {
-        imagesState[index].cropData = tempCropBuffer[index];
-    });
+    cropper.destroy();
+    cropper = null;
 
-    // limpiar buffer
-    tempCropBuffer = {};
+    modal.hide();
+
+    syncFileInputFromState();
+    renderNewImagesPreview();
 
     Swal.fire({
         icon: 'success',
-        title: 'Imágenes ajustadas',
-        timer: 900,
+        title: 'Imagen ajustada',
+        timer: 800,
         showConfirmButton: false
     });
-
-    modal.hide();
 });
 
 const FORM_MODE = 'edit';
@@ -1053,52 +1084,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCropperButtonState();
     }
 });
-
-document.addEventListener('DOMContentLoaded', () => {
-
-    const submitBtn = document.getElementById('submitBtn');
-    const form      = document.getElementById('adForm');
-
-    if (!submitBtn || !form) return;
-
-    submitBtn.addEventListener('click', function () {
-
-        if (this.disabled) return;
-
-        // SINCRONIZAR FILES FINAL
-        const dt = new DataTransfer();
-
-        imagesState
-            .filter(img => !img.deleted && img.file)
-            .forEach(img => {
-                dt.items.add(img.file);
-            });
-
-        fileInput.files = dt.files;
-
-        // SERIALIZAR CROPS
-        const cropPayload = imagesState
-            .filter(img => !img.deleted)
-            .map(img => ({
-                id: img.id ?? null,
-                uid: img.uid,
-                cropData: img.cropData
-            }));
-
-        document.getElementById('crop_data').value =
-            JSON.stringify(cropPayload);
-
-        // DEBUG (puedes quitar luego)
-        console.log("Archivos a enviar:", fileInput.files.length);
-
-        // BLOQUEAR BOTÓN
-        this.disabled = true;
-        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
-
-        form.submit();
-    });
-});
-
 
 /* Validación de campos WhatsApp y llamadas */
 document.querySelectorAll('input[name="whatsapp"], input[name="call_phone"]').forEach(input => {
@@ -1517,7 +1502,6 @@ document.addEventListener('DOMContentLoaded', () => {
        ========================= */
     if (STATUS === 'publicado') {
 
-        // CAMPOS QUE SÍ SE PUEDEN EDITAR
         const editableFields = [
             'district',
             'province',
@@ -1527,24 +1511,23 @@ document.addEventListener('DOMContentLoaded', () => {
             'call_phone'
         ];
 
-        document.querySelectorAll('input, select, textarea, button').forEach(el => {
+        const form = document.getElementById('adForm');
+        if (!form) return;
 
-            // permitir submit y tokens
-            if (el.type === 'submit') return;
+        form.querySelectorAll('input, select, textarea').forEach(el => {
+
             if (['_token', '_method', 'return_to'].includes(el.name)) return;
 
-            // si está en la whitelist → permitir
             if (editableFields.includes(el.name)) {
                 el.disabled = false;
-                return;
+            } else {
+                el.disabled = true;
+                el.classList.add('disabled');
             }
-
-            // todo lo demás bloqueado
-            el.disabled = true;
-            el.classList.add('disabled');
         });
 
-
+        // ASEGURAR QUE EL BOTÓN SIEMPRE ESTÉ ACTIVO
+        document.getElementById('submitBtn')?.removeAttribute('disabled');
         return;
     }
 
@@ -1569,15 +1552,54 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(id)?.setAttribute('disabled', true);
         });
 
-        // imágenes SÍ permitidas en pendiente
     }
 
 });
 
+document.addEventListener('DOMContentLoaded', () => {
 
+    const submitBtn = document.getElementById('submitBtn');
+    const form      = document.getElementById('adForm');
 
+    if (!submitBtn || !form) return;
 
+    submitBtn.addEventListener('click', function () {
 
+        if (this.disabled) return;
+
+        // SINCRONIZAR FILES FINAL
+        const dt = new DataTransfer();
+
+        imagesState
+            .filter(img => !img.deleted && img.file)
+            .forEach(img => {
+                dt.items.add(img.file);
+            });
+
+        fileInput.files = dt.files;
+
+        // SERIALIZAR CROPS
+        const cropPayload = imagesState
+            .filter(img => !img.deleted)
+            .map(img => ({
+                id: img.id ?? null,
+                uid: img.uid,
+                cropData: img.cropData
+            }));
+
+        document.getElementById('crop_data').value =
+            JSON.stringify(cropPayload);
+
+        // DEBUG (puedes quitar luego)
+        console.log("Archivos a enviar:", fileInput.files.length);
+
+        // BLOQUEAR BOTÓN
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+
+        form.submit();
+    });
+}); 
 </script>
 
 @if (session('success'))
@@ -1644,7 +1666,6 @@ Swal.fire({
     height: 120px;
     overflow: hidden;
     border-radius: 6px;
-    background: #eee;
 }
 
 .draft-crop-box img {

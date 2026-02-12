@@ -163,22 +163,12 @@ class MyAdRequestController extends Controller
     public function store(Request $request)
     { 
 
-    Log::info('===== STORE DEBUG START =====');
-
-    Log::info('FILES ALL:', $request->allFiles());
-    Log::info('HAS FILE images:', ['hasFile' => $request->hasFile('images')]);
-    Log::info('FILE images RAW:', $request->file('images'));
-    Log::info('INPUT images:', $request->input('images'));
-    Log::info('CROP DATA:', ['crop_data' => $request->crop_data]);
-
-    Log::info('===== STORE DEBUG END =====');
-
         $request->validate([
             'category_id'     => 'required|exists:ad_categories,id',
             'subcategory_id'  => 'required|exists:ad_subcategories,id',
 
-            'title'           => 'required|string|min:3|max:70',
-            'description'     => 'required|string|min:3',
+            'title'           => 'required|string|min:1|max:70',
+            'description'     => 'required|string',
 
             'department'      => 'required|string|max:255',
             'province'        => 'required|string|max:255',
@@ -356,7 +346,6 @@ class MyAdRequestController extends Controller
             'amount_visible'        => $request->amount_visible,
             'amount_text'        => $request->amount_text,
             'days_active'           => $days,
-            //'expires_at'            => $expiresAt,
             'published'             => false,
             'status'     => $status,
             'expires_at' => $expiresAt,
@@ -463,50 +452,40 @@ class MyAdRequestController extends Controller
             }
         }
 
-        if ($request->hasFile('images')) {
+        $cropPayload = [];
 
-    Log::info('ENTRÓ A hasFile');
-
-    $files = $request->file('images');
-
-    Log::info('TOTAL FILES COUNT:', ['count' => count($files)]);
-
-    foreach ($files as $index => $file) {
-
-        Log::info('Procesando archivo:', [
-            'index' => $index,
-            'originalName' => $file->getClientOriginalName(),
-            'size' => $file->getSize(),
-            'valid' => $file->isValid()
-        ]);
-
-        if (!$file->isValid()) {
-            Log::warning('Archivo inválido');
-            continue;
+        if ($request->filled('crop_data')) {
+            $cropPayload = json_decode($request->crop_data, true) ?? [];
         }
 
-        $filename = time().'_'.uniqid().'.webp';
-        $path = public_path('images/advertisementss/'.$filename);
+        if ($request->hasFile('images')) {
 
-        $manager = new ImageManager(new Driver());
-        $image = $manager->read($file);
-        $image->toWebp(85)->save($path);
+            $files = $request->file('images');
 
-        AdvertisementImage::create([
-            'advertisementss_id' => $ad->id,
-            'image' => 'images/advertisementss/'.$filename,
-            'crop_data' => null,
-            'is_main' => $index === 0
-        ]);
+            foreach ($files as $index => $file) {
 
-        Log::info('Imagen guardada:', ['filename' => $filename]);
-    }
+                if (!$file->isValid()) {
+                    continue;
+                }
 
-} else {
+                $filename = time().'_'.uniqid().'.webp';
+                $path = public_path('images/advertisementss/'.$filename);
 
-    Log::warning('NO ENTRÓ A hasFile(images)');
-}
+                $manager = new ImageManager(new Driver());
+                $image = $manager->read($file);
+                $image->toWebp(85)->save($path);
 
+                // obtener crop correspondiente por índice
+                $cropDataForImage = $cropPayload[$index]['cropData'] ?? null;
+
+                AdvertisementImage::create([
+                    'advertisementss_id' => $ad->id,
+                    'image' => 'images/advertisementss/'.$filename,
+                    'crop_data' => $cropDataForImage,
+                    'is_main' => $index === 0
+                ]);
+            }
+        }
 
         return redirect()
             ->route('my-ads.index')
@@ -922,7 +901,7 @@ class MyAdRequestController extends Controller
             $receiptPath = $folder . DIRECTORY_SEPARATOR . $receiptFile;
 
             $pdf = Pdf::loadView('public.pdf.receipt', [
-                'ad'         => $ad->fresh(), // datos ya actualizados
+                'ad'         => $ad->fresh(), 
                 'user'       => $user,
                 'finalPrice' => $finalPrice,
             ]);

@@ -965,17 +965,29 @@
     </div>
 </div>
 
-<!-- MODAL CROPPER -->
-<div class="modal fade" id="cropperModal" tabindex="-1">
+<!-- MODAL CROPPER CREATE -->
+<div class="modal fade" id="cropperModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
-
       <div class="modal-header">
         <h5 class="modal-title">Ajustar imagen</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
 
       <div class="modal-body">
+
+        <div class="alert alert-light border rounded-3 mb-3 small">
+
+            <div class="fw-semibold mb-1">
+                📌 Ajusta la imagen para tu anuncio
+            </div>
+
+            <ul class="mb-0 ps-3">
+                <li>El área dentro del marco es lo que se mostrará en el anuncio.</li>
+                <li>Puedes mover la imagen para centrar lo más importante.</li>
+                <li>El tamaño visible tiene proporción horizontal optimizada para las tarjetas.</li>
+                <li>Todo lo que quede fuera del marco no será visible.</li>
+            </ul>
+        </div>
 
         <div class="d-flex gap-2 mb-3 flex-wrap" id="thumbsContainer"></div>
 
@@ -983,12 +995,12 @@
           <img id="cropImagePreview">
         </div>
 
+         <div class="text-center text-muted small mt-2">
+            Vista previa con proporción real del anuncio (700 x 380)
+          </div>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">
-          Cancelar
-        </button>
         <button class="btn btn-primary" id="confirmCrop">
           Confirmar
         </button>
@@ -1037,6 +1049,12 @@ window.ALERTS = @json($alertsPrepared);
         if (e.key === 'Enter') {
             e.preventDefault();
             return false;
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (openCropperBtn) {
+            openCropperBtn.style.display = 'none';
         }
     });
 
@@ -1130,22 +1148,49 @@ fileInput.addEventListener('change', e => {
     const file = e.target.files[0];
     if (!file) return;
 
-    imagesState.push({
+    const activeCount = getActiveImagesCount();
+
+    if (activeCount >= MAX_IMAGES) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Límite alcanzado',
+            text: `Solo puedes subir ${MAX_IMAGES} imágenes`
+        });
+        fileInput.value = '';
+        return;
+    }
+
+    const newImage = {
         uid: crypto.randomUUID(),
         file: file,
         cropData: null,
-        canvasData: null,
-        cropBoxData: null,
-        deleted: false
-    });
+        deleted: false,
+        isExisting: false
+    };
 
+    imagesState.push(newImage);
+
+    // limpiar input
     fileInput.value = '';
 
-    renderNewImagesPreview();
-    syncFileInputFromState();
-    updateCropperButtonState();
-    updatePreview();
+    // abrir modal SOLO con esta imagen
+    currentIndex = imagesState.length - 1;
+
+    const thumbs = document.getElementById('thumbsContainer');
+    thumbs.innerHTML = ''; 
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        modal.show();
+
+        setTimeout(() => {
+            initCropper(reader.result, currentIndex);
+        }, 200);
+    };
+
+    reader.readAsDataURL(file);
 });
+
 
 function renderNewImagesPreview() {
 
@@ -1348,27 +1393,29 @@ function saveCurrentCrop() {
 /* confirmar encuadre */
 document.getElementById('confirmCrop').addEventListener('click', () => {
 
-    if (!cropper) return;
+    if (!cropper || currentIndex === null) return;
 
-    // guardar la imagen actual en buffer
-    saveTempCrop();
+    // guardar crop directamente
+    imagesState[currentIndex].cropData = cropper.getData(true);
 
-    // pasar TODO el buffer a definitivo
-    Object.keys(tempCropBuffer).forEach(index => {
-        imagesState[index].cropData = tempCropBuffer[index];
-    });
+    // destruir cropper
+    cropper.destroy();
+    cropper = null;
 
-    // limpiar buffer
-    tempCropBuffer = {};
+    modal.hide();
+
+    // sincronizar files
+    syncFileInputFromState();
+
+    // render preview ya cuadrada
+    renderNewImagesPreview();
 
     Swal.fire({
         icon: 'success',
-        title: 'Imágenes ajustadas',
-        timer: 900,
+        title: 'Imagen ajustada',
+        timer: 800,
         showConfirmButton: false
     });
-
-    modal.hide();
 });
 
 function updateCropperButtonState() {
