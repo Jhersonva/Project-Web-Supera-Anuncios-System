@@ -665,79 +665,80 @@
                     @endif
                 </div>
 
-                <!-- IMÁGENES EXISTENTES -->
-                @if(isset($ad) && $ad && $ad->images->count())
-                    <div class="d-flex flex-wrap gap-2 mb-3" id="existingImagesWrapper">
-
-                        @foreach($ad->images as $image)
-                            <div class="position-relative image-wrapper"
-                                data-image-id="{{ $image->id }}">
-
-                                @php
-                                    $crop = is_array($image->crop_data) ? $image->crop_data : null;
-                                @endphp
-
-                                <div class="draft-crop-box">
-                                    <img
-                                        src="{{ asset($image->image) }}"
-                                        @if($crop)
-                                            style="
-                                                transform:
-                                                    scale({{ 120 / $crop['width'] }})
-                                                    translate(-{{ $crop['x'] }}px, -{{ $crop['y'] }}px);
-                                            "
-                                        @else
-                                            style="
-                                                width: 100%;
-                                                height: 100%;
-                                                object-fit: cover;
-                                            "
-                                        @endif
-                                    >
-                                </div>
-
-                                <style>
-                                    .img-crop-box {
-                                        width: 300px;
-                                        height: 300px;
-                                        overflow: hidden;
-                                    }
-
-                                    .img-crop-box img {
-                                        width: auto;
-                                        height: auto;
-                                        min-width: 100%;
-                                        min-height: 100%;
-                                    }
-
-                                </style>
-
-
-                                {{-- BADGE PRINCIPAL --}}
-                                @if($image->is_main)
-                                    <span class="badge bg-primary position-absolute top-0 start-0">
-                                        Principal
-                                    </span>
-                                @endif
-
-                                {{-- BOTÓN ELIMINAR --}}
-                                <button
-                                    type="button"
-                                    class="delete-img-btn"
-                                    onclick="markImageForRemoval({{ $image->id }}, this)">
-                                    ×
-                                </button>
-
-                            </div>
-                        @endforeach
-
-                    </div>
-                @endif
-
                 <!-- IMÁGENES -->
                 <div class="field-card {{ isset($ad) ? '' : 'd-none' }}" id="imagesContainer">
 
                     <label class="fw-semibold mb-2">Imágenes del anuncio</label>
+
+                    <!-- IMÁGENES EXISTENTES -->
+                    @if(isset($ad) && $ad && $ad->images->count())
+                        <div class="d-flex flex-wrap gap-2 mb-3" id="existingImagesWrapper">
+
+                            @foreach($ad->images as $image)
+                                <div class="position-relative image-wrapper"
+                                    data-image-id="{{ $image->id }}">
+
+                                    @php
+                                        $crop = is_array($image->crop_data) ? $image->crop_data : null;
+                                    @endphp
+
+                                    <div class="draft-crop-box">
+                                        <img
+                                            src="{{ asset($image->image) }}"
+                                            @if($crop)
+                                                style="
+                                                    transform:
+                                                        scale({{ 120 / $crop['width'] }})
+                                                        translate(-{{ $crop['x'] }}px, -{{ $crop['y'] }}px);
+                                                "
+                                            @else
+                                                style="
+                                                    width: 100%;
+                                                    height: 100%;
+                                                    object-fit: cover;
+                                                "
+                                            @endif
+                                        >
+                                    </div>
+
+                                    <style>
+                                        .img-crop-box {
+                                            width: 300px;
+                                            height: 300px;
+                                            overflow: hidden;
+                                        }
+
+                                        .img-crop-box img {
+                                            width: auto;
+                                            height: auto;
+                                            min-width: 100%;
+                                            min-height: 100%;
+                                        }
+
+                                    </style>
+
+
+                                    {{-- BADGE PRINCIPAL --}}
+                                    @if($image->is_main)
+                                        <span class="badge bg-primary position-absolute top-0 start-0">
+                                            Principal
+                                        </span>
+                                    @endif
+
+                                    {{-- BOTÓN ELIMINAR --}}
+                                    <button
+                                        type="button"
+                                        class="delete-img-btn"
+                                        onclick="markImageForRemoval({{ $image->id }}, this)">
+                                        ×
+                                    </button>
+
+                                </div>
+                            @endforeach
+
+                        </div>
+                    @endif
+                    
                     <hr>
 
                     <button
