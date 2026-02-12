@@ -19,9 +19,9 @@ function requireLogin(action, payload = null) {
         cancelButtonText: "Crear cuenta"
     }).then((result) => {
         if (result.isConfirmed) {
-            window.location.href = "/auth/login";
+            window.location.replace("/auth/login");
         } else {
-            window.location.href = "/auth/register";
+            window.location.replace("/auth/register");
         }
     });
 }
@@ -141,6 +141,7 @@ document.addEventListener("DOMContentLoaded", function () {
         inputLocation.value = '';
         selectCategory.value = '';
         selectSubcategory.innerHTML = '<option value="">Todas las subcategorías</option>';
+        localStorage.removeItem('private_services_filter');
         renderAds(allAds);
     });
 });
@@ -460,10 +461,9 @@ function initAdCarousels() {
             index = (index + 1) % images.length;
             img.src = images[index];
             applyCrop(img, crops[index]);
-        }, 3000);
+        }, 5000);
     });
 }
-
 
 function renderPagination(paginatedData, type) {
     let html = `<ul class="pagination pagination-sm">`;
@@ -745,6 +745,10 @@ function createAdCard(ad){
 
 // Acción VER
 function handleVer(url) {
+
+    // Guardamos siempre desde dónde vino
+    localStorage.setItem("last_ads_page", window.location.href);
+
     if (!isAuthenticated) {
         requireLogin("ver", { url });
         return;

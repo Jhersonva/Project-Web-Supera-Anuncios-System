@@ -57,6 +57,26 @@
 
     <script>
 
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const isAuthenticated = Boolean(window.IS_AUTHENTICATED);
+            const action = localStorage.getItem("pending_action");
+            const payloadRaw = localStorage.getItem("pending_payload");
+
+            if (isAuthenticated && action) {
+
+                const payload = payloadRaw ? JSON.parse(payloadRaw) : null;
+
+                localStorage.removeItem("pending_action");
+                localStorage.removeItem("pending_payload");
+
+                if (action === "ver" && payload?.url) {
+                    window.location.href = payload.url;
+                }
+            }
+
+        });
+
     @auth
         window.PROFILE_COMPLETE = @json(auth()->user()->is_profile_complete);
         window.PROFILE_CONFIG_URL = "{{ route('profile.index') }}";
@@ -228,7 +248,6 @@
     });
 
 });
-
 
     </script>
 

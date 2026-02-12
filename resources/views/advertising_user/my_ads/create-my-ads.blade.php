@@ -757,8 +757,7 @@
                         name="images[]"
                         id="ownImagesInput"
                         class="form-control"
-                        accept="image/*"
-                        multiple
+                        accept="image/*"                   
                         >
                     
                     <!-- DATA DE CROP -->
@@ -1039,6 +1038,27 @@ window.ALERTS = @json($alertsPrepared);
             e.preventDefault();
             return false;
         }
+    });
+
+    /* Script para el botón de envío del anuncio */
+    document.getElementById('submitAdBtn').addEventListener('click', function () {
+
+        const btn = this;
+
+        // Si ya está deshabilitado, no hacer nada
+        if (btn.disabled) return;
+
+        // Deshabilitar inmediatamente
+        btn.disabled = true;
+
+        // Cambiar texto para feedback visual
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
+
+        // Opcional: marcar publish
+        document.getElementById('publishInput').value = 1;
+
+        // Enviar formulario
+        document.getElementById('adForm').submit();
     });
 
     const FORM_MODE = "{{ isset($ad) ? 'edit' : 'create' }}";

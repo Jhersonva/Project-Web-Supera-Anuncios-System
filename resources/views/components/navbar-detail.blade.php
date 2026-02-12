@@ -14,3 +14,24 @@
         {{ $ad->created_at->format('d/m/Y') }}
     </span>
 </nav>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const backButton = document.querySelector("a[onclick='history.back()']");
+        const lastPage = localStorage.getItem("last_ads_page");
+
+        if (backButton && lastPage) {
+
+            backButton.onclick = function (e) {
+                e.preventDefault();
+
+                // Limpiamos para que no quede guardado eternamente
+                localStorage.removeItem("last_ads_page");
+
+                window.location.href = lastPage;
+            };
+        }
+
+    });
+</script>

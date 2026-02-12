@@ -16,9 +16,9 @@ function requireLogin(action, payload = null) {
         cancelButtonText: "Crear cuenta"
     }).then((result) => {
         if (result.isConfirmed) {
-            window.location.href = "/auth/login";
+            window.location.replace("/auth/login");
         } else {
-            window.location.href = "/auth/register";
+            window.location.replace("/auth/register");
         }
     });
 }
