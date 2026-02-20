@@ -95,7 +95,7 @@
         </div>
 
         <!-- FORMULARIO -->
-        <form method="POST" action="{{ route('recharges.store') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('recharges.store') }}" enctype="multipart/form-data" novalidate>
             @csrf
 
             <input type="hidden" name="monto" id="inputMonto">
@@ -108,7 +108,6 @@
                     name="img_cap_pago" 
                     class="form-control mt-2" 
                     accept="image/*" 
-                    required
                     id="imgComprobante"
                 >
                 <!-- Preview de la imagen -->
@@ -117,7 +116,7 @@
                 </div>
             </div>
 
-            <button id="btnRecargar" class="btn btn-danger w-100 mt-4 py-2 fw-bold" type="submit">
+            <button id="btnEnviarRecarga" class="btn btn-danger w-100 mt-4 py-2 fw-bold" type="submit">
                 Enviar solicitud de recarga
             </button>
         </form>
@@ -344,6 +343,50 @@ document.querySelectorAll('.btn-delete-recharge').forEach(btn => {
     });
 });
 
+// No actualizar el formulario
+document.addEventListener("DOMContentLoaded", function () {
+
+    const form = document.querySelector('form[action="{{ route('recharges.store') }}"]');
+
+    form.addEventListener('submit', function (e) {
+
+        e.preventDefault(); 
+
+        const monto   = document.getElementById('montoLibre').value.trim();
+        const metodo  = document.getElementById('inputMetodo').value;
+        const imagen  = document.getElementById('imgComprobante').files.length;
+
+        let errores = [];
+
+        if (!monto || monto < 1) {
+            errores.push('Debes ingresar un monto válido.');
+        }
+
+        if (!metodo) {
+            errores.push('Debes seleccionar un método de pago.');
+        }
+
+        if (!imagen) {
+            errores.push('Debes subir el comprobante de pago.');
+        }
+
+        if (errores.length > 0) {
+
+            Swal.fire({
+                icon: 'warning',
+                title: 'Completa todos los campos',
+                html: `<ul style="text-align:left;">${errores.map(e => `<li>${e}</li>`).join('')}</ul>`
+            });
+
+            return; 
+
+        }
+
+        form.submit(); 
+
+    });
+
+});
 </script>
 
 @endsection

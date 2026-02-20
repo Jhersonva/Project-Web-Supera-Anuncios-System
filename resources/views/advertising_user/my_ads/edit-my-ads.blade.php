@@ -86,7 +86,7 @@
         {{-- Título --}}
         <div class="field-card" id="titleContainer">
             <label class="fw-semibold">Título del Anuncio</label>
-            <input type="text" class="form-control" name="title" value="{{ $ad->title }}">
+            <input type="text" class="form-control" name="title" value="{{ old('title', $ad->title) }}">
         </div>
 
         {{-- Descripción --}}
@@ -731,9 +731,6 @@
 
             <ul class="mb-0 ps-3">
                 <li>El área dentro del marco es lo que se mostrará en el anuncio.</li>
-                <li>Puedes mover la imagen para centrar lo más importante.</li>
-                <li>El tamaño visible tiene proporción horizontal optimizada para las tarjetas.</li>
-                <li>Todo lo que quede fuera del marco no será visible.</li>
             </ul>
         </div>
 

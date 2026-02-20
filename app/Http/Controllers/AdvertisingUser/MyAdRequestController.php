@@ -540,54 +540,89 @@ class MyAdRequestController extends Controller
 
         $ad = Advertisement::with(['images', 'fields_values'])->findOrFail($id);
         $cropPayload = json_decode($request->input('crop_data', '[]'), true);
-        
-        // Si está publicado, solo permitir ciertos campos
+
         $isPublished = $ad->status === 'publicado';
-        
         $user = auth()->user();
+
+        // Convertir vacío a null para evitar problemas con nullable
+        $request->merge([
+            'contact_location' => $request->contact_location ?: null
+        ]);
 
         if ($isPublished) {
 
-            // SOLO CAMPOS EDITABLES
-            $request->validate([
+            $rules = [
                 'department'       => 'required|string|max:255',
                 'province'         => 'required|string|max:255',
                 'district'         => 'required|string|max:255',
-                'contact_location' => 'required|string|max:255',
+                'contact_location' => 'nullable|string|max:255',
                 'whatsapp'         => 'required|string|max:9',
                 'call_phone'       => 'required|string|max:9',
-            ]);
+            ];
 
         } else {
 
-            $request->validate([
-                'category_id'     => 'required|exists:ad_categories,id',
-                'subcategory_id'  => 'required|exists:ad_subcategories,id',
+            $rules = [
+                'category_id'      => 'required|exists:ad_categories,id',
+                'subcategory_id'   => 'required|exists:ad_subcategories,id',
 
-                'title'           => 'required|string|min:3|max:70',
-                'description'     => 'required|string|min:3',
+                'title'            => 'required|string|min:3|max:70',
+                'description'      => 'required|string|min:3',
 
-                'department'      => 'required|string|max:255',
-                'province'        => 'required|string|max:255',
-                'district'        => 'required|string|max:255',
-                'contact_location'=> 'required|string|max:255',
+                'department'       => 'required|string|max:255',
+                'province'         => 'required|string|max:255',
+                'district'         => 'required|string|max:255',
+                'contact_location' => 'nullable|string|max:255',
 
-                'whatsapp'        => 'required|string|max:9',
-                'call_phone'      => 'required|string|max:9',
+                'whatsapp'         => 'required|string|max:9',
+                'call_phone'       => 'required|string|max:9',
 
-                'amount_visible'  => 'required|in:0,1',
-                'amount'          => 'required_if:amount_visible,1|numeric|min:0',
-                //'amount_text' => 'required_if:amount_visible,0|string|max:50',
-                'amount_currency' => 'required_if:amount_visible,1|in:PEN,USD',
+                'amount_visible'   => 'required|in:0,1',
+                'amount'           => 'required_if:amount_visible,1|numeric|min:0',
+                'amount_currency'  => 'required_if:amount_visible,1|in:PEN,USD',
 
-                'days_active'     => 'required|integer|min:2',
+                'days_active'      => 'required|integer|min:2',
 
-                'images'          => 'nullable|array|max:5',
-                'images.*'        => 'image|mimes:jpg,jpeg,png,webp|max:8192',
+                'images'           => 'nullable|array|max:5',
+                'images.*'         => 'image|mimes:jpg,jpeg,png,webp|max:8192',
 
-                'dynamic'         => 'nullable|array',
-            ]);
+                'dynamic'          => 'nullable|array',
+            ];
         }
+
+        $messages = [
+            'required' => 'El campo :attribute es obligatorio.',
+            'required_if' => 'El campo :attribute es obligatorio.',
+            'exists' => 'El :attribute seleccionado no es válido.',
+            'string' => 'El campo :attribute debe ser texto.',
+            'numeric' => 'El campo :attribute debe ser un número.',
+            'integer' => 'El campo :attribute debe ser un número entero.',
+            'min' => 'El campo :attribute no cumple el mínimo permitido.',
+            'max' => 'El campo :attribute supera el máximo permitido.',
+            'in' => 'El valor seleccionado para :attribute no es válido.',
+            'image' => 'El archivo debe ser una imagen válida.',
+            'mimes' => 'La imagen debe ser jpg, jpeg, png o webp.',
+        ];
+
+        $attributes = [
+            'category_id' => 'categoría',
+            'subcategory_id' => 'subcategoría',
+            'title' => 'título',
+            'description' => 'descripción',
+            'department' => 'departamento',
+            'province' => 'provincia',
+            'district' => 'distrito',
+            'contact_location' => 'ubicación de contacto',
+            'whatsapp' => 'whatsapp',
+            'call_phone' => 'teléfono',
+            'amount_visible' => 'tipo de monto',
+            'amount' => 'monto',
+            'amount_currency' => 'moneda',
+            'days_active' => 'días activo',
+            'images' => 'imágenes',
+        ];
+
+        $request->validate($rules, $messages, $attributes);
 
         // ===== VALIDAR CAMPOS DINÁMICOS REALES =====
         if (!$isPublished && $request->filled('subcategory_id')) {

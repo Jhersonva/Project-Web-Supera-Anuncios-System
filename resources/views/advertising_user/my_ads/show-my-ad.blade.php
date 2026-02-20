@@ -64,7 +64,15 @@
 <div class="container mt-4 mb-5 ad-container">
 
     {{-- VOLVER --}}
-    <a href="{{ url()->previous() }}" class="text-dark">
+    @auth
+        @if(in_array(auth()->user()->role_id, [1,3]))
+            <a href="{{ route('admin.ads-history.index') }}" class="text-dark">
+        @else
+            <a href="{{ route('my-ads.index') }}" class="text-dark">
+        @endif
+    @else
+        <a href="{{ route('home') }}" class="text-dark">
+    @endauth
         <i class="fa-solid fa-arrow-left fs-5"></i>
     </a>
 

@@ -38,7 +38,7 @@
 
         <!-- FORMULARIO IZQUIERDA -->
         <div class="col-lg-8 col-md-7">
-            <form id="adForm" action="{{ isset($ad) ? route('my-ads.updateDraft', $ad->id) : route('my-ads.storeAdRequest') }}" method="POST" enctype="multipart/form-data">
+            <form id="adForm" action="{{ isset($ad) ? route('my-ads.updateDraft', $ad->id) : route('my-ads.storeAdRequest') }}" method="POST" enctype="multipart/form-data" novalidate>
                 @csrf
 
                 {{-- CATEGORÍA --}}
@@ -984,9 +984,6 @@
 
             <ul class="mb-0 ps-3">
                 <li>El área dentro del marco es lo que se mostrará en el anuncio.</li>
-                <li>Puedes mover la imagen para centrar lo más importante.</li>
-                <li>El tamaño visible tiene proporción horizontal optimizada para las tarjetas.</li>
-                <li>Todo lo que quede fuera del marco no será visible.</li>
             </ul>
         </div>
 
@@ -1628,11 +1625,77 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-document.getElementById('submitAdBtn').addEventListener('click', function () {
+document.getElementById('submitAdBtn').addEventListener('click', function (e) {
+    e.preventDefault();
 
-    const btn = this;
+    const btn  = this;
+    const form = document.getElementById('adForm');
 
     if (btn.disabled) return;
+
+    let errores = [];
+
+    // Validar TODOS los campos required
+    const requiredFields = form.querySelectorAll('[required]');
+
+    requiredFields.forEach(field => {
+
+        if (field.disabled || field.closest('.d-none')) return;
+
+        if (!field.value || field.value.trim() === '') {
+            // Buscar el label que está justo antes del input
+            const nombres = {
+                title: 'Título del Anuncio',
+                description: 'Descripción',
+                requirements: 'Requisitos',
+                benefits: 'Beneficios',
+                district: 'Distrito',
+                province: 'Provincia',
+                department: 'Departamento',
+                amount: 'Monto / Precio / Sueldo'
+            };
+
+            let label;
+
+            // Si es campo dinámico
+            if (field.name.startsWith('dynamic')) {
+
+                const dynamicLabel = field.closest('.field-card')?.querySelector('label');
+
+                if (dynamicLabel) {
+                    label = dynamicLabel.innerText.replace('*','').trim();
+                } else {
+                    label = 'Campo obligatorio';
+                }
+
+            } else {
+
+                label = nombres[field.name] || field.name;
+            }
+
+            errores.push(label + ' es obligatorio.');
+        }
+
+    });
+
+    // VALIDAR IMÁGENES
+    const existingImages = document.querySelectorAll('.image-wrapper:not(.removed)').length;
+    const newImages = document.getElementById('ownImagesInput').files.length;
+
+    if (existingImages === 0 && newImages === 0) {
+        errores.push('Imágenes del anuncio es obligatorio.');
+    }
+
+    if (errores.length > 0) {
+
+        Swal.fire({
+            icon: 'error',
+            title: 'Corrige los errores',
+            html: `<ul style="text-align:left;">${errores.map(e => `<li>${e}</li>`).join('')}</ul>`
+        });
+
+        return; 
+    }
 
     // SERIALIZAR CROPS
     const cropPayload = imagesState
@@ -1655,14 +1718,14 @@ document.getElementById('submitAdBtn').addEventListener('click', function () {
         return;
     }
 
-    // Si sí tiene saldo suficiente
+    // Enviar
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
 
     document.getElementById('save_as_draft').value = 0;
     document.getElementById('publishInput').value = 1;
 
-    document.getElementById('adForm').submit();
+    form.submit(); 
 });
 
 function checkBalanceBeforeSubmit(finalPrice) {
