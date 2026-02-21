@@ -186,7 +186,7 @@ class MyAdRequestController extends Controller
 
             // IMÁGENES OBLIGATORIAS
             'images'   => 'nullable|array|max:5',
-            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:8192',
+            //'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:8192',
             'crop_data' => 'nullable|string',
 
             // CAMPOS DINÁMICOS (OBLIGATORIOS)
@@ -455,28 +455,123 @@ class MyAdRequestController extends Controller
         $cropPayload = [];
 
         if ($request->filled('crop_data')) {
-            $cropPayload = json_decode($request->crop_data, true) ?? [];
+
+            $decoded = json_decode($request->crop_data, true) ?? [];
+
+            // SI VIENE COMO OBJETO (1 SOLA IMAGEN), convertirlo a array
+            if (isset($decoded['x'])) {
+                $cropPayload[] = [
+                    'cropData' => $decoded
+                ];
+            } else {
+                $cropPayload = $decoded;
+            }
         }
 
         if ($request->hasFile('images')) {
 
-            $files = $request->file('images');
+            $directory = public_path('images/advertisementss');
 
-            foreach ($files as $index => $file) {
+            if (!file_exists($directory)) {
+                mkdir($directory, 0755, true);
+            }
+
+            foreach ($request->file('images') as $index => $file) {
 
                 if (!$file->isValid()) {
                     continue;
                 }
 
                 $filename = time().'_'.uniqid().'.webp';
-                $path = public_path('images/advertisementss/'.$filename);
+                $path = $directory.'/'.$filename;
 
-                $manager = new ImageManager(new Driver());
-                $image = $manager->read($file);
-                $image->toWebp(85)->save($path);
+                // Obtener dimensiones originales
+                [$originalWidth, $originalHeight, $type] = getimagesize($file->getPathname());
 
-                // obtener crop correspondiente por índice
-                $cropDataForImage = $cropPayload[$index]['cropData'] ?? null;
+                $maxWidth  = 2500;
+                $maxHeight = 2500;
+
+                $newWidth  = $originalWidth;
+                $newHeight = $originalHeight;
+
+                /*
+                |--------------------------------------------------------------------------
+                | 1️⃣ Redimensionar solo si es gigante
+                |--------------------------------------------------------------------------
+                */
+
+                if ($originalWidth > $maxWidth || $originalHeight > $maxHeight) {
+
+                    $ratio = min($maxWidth / $originalWidth, $maxHeight / $originalHeight);
+
+                    $newWidth  = (int) ($originalWidth * $ratio);
+                    $newHeight = (int) ($originalHeight * $ratio);
+
+                    switch ($type) {
+                        case IMAGETYPE_JPEG:
+                            $source = imagecreatefromjpeg($file->getPathname());
+                            break;
+                        case IMAGETYPE_PNG:
+                            $source = imagecreatefrompng($file->getPathname());
+                            break;
+                        case IMAGETYPE_WEBP:
+                            $source = imagecreatefromwebp($file->getPathname());
+                            break;
+                        default:
+                            continue 2;
+                    }
+
+                    $resized = imagecreatetruecolor($newWidth, $newHeight);
+
+                    imagecopyresampled(
+                        $resized,
+                        $source,
+                        0, 0, 0, 0,
+                        $newWidth, $newHeight,
+                        $originalWidth, $originalHeight
+                    );
+
+                    imagewebp($resized, $path, 85);
+
+                    imagedestroy($source);
+                    imagedestroy($resized);
+
+                } else {
+
+                    $manager = new ImageManager(new Driver());
+                    $image   = $manager->read($file);
+                    $image->toWebp(85)->save($path);
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 2️⃣ Ajustar crop proporcionalmente si hubo resize
+                |--------------------------------------------------------------------------
+                */
+
+                $cropDataForImage = null;
+
+                if (isset($cropPayload[$index]['cropData'])) {
+                    $cropDataForImage = $cropPayload[$index]['cropData'];
+                }
+
+                if ($cropDataForImage && 
+                    ($originalWidth != $newWidth || $originalHeight != $newHeight)) {
+
+                    $scaleX = $newWidth / $originalWidth;
+                    $scaleY = $newHeight / $originalHeight;
+
+                    $cropDataForImage['x']      *= $scaleX;
+                    $cropDataForImage['y']      *= $scaleY;
+                    $cropDataForImage['width']  *= $scaleX;
+                    $cropDataForImage['height'] *= $scaleY;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 3️⃣ Guardar
+                |--------------------------------------------------------------------------
+                */
 
                 AdvertisementImage::create([
                     'advertisementss_id' => $ad->id,
@@ -1038,7 +1133,7 @@ class MyAdRequestController extends Controller
             'amount' => 'required_if:amount_visible,1|nullable|numeric|min:0',
             'remove_images' => 'nullable|string',
             'images'        => 'nullable|array|max:5',
-            'images.*'      => 'image|mimes:jpg,jpeg,png,webp|max:8192',
+            //'images.*'      => 'image|mimes:jpg,jpeg,png,webp|max:8192',
         ]);
 
         $user = auth()->user();
@@ -1250,12 +1345,12 @@ class MyAdRequestController extends Controller
         // =======================
         if ($request->hasFile('images')) {
 
-            $path = public_path('images/advertisementss');
-            if (!file_exists($path)) {
-                mkdir($path, 0777, true);
+            $directory = public_path('images/advertisementss');
+
+            if (!file_exists($directory)) {
+                mkdir($directory, 0755, true);
             }
 
-            // cuántas imágenes quedan actualmente
             $currentCount = AdvertisementImage::where(
                 'advertisementss_id',
                 $ad->id
@@ -1271,17 +1366,101 @@ class MyAdRequestController extends Controller
 
                 if ($currentCount >= 5) break;
 
-                $filename = time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
-                $file->move($path, $filename);
+                if (!$file->isValid()) continue;
+
+                $filename = time().'_'.uniqid().'.webp';
+                $path = $directory.'/'.$filename;
+
+                [$originalWidth, $originalHeight, $type] = getimagesize($file->getPathname());
+
+                $maxWidth  = 2500;
+                $maxHeight = 2500;
+
+                $newWidth  = $originalWidth;
+                $newHeight = $originalHeight;
+
+                /*
+                |--------------------------------------------------------------------------
+                | 1️⃣ Redimensionar solo si es gigante
+                |--------------------------------------------------------------------------
+                */
+
+                if ($originalWidth > $maxWidth || $originalHeight > $maxHeight) {
+
+                    $ratio = min($maxWidth / $originalWidth, $maxHeight / $originalHeight);
+
+                    $newWidth  = (int) ($originalWidth * $ratio);
+                    $newHeight = (int) ($originalHeight * $ratio);
+
+                    switch ($type) {
+                        case IMAGETYPE_JPEG:
+                            $source = imagecreatefromjpeg($file->getPathname());
+                            break;
+                        case IMAGETYPE_PNG:
+                            $source = imagecreatefrompng($file->getPathname());
+                            break;
+                        case IMAGETYPE_WEBP:
+                            $source = imagecreatefromwebp($file->getPathname());
+                            break;
+                        default:
+                            continue 2;
+                    }
+
+                    $resized = imagecreatetruecolor($newWidth, $newHeight);
+
+                    imagecopyresampled(
+                        $resized,
+                        $source,
+                        0, 0, 0, 0,
+                        $newWidth, $newHeight,
+                        $originalWidth, $originalHeight
+                    );
+
+                    imagewebp($resized, $path, 85);
+
+                    imagedestroy($source);
+                    imagedestroy($resized);
+
+                } else {
+
+                    $manager = new ImageManager(new Driver());
+                    $image   = $manager->read($file);
+                    $image->toWebp(85)->save($path);
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 2️⃣ Ajustar crop proporcionalmente si hubo resize
+                |--------------------------------------------------------------------------
+                */
 
                 $uidFromJs = $newImagesPayload[$index]['uid'] ?? null;
+                $cropDataForImage = $newImagesPayload[$index]['cropData'] ?? null;
+
+                if ($cropDataForImage &&
+                    ($originalWidth != $newWidth || $originalHeight != $newHeight)) {
+
+                    $scaleX = $newWidth / $originalWidth;
+                    $scaleY = $newHeight / $originalHeight;
+
+                    $cropDataForImage['x']      *= $scaleX;
+                    $cropDataForImage['y']      *= $scaleY;
+                    $cropDataForImage['width']  *= $scaleX;
+                    $cropDataForImage['height'] *= $scaleY;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | 3️⃣ Guardar
+                |--------------------------------------------------------------------------
+                */
 
                 AdvertisementImage::create([
                     'advertisementss_id' => $ad->id,
-                    'image' => 'images/advertisementss/'.$filename,
-                    'crop_data' => null,
-                    'is_main' => $currentCount === 0,
-                    'uid' => $uidFromJs
+                    'image'      => 'images/advertisementss/'.$filename,
+                    'crop_data'  => $cropDataForImage,
+                    'is_main'    => $currentCount === 0,
+                    'uid'        => $uidFromJs
                 ]);
 
                 $currentCount++;
@@ -1292,6 +1471,10 @@ class MyAdRequestController extends Controller
 
         foreach ($cropPayload as $imgCrop) {
 
+            $cropData = $imgCrop['cropData'] ?? null;
+
+            if (!$cropData) continue;
+
             // IMAGEN EXISTENTE
             if (!empty($imgCrop['id'])) {
 
@@ -1300,8 +1483,9 @@ class MyAdRequestController extends Controller
                     ->first();
 
                 if ($img) {
-                    $img->crop_data = $imgCrop['cropData'] ?? null;
-                    $img->save();
+                    $img->update([
+                        'crop_data' => $cropData
+                    ]);
                 }
 
                 continue;
@@ -1315,8 +1499,9 @@ class MyAdRequestController extends Controller
                     ->first();
 
                 if ($img) {
-                    $img->crop_data = $imgCrop['cropData'] ?? null;
-                    $img->save();
+                    $img->update([
+                        'crop_data' => $cropData
+                    ]);
                 }
             }
         }

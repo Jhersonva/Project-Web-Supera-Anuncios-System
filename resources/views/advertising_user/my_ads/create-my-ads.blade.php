@@ -1377,7 +1377,7 @@ function initCropper(src, index) {
 function saveTempCrop() {
     if (!cropper || currentIndex === null) return;
 
-    tempCropBuffer[currentIndex] = cropper.getData(true);
+    tempCropBuffer[currentIndex] = cropper.getData();
 }
 
 function saveCurrentCrop() {
@@ -1385,7 +1385,7 @@ function saveCurrentCrop() {
 
     imagesState[currentIndex].canvasData  = cropper.getCanvasData();
     imagesState[currentIndex].cropBoxData = cropper.getCropBoxData();
-    imagesState[currentIndex].cropData    = cropper.getData(true);
+    imagesState[currentIndex].cropData    = cropper.getData();
 }
 
 /* confirmar encuadre */
@@ -1703,7 +1703,7 @@ document.getElementById('submitAdBtn').addEventListener('click', function (e) {
         .map(img => ({
             id: img.id ?? null,
             uid: img.uid,
-            cropData: img.cropData
+            cropData: img.deleted ? null : img.cropData
         }));
 
     document.getElementById('crop_data').value =
@@ -2693,7 +2693,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 fieldsContainer.innerHTML += `
                     <div class="field-card">
-                        <label class="fw-semibold" required>${f.name}</label>
+                        <label class="fw-semibold">${f.name}</label>
                         ${input}
                     </div>
                 `;
