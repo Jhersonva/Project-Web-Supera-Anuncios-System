@@ -247,6 +247,8 @@ Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])
         ->name('auth.register');
 
+    Route::get('/verify/{token}', [AuthController::class, 'verify'])->name('auth.verify');
+
     // Logout
     Route::post('/logout', [AuthController::class, 'logout'])
         ->name('auth.logout');
@@ -259,6 +261,9 @@ Route::prefix('auth')->group(function () {
     })->name('api.alerts');
 
 });
+
+Route::view('/registro/esperando-verificacion', 'auth.verify-wait')
+    ->name('register.wait');
 
 /*RUTAS PÚBLICAS — Libro de Reclamaciones*/
 Route::get('/libro-de-reclamaciones', [ComplaintBookSettingController::class, 'publicView'])->name('public.complaint-book');

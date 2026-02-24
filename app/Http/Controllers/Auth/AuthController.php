@@ -9,7 +9,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\VerifyUserMail;
+use Illuminate\Support\Facades\Cache;
 
 class AuthController extends Controller
 {
@@ -26,40 +29,39 @@ class AuthController extends Controller
                 'account_type' => 'required|in:person,business',
 
                 'full_name' => 'required_if:account_type,person|max:120',
-                'dni'       => 'nullable|required_if:account_type,person|size:8|unique:users,dni',
+                'dni' => 'nullable|required_if:account_type,person|size:8|unique:users,dni',
 
                 'company_reason' => 'nullable|required_if:account_type,business|max:150',
-                'ruc'            => 'nullable|required_if:account_type,business|size:11|unique:users,ruc',
+                'ruc' => 'nullable|required_if:account_type,business|size:11|unique:users,ruc',
 
-                'email'    => 'required|email|max:120|unique:users,email',
+                'email' => 'required|email|max:120|unique:users,email',
                 'password' => 'required|string|min:8',
 
-                'call_phone'    => 'nullable|string|max:9|unique:users,call_phone',
+                'call_phone' => 'nullable|string|max:9|unique:users,call_phone',
                 'locality' => 'nullable|string|max:150',
             ]);
 
-            $role = Role::where('name', 'advertising_user')->firstOrFail();
+            $token = Str::random(64);
 
-            $user = User::create([
-                'role_id' => $role->id,
-                'account_type' => $validated['account_type'],
+            // guardar datos temporalmente
+            Cache::put(
+                'register_'.$token,
+                $validated,
+                now()->addMinutes(30)
+            );
 
-                'full_name'      => $validated['full_name'] ?? null,
-                'dni'            => $validated['dni'] ?? null,
-                'company_reason' => $validated['company_reason'] ?? null,
-                'ruc'            => $validated['ruc'] ?? null,
+            // objeto temporal solo para el mail
+            $user = (object) [
+                'email' => $validated['email'],
+                'full_name' => $validated['full_name'] ?? null,
+                'verification_token' => $token,
+                'verification_expires_at' => now()->addMinutes(30)
+            ];
 
-                'email'    => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'call_phone'    => $validated['call_phone'] ?? null,
-                'locality' => $validated['locality'] ?? null,
-            ]);
-
-            Auth::login($user);
+            Mail::to($validated['email'])->send(new VerifyUserMail($user));
 
             return response()->json([
-                'message' => 'Usuario creado correctamente',
-                'redirect' => route('home')
+                'message' => 'Revisa tu correo para verificar tu cuenta.'
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -76,6 +78,41 @@ class AuthController extends Controller
                 'message' => 'Error al crear la cuenta'
             ], 500);
         }
+    }
+
+    public function verify($token)
+    {
+        $data = Cache::get('register_'.$token);
+
+        if (!$data) {
+            return view('auth.verify', ['status' => 'expired']);
+        }
+
+        $role = Role::where('name', 'advertising_user')->firstOrFail();
+
+        $user = User::create([
+            'role_id' => $role->id,
+            'account_type' => $data['account_type'],
+
+            'full_name' => $data['full_name'] ?? null,
+            'dni' => $data['dni'] ?? null,
+            'company_reason' => $data['company_reason'] ?? null,
+            'ruc' => $data['ruc'] ?? null,
+
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'call_phone' => $data['call_phone'] ?? null,
+            'locality' => $data['locality'] ?? null,
+
+            'is_verified' => true,
+            'verified_at' => now()
+        ]);
+
+        Cache::forget('register_'.$token);
+
+        Auth::login($user);
+
+        return view('auth.verify', ['status' => 'success']);
     }
 
     /**

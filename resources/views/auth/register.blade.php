@@ -27,10 +27,6 @@
     </p>
 
     <div class="text-center mb-3">
-      {{--
-      <img src="{{ asset('assets/icons/logo.jpg') }}" width="80" class="rounded-3 mb-2">
-      <h6 class="fw-bold">VIVA ANUNCIOS!</h6>
-      --}}
       <img src="{{ system_logo() }}" alt="{{ system_company_name() }}" width="90" class="rounded-3 mb-2">
     </div>
 
@@ -172,7 +168,7 @@
             </label>
         </div>
 
-        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold mt-4">
+        <button id="registerBtn" type="submit" class="btn btn-primary w-100 py-2 fw-bold mt-4">
             Registrarse
         </button>
       </form>
@@ -277,19 +273,32 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 document.getElementById('registerForm').addEventListener('submit', function (e) {
+
     e.preventDefault();
 
     const form = this;
     const formData = new FormData(form);
 
+    const btn = document.getElementById('registerBtn');
+    const originalText = btn.innerHTML;
+
+    // modo cargando
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Registrando...';
+
     // Validación rápida frontend
     if (!document.getElementById('acceptTerms').checked) {
+
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+
         Swal.fire({
             icon: 'warning',
             title: 'Acepta los términos',
             text: 'Debes aceptar los términos y condiciones.',
             confirmButtonColor: '#0d6efd'
         });
+
         return;
     }
 
@@ -302,26 +311,27 @@ document.getElementById('registerForm').addEventListener('submit', function (e) 
         body: formData
     })
     .then(async response => {
+
         const data = await response.json();
 
         if (!response.ok) {
             throw data;
         }
 
-        // REGISTRO EXITOSO
         Swal.fire({
             icon: 'success',
-            title: 'Cuenta creada',
-            text: 'Tu cuenta fue creada correctamente.',
+            title: 'Verifica tu correo',
+            text: 'Te enviamos un enlace para activar tu cuenta.',
             confirmButtonColor: '#0d6efd'
         }).then(() => {
-            window.location.href = data.redirect ?? '/';
+
+            window.location.href = "{{ route('register.wait') }}";
+
         });
 
     })
     .catch(error => {
 
-        // ERRORES DE VALIDACIÓN
         if (error.errors) {
 
             const messages = Object.values(error.errors)
@@ -336,14 +346,24 @@ document.getElementById('registerForm').addEventListener('submit', function (e) 
             });
 
         } else {
+
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
                 text: error.message ?? 'Error inesperado',
                 confirmButtonColor: '#dc3545'
             });
+
         }
+
+    })
+    .finally(() => {
+
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+
     });
+
 });
 </script>
 

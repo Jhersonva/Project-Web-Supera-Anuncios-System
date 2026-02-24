@@ -17,6 +17,8 @@ class User extends Authenticatable
         'company_reason',
         'ruc',
         'password',
+        'verification_token',
+        'verification_expires_at',
         'email',
         'phone',
         'locality',
