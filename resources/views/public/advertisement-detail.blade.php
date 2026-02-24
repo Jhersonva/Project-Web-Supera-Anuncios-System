@@ -75,7 +75,9 @@
         </p>
 
         <p><i class="fa-solid fa-calendar"></i>
-            {{ $ad->created_at->format('d/m/Y') }}
+            {{ $ad->published_at 
+                ? $ad->published_at->format('d/m/Y')
+                : 'Pendiente' }}
         </p>
 
         <p>

@@ -30,6 +30,7 @@ class Advertisement extends Model
         'days_active',
         'expires_at',
         'published',
+        'published_at',
         'stars',
         'urgent_publication',
         'urgent_price',
@@ -90,6 +91,7 @@ class Advertisement extends Model
 
         'stars' => 'integer',
         'days_active' => 'integer',
+        'published_at' => 'datetime',
         'expires_at' => 'datetime',
     ];
 
@@ -141,8 +143,12 @@ class Advertisement extends Model
 
     public function getTimeAgoAttribute()
     {
-        return $this->created_at
-            ? $this->created_at->diffForHumans()
-            : null;
+        if (!$this->published_at) {
+            return 'Pendiente de aprobación';
+        }
+
+        return $this->published_at
+            ->locale('es')
+            ->diffForHumans();
     }
 }

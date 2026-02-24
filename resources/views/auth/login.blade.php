@@ -23,11 +23,6 @@
     <h2 class="fw-bold mb-3 text-center">Bienvenido de nuevo</h2>
 
     <div class="text-center mb-3">
-      {{--
-      
-      <img src="{{ asset('assets/icons/logo.jpg') }}" width="80" class="rounded-3 mb-2">
-      <h6 class="fw-bold">VIVA ANUNCIOS!</h6>-->
-      --}}
       <img src="{{ system_logo() }}" alt="{{ system_company_name() }}" width="90" class="rounded-3 mb-2">
     </div>
 

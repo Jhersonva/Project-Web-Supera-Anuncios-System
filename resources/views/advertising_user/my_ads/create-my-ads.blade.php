@@ -362,6 +362,7 @@
                         readonly
                     >
 
+                    {{--
                     <label class="fw-semibold mt-2">Fecha de expiración</label>
                     <input
                         type="text"
@@ -371,7 +372,7 @@
                             ? $ad->expires_at->format('d/m/Y')
                             : '' }}"
                         readonly
-                    >
+                    >--}}
                 </div>
 
                 <!-- PUBLICACIÓN URGENTE LISTO-->
@@ -1703,8 +1704,9 @@ document.getElementById('submitAdBtn').addEventListener('click', function (e) {
         .map(img => ({
             id: img.id ?? null,
             uid: img.uid,
-            cropData: img.deleted ? null : img.cropData
-        }));
+            cropData: img.cropData ?? null
+        }))
+        .filter(item => item.cropData !== null);
 
     document.getElementById('crop_data').value =
         JSON.stringify(cropPayload);

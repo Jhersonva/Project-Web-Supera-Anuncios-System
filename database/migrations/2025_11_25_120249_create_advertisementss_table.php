@@ -27,6 +27,7 @@ return new class extends Migration {
             $table->unsignedInteger('days_active')->default(1);
             $table->dateTime('expires_at')->nullable();
             $table->boolean('published')->default(false);
+            $table->timestamp('published_at')->nullable();
             $table->unsignedTinyInteger('stars')->default(0); 
             $table->boolean('urgent_publication')->default(false); 
             $table->decimal('urgent_price', 10, 2)->nullable();

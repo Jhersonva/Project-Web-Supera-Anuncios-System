@@ -23,7 +23,8 @@ class AdsHistoryController extends Controller
             if ($request->status === "publicado") {
                 $query->where('published', 1);
             } elseif ($request->status === "expirado") {
-                $query->where('expires_at', '<', now());
+               $query->whereNotNull('expires_at')
+                    ->where('expires_at', '<', now());
             }
         }
 
@@ -101,9 +102,16 @@ class AdsHistoryController extends Controller
     public function approve($id)
     {
         $ad = Advertisement::findOrFail($id);
-        $ad->status = 'publicado';
-        $ad->published = 1; 
-        $ad->save();
+
+        $publishedAt = now();
+        $expiresAt = $publishedAt->copy()->addDays($ad->days_active);
+
+        $ad->update([
+            'status' => 'publicado',
+            'published' => true,
+            'published_at' => $publishedAt,
+            'expires_at' => $expiresAt
+        ]);
 
         return back()->with('success', 'Anuncio aprobado correctamente.');
     }

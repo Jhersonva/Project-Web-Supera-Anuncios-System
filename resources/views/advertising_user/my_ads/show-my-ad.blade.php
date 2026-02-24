@@ -5,7 +5,7 @@
 @section('content')
 
 @php
-    $esExpirado = $ad->expires_at < now();
+    $esExpirado = $ad->expires_at && $ad->expires_at < now();
     $esPendiente = $ad->status === 'pendiente' && !$esExpirado;
     $esAprobado  = $ad->status === 'publicado' && !$esExpirado;
     $esRechazado = $ad->status === 'rechazado' && !$esExpirado;
@@ -163,7 +163,7 @@
 
             {{-- ESTADO DEL ANUNCIO --}}
             @php
-                $esExpirado = $ad->expires_at < now();
+                $esExpirado = $ad->expires_at && $ad->expires_at < now();
                 $esPendiente = $ad->status === 'pendiente' && !$esExpirado;
                 $esAprobado  = $ad->status === 'publicado' && !$esExpirado;
                 $esRechazado = $ad->status === 'rechazado' && !$esExpirado;
@@ -346,7 +346,12 @@
             {{-- DETALLES --}}
             <h5 class="fw-bold mt-4">Detalles del anuncio</h5>
             <ul class="text-secondary">
-                <li>Publicado: {{ $ad->created_at->locale('es')->diffForHumans() }}</li>
+                <li>
+                Publicado:
+                {{ $ad->published_at
+                    ? $ad->published_at->locale('es')->diffForHumans()
+                    : 'Pendiente de aprobación' }}
+                </li>
                 <li>Expira: {{ $ad->expires_at }}</li>
                 @if ($ad->urgent_publication)
                     <li class="text-danger fw-bold">Publicación urgente</li>

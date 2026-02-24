@@ -210,7 +210,7 @@ class MyAdRequestController extends Controller
         $user = auth()->user();
 
         $days = (int) $request->days_active;
-        $expiresAt = now()->addDays($days);
+        //$expiresAt = now()->addDays($days);
 
         // Subcategoría para calcular precio
         $subcategory = AdSubcategory::findOrFail($request->subcategory_id);
@@ -348,7 +348,8 @@ class MyAdRequestController extends Controller
             'days_active'           => $days,
             'published'             => false,
             'status'     => $status,
-            'expires_at' => $expiresAt,
+            'expires_at' => null,
+            'published_at' => null,
 
             // ===== PUBLICACIONES =====
             'urgent_publication'    => $request->boolean('urgent_publication'),
@@ -470,6 +471,10 @@ class MyAdRequestController extends Controller
 
         if ($request->hasFile('images')) {
 
+
+            ini_set('memory_limit', '512M');
+            set_time_limit(300);
+
             $directory = public_path('images/advertisementss');
 
             if (!file_exists($directory)) {
@@ -494,11 +499,7 @@ class MyAdRequestController extends Controller
                 $newWidth  = $originalWidth;
                 $newHeight = $originalHeight;
 
-                /*
-                |--------------------------------------------------------------------------
-                | 1️⃣ Redimensionar solo si es gigante
-                |--------------------------------------------------------------------------
-                */
+                //Redimensionar solo si es gigante
 
                 if ($originalWidth > $maxWidth || $originalHeight > $maxHeight) {
 
@@ -543,12 +544,7 @@ class MyAdRequestController extends Controller
                     $image->toWebp(85)->save($path);
                 }
 
-                /*
-                |--------------------------------------------------------------------------
-                | 2️⃣ Ajustar crop proporcionalmente si hubo resize
-                |--------------------------------------------------------------------------
-                */
-
+                //Ajustar crop proporcionalmente si hubo resize
                 $cropDataForImage = null;
 
                 if (isset($cropPayload[$index]['cropData'])) {
@@ -567,12 +563,7 @@ class MyAdRequestController extends Controller
                     $cropDataForImage['height'] *= $scaleY;
                 }
 
-                /*
-                |--------------------------------------------------------------------------
-                | 3️⃣ Guardar
-                |--------------------------------------------------------------------------
-                */
-
+                // Guardar
                 AdvertisementImage::create([
                     'advertisementss_id' => $ad->id,
                     'image' => 'images/advertisementss/'.$filename,
@@ -679,7 +670,7 @@ class MyAdRequestController extends Controller
                 'days_active'      => 'required|integer|min:2',
 
                 'images'           => 'nullable|array|max:5',
-                'images.*'         => 'image|mimes:jpg,jpeg,png,webp|max:8192',
+                //'images.*'         => 'image|mimes:jpg,jpeg,png,webp|max:8192',
 
                 'dynamic'          => 'nullable|array',
             ];
@@ -924,47 +915,116 @@ class MyAdRequestController extends Controller
             // SUBIR NUEVAS IMÁGENES (CONVERSIÓN A WEBP) SUBIR NUEVAS IMÁGENES (SIN BORRAR LAS EXISTENTES)
             if ($request->hasFile('images')) {
 
-                $path = public_path('images/advertisementss');
-                if (!file_exists($path)) {
-                    mkdir($path, 0777, true);
+                ini_set('memory_limit', '512M');
+                set_time_limit(300);
+
+                $directory = public_path('images/advertisementss');
+
+                if (!file_exists($directory)) {
+                    mkdir($directory, 0755, true);
                 }
 
-                $manager = new ImageManager(new Driver());
-
-                // contar cuántas imágenes quedan
-                $currentCount = AdvertisementImage::where('advertisementss_id', $ad->id)->count();
+                $currentCount = AdvertisementImage::where(
+                    'advertisementss_id',
+                    $ad->id
+                )->count();
 
                 $cropPayload = json_decode($request->crop_data, true) ?? [];
 
-                // solo UIDs de imágenes NUEVAS (id === null)
-                $newUids = collect($cropPayload)
-                    ->filter(fn ($i) => empty($i['id']) && !empty($i['uid']))
+                $cropMap = collect($cropPayload)->keyBy('uid');
+
+                $newImagesPayload = collect($cropPayload)
+                    ->filter(fn ($img) => empty($img['id']) && !empty($img['uid']))
                     ->values();
 
                 foreach ($request->file('images') as $index => $file) {
 
                     if ($currentCount >= 5) break;
 
+                    if (!$file->isValid()) continue;
+
                     $filename = time().'_'.uniqid().'.webp';
+                    $path = $directory.'/'.$filename;
 
-                    $image = $manager->read($file);
-                    $image->toWebp(85)->save($path.'/'.$filename);
+                    [$originalWidth, $originalHeight, $type] = getimagesize($file->getPathname());
 
-                    $cropPayload = json_decode($request->crop_data, true) ?? [];
+                    $maxWidth  = 2500;
+                    $maxHeight = 2500;
 
-                    // SOLO crops de imágenes nuevas (id === null)
-                    $newCrops = collect($cropPayload)
-                        ->filter(fn ($i) => empty($i['id']) && !empty($i['uid']))
-                        ->values();
+                    $newWidth  = $originalWidth;
+                    $newHeight = $originalHeight;
 
-                    $cropInfo = $newCrops->get($index);
 
+                    //Redimensionar solo si es gigante
+                    if ($originalWidth > $maxWidth || $originalHeight > $maxHeight) {
+
+                        $ratio = min($maxWidth / $originalWidth, $maxHeight / $originalHeight);
+
+                        $newWidth  = (int) ($originalWidth * $ratio);
+                        $newHeight = (int) ($originalHeight * $ratio);
+
+                        switch ($type) {
+                            case IMAGETYPE_JPEG:
+                                $source = imagecreatefromjpeg($file->getPathname());
+                                break;
+                            case IMAGETYPE_PNG:
+                                $source = imagecreatefrompng($file->getPathname());
+                                break;
+                            case IMAGETYPE_WEBP:
+                                $source = imagecreatefromwebp($file->getPathname());
+                                break;
+                            default:
+                                continue 2;
+                        }
+
+                        $resized = imagecreatetruecolor($newWidth, $newHeight);
+
+                        imagecopyresampled(
+                            $resized,
+                            $source,
+                            0, 0, 0, 0,
+                            $newWidth, $newHeight,
+                            $originalWidth, $originalHeight
+                        );
+
+                        imagewebp($resized, $path, 85);
+
+                        imagedestroy($source);
+                        imagedestroy($resized);
+
+                    } else {
+
+                        $manager = new ImageManager(new Driver());
+                        $image   = $manager->read($file);
+
+                        $image->toWebp(85)->save($path);
+                    }
+
+
+                    //Ajustar crop proporcionalmente si hubo resize
+
+                    $uidFromJs = $newImagesPayload[$index]['uid'] ?? null;
+                    $cropDataForImage = $cropMap[$uidFromJs]['cropData'] ?? null;
+
+                    if ($cropDataForImage &&
+                        ($originalWidth != $newWidth || $originalHeight != $newHeight)) {
+
+                        $scaleX = $newWidth / $originalWidth;
+                        $scaleY = $newHeight / $originalHeight;
+
+                        $cropDataForImage['x']      *= $scaleX;
+                        $cropDataForImage['y']      *= $scaleY;
+                        $cropDataForImage['width']  *= $scaleX;
+                        $cropDataForImage['height'] *= $scaleY;
+                    }
+
+                    // Guardar
                     AdvertisementImage::create([
                         'advertisementss_id' => $ad->id,
-                        'image'     => 'images/advertisementss/'.$filename,
-                        'is_main'   => $currentCount === 0,
-                        'uid'       => $cropInfo['uid'] ?? null,
-                        'crop_data' => $cropInfo['cropData'] ?? null,
+                        'image'      => 'images/advertisementss/'.$filename,
+                        'crop_data'  => $cropDataForImage,
+                        'is_main'    => $currentCount === 0,
+                        'uid'        => $uidFromJs
                     ]);
 
                     $currentCount++;
@@ -989,19 +1049,6 @@ class MyAdRequestController extends Controller
                 }
 
                 continue;
-            }
-
-            // IMAGEN NUEVA (buscar por UID)
-            if (!empty($imgCrop['uid'])) {
-
-                $img = AdvertisementImage::where('uid', $imgCrop['uid'])
-                    ->where('advertisementss_id', $ad->id)
-                    ->first();
-
-                if ($img) {
-                    $img->crop_data = $imgCrop['cropData'] ?? null;
-                    $img->save();
-                }
             }
         }
 
@@ -1234,7 +1281,8 @@ class MyAdRequestController extends Controller
 
             'status'     => $isPublishing ? 'pendiente' : 'draft',
             'published'  => false,
-            'expires_at' => $isPublishing ? now()->addDays($days) : null,
+            'expires_at' => null,
+            'published_at' => null,
 
             // PUBLICACIONES
             'urgent_publication'    => $request->boolean('urgent_publication'),
@@ -1345,6 +1393,9 @@ class MyAdRequestController extends Controller
         // =======================
         if ($request->hasFile('images')) {
 
+            ini_set('memory_limit', '512M');
+            set_time_limit(300);
+
             $directory = public_path('images/advertisementss');
 
             if (!file_exists($directory)) {
@@ -1357,6 +1408,8 @@ class MyAdRequestController extends Controller
             )->count();
 
             $cropPayload = json_decode($request->crop_data, true) ?? [];
+
+            $cropMap = collect($cropPayload)->keyBy('uid');
 
             $newImagesPayload = collect($cropPayload)
                 ->filter(fn ($img) => empty($img['id']) && !empty($img['uid']))
@@ -1379,12 +1432,7 @@ class MyAdRequestController extends Controller
                 $newWidth  = $originalWidth;
                 $newHeight = $originalHeight;
 
-                /*
-                |--------------------------------------------------------------------------
-                | 1️⃣ Redimensionar solo si es gigante
-                |--------------------------------------------------------------------------
-                */
-
+                //Redimensionar solo si es gigante
                 if ($originalWidth > $maxWidth || $originalHeight > $maxHeight) {
 
                     $ratio = min($maxWidth / $originalWidth, $maxHeight / $originalHeight);
@@ -1428,14 +1476,9 @@ class MyAdRequestController extends Controller
                     $image->toWebp(85)->save($path);
                 }
 
-                /*
-                |--------------------------------------------------------------------------
-                | 2️⃣ Ajustar crop proporcionalmente si hubo resize
-                |--------------------------------------------------------------------------
-                */
-
+                //Ajustar crop proporcionalmente si hubo resize
                 $uidFromJs = $newImagesPayload[$index]['uid'] ?? null;
-                $cropDataForImage = $newImagesPayload[$index]['cropData'] ?? null;
+                $cropDataForImage = $cropMap[$uidFromJs]['cropData'] ?? null;
 
                 if ($cropDataForImage &&
                     ($originalWidth != $newWidth || $originalHeight != $newHeight)) {
@@ -1449,12 +1492,8 @@ class MyAdRequestController extends Controller
                     $cropDataForImage['height'] *= $scaleY;
                 }
 
-                /*
-                |--------------------------------------------------------------------------
-                | 3️⃣ Guardar
-                |--------------------------------------------------------------------------
-                */
 
+                //Guardar
                 AdvertisementImage::create([
                     'advertisementss_id' => $ad->id,
                     'image'      => 'images/advertisementss/'.$filename,
@@ -1475,7 +1514,7 @@ class MyAdRequestController extends Controller
 
             if (!$cropData) continue;
 
-            // IMAGEN EXISTENTE
+            // SOLO ACTUALIZAR IMÁGENES EXISTENTES
             if (!empty($imgCrop['id'])) {
 
                 $img = AdvertisementImage::where('id', $imgCrop['id'])
@@ -1483,27 +1522,13 @@ class MyAdRequestController extends Controller
                     ->first();
 
                 if ($img) {
-                    $img->update([
-                        'crop_data' => $cropData
-                    ]);
-                }
 
-                continue;
-            }
-
-            // IMAGEN NUEVA → buscar por UID
-            if (!empty($imgCrop['uid'])) {
-
-                $img = AdvertisementImage::where('uid', $imgCrop['uid'])
-                    ->where('advertisementss_id', $ad->id)
-                    ->first();
-
-                if ($img) {
                     $img->update([
                         'crop_data' => $cropData
                     ]);
                 }
             }
+
         }
 
         // =======================

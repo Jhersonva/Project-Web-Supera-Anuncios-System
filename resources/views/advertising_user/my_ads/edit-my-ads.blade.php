@@ -768,6 +768,7 @@
 $existingImages = $ad->images->map(function ($img) {
     return [
         'id'       => $img->id,
+        'uid'      => 'db-'.$img->id,
         'src'      => asset($img->image),
         'cropData' => $img->crop_data,
         'is_main'  => $img->is_main,
