@@ -39,6 +39,46 @@ class AuthController extends Controller
 
                 'call_phone' => 'nullable|string|max:9|unique:users,call_phone',
                 'locality' => 'nullable|string|max:150',
+            ], [
+
+                // términos
+                'accept_terms.required' => 'Debes aceptar los términos y condiciones.',
+                'accept_terms.accepted' => 'Debes aceptar los términos y condiciones.',
+
+                // tipo cuenta
+                'account_type.required' => 'Debes seleccionar un tipo de cuenta.',
+
+                // persona
+                'full_name.required_if' => 'Debes ingresar tu nombre completo.',
+                'full_name.max' => 'El nombre no puede superar los 120 caracteres.',
+
+                'dni.required_if' => 'Debes ingresar tu DNI.',
+                'dni.size' => 'El DNI debe tener exactamente 8 dígitos.',
+                'dni.unique' => 'Este DNI ya está registrado.',
+
+                // empresa
+                'company_reason.required_if' => 'Debes ingresar la razón social.',
+                'company_reason.max' => 'La razón social es demasiado larga.',
+
+                'ruc.required_if' => 'Debes ingresar el RUC.',
+                'ruc.size' => 'El RUC debe tener exactamente 11 dígitos.',
+                'ruc.unique' => 'Este RUC ya está registrado.',
+
+                // correo
+                'email.required' => 'Debes ingresar un correo electrónico.',
+                'email.email' => 'El correo no tiene un formato válido.',
+                'email.unique' => 'Este correo ya está registrado.',
+
+                // contraseña
+                'password.required' => 'Debes crear una contraseña.',
+                'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
+
+                // celular
+                'call_phone.max' => 'El celular debe tener máximo 9 dígitos.',
+                'call_phone.unique' => 'Este número de celular ya está registrado.',
+
+                // localidad
+                'locality.max' => 'La localidad es demasiado larga.',
             ]);
 
             $token = Str::random(64);

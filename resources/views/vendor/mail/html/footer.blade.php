@@ -14,6 +14,11 @@ Web
 </a>
 &nbsp; | &nbsp;
 
+<a href="mailto:soporte@superaanuncios.com" style="color:#2563eb;text-decoration:none;">
+Correo
+</a>
+&nbsp; | &nbsp;
+
 <a href="https://wa.me/51987654321" style="color:#2563eb;text-decoration:none;">
 WhatsApp
 </a>
