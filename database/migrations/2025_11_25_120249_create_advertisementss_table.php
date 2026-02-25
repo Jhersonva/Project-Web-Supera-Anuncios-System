@@ -25,6 +25,7 @@ return new class extends Migration {
             $table->boolean('amount_visible')->default(1);
             $table->string('amount_text')->nullable();
             $table->unsignedInteger('days_active')->default(1);
+            $table->integer('featured_days')->default(1);
             $table->dateTime('expires_at')->nullable();
             $table->boolean('published')->default(false);
             $table->timestamp('published_at')->nullable();
@@ -33,6 +34,8 @@ return new class extends Migration {
             $table->decimal('urgent_price', 10, 2)->nullable();
             $table->boolean('featured_publication')->default(false); 
             $table->decimal('featured_price', 10, 2)->nullable(); 
+            $table->timestamp('featured_started_at')->nullable();
+            $table->timestamp('featured_expires_at')->nullable();
             $table->boolean('premiere_publication')->default(false);
             $table->decimal('premiere_price', 10, 2)->nullable();
             $table->boolean('semi_new_publication')->default(false);

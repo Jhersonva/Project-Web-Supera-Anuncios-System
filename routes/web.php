@@ -127,6 +127,10 @@ Route::get('/api/ads', function (Request $request) {
     $transform = function ($ad) {
         $ad->full_url = route('public.ad.detail', ['slug'=>$ad->slug,'id'=>$ad->id]);
         $ad->time_ago = $ad->created_at->locale('es')->diffForHumans();
+        // Si la fecha de expiración del destacado ha pasado, desactivar destacado
+        if ($ad->featured_expires_at && now()->gt($ad->featured_expires_at)) {
+            $ad->featured_publication = false;
+        }
         $user = $ad->user;
         $displayName = null;
         if ($user) {

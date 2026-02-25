@@ -183,6 +183,7 @@ class MyAdRequestController extends Controller
             'amount_currency' => 'required_if:amount_visible,1|in:PEN,USD',
 
             'days_active'     => 'required|integer|min:2',
+            'featured_days' => 'nullable|integer|min:1',
 
             // IMÁGENES OBLIGATORIAS
             'images'   => 'nullable|array|max:5',
@@ -221,8 +222,10 @@ class MyAdRequestController extends Controller
             ? (float) Setting::get('urgent_publication_price', 0)
             : 0;
 
+        $featuredDays = $request->input('featured_days', 1);
+
         $featuredPrice = $request->boolean('featured_publication')
-            ? (float) Setting::get('featured_publication_price', 0)
+            ? (float) Setting::get('featured_publication_price', 0) * $featuredDays
             : 0;
 
         $premierePrice = $request->boolean('premiere_publication')
@@ -346,6 +349,7 @@ class MyAdRequestController extends Controller
             'amount_visible'        => $request->amount_visible,
             'amount_text'        => $request->amount_text,
             'days_active'           => $days,
+            'featured_days' => $request->input('featured_days', 1),
             'published'             => false,
             'status'     => $status,
             'expires_at' => null,

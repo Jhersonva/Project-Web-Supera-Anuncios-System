@@ -28,6 +28,7 @@ class Advertisement extends Model
         'amount_visible',
         'amount_text',
         'days_active',
+        'featured_days',
         'expires_at',
         'published',
         'published_at',
@@ -36,6 +37,8 @@ class Advertisement extends Model
         'urgent_price',
         'featured_publication',
         'featured_price',
+        'featured_started_at',
+        'featured_expires_at',
         'premiere_publication',
         'premiere_price',
         'semi_new_publication',
@@ -74,6 +77,9 @@ class Advertisement extends Model
         'featured_publication' => 'boolean',
         'featured_price' => 'decimal:2',
 
+        'featured_started_at' => 'datetime',
+        'featured_expires_at' => 'datetime',
+
         'premiere_publication' => 'boolean',
         'premiere_price' => 'decimal:2',
 
@@ -91,6 +97,7 @@ class Advertisement extends Model
 
         'stars' => 'integer',
         'days_active' => 'integer',
+        'featured_days' => 'integer',
         'published_at' => 'datetime',
         'expires_at' => 'datetime',
     ];

@@ -22,7 +22,7 @@
         </p>
 
         <div class="alert alert-light border small">
-            <strong>SuperaAnuncios</strong> te permite publicar,
+            <strong>Supera Anuncios</strong> te permite publicar,
             vender y promocionar tus productos de forma rápida y segura.
         </div>
 

@@ -2,7 +2,7 @@
 
 # Hola {{ $user->full_name ?? 'Usuario' }}
 
-Gracias por registrarte en **SuperaAnuncios**.
+Gracias por registrarte en **Supera Anuncios**.
 
 Para activar tu cuenta y comenzar a publicar anuncios, solo debes verificar tu correo haciendo clic en el siguiente botón:
 
@@ -15,6 +15,6 @@ Verificar mi cuenta
 Si no creaste esta cuenta, puedes ignorar este mensaje sin problema.
 
 Saludos,  
-**Equipo de SuperaAnuncios**
+**Equipo de Supera Anuncios**
 
 @endcomponent

@@ -104,13 +104,25 @@ class AdsHistoryController extends Controller
         $ad = Advertisement::findOrFail($id);
 
         $publishedAt = now();
+
         $expiresAt = $publishedAt->copy()->addDays($ad->days_active);
+
+        $featuredStart = null;
+        $featuredEnd = null;
+
+        if ($ad->featured_publication) {
+            $featuredStart = $publishedAt;
+            $featuredEnd = $publishedAt->copy()->addDays($ad->featured_days);
+        }
 
         $ad->update([
             'status' => 'publicado',
             'published' => true,
             'published_at' => $publishedAt,
-            'expires_at' => $expiresAt
+            'expires_at' => $expiresAt,
+
+            'featured_started_at' => $featuredStart,
+            'featured_expires_at' => $featuredEnd
         ]);
 
         return back()->with('success', 'Anuncio aprobado correctamente.');

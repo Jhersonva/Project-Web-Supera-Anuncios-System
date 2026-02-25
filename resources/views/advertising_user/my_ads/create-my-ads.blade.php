@@ -434,6 +434,29 @@
                     <small class="text-danger fw-bold">
                         Precio por publicación destacada: S/. {{ number_format($featuredPrice, 2) }}
                     </small>
+
+                    <div class="mt-2 d-none" id="featuredDaysContainer">
+
+                        <label class="fw-semibold">¿Cuántos días quieres la etiqueta destacada?</label>
+
+                        <input
+                            type="number"
+                            min="1"
+                            value="{{ old('featured_days', $ad->featured_days ?? 1) }}"
+                            id="featured_days"
+                            name="featured_days"
+                            class="form-control"
+                            {{ isset($ad) && $ad->status === 'draft' ? 'readonly' : '' }}
+                        >
+
+                        <small class="text-muted">
+                            La etiqueta destacada se cobrará por cada día seleccionado.
+                        </small>
+
+                        <small id="featuredDaysInfo" class="text-primary d-block mt-1">
+                            Los días destacados no pueden superar los días de publicación.
+                        </small>
+                    </div>
                 </div>
 
                 <!-- PUBLICACIÓN ESTRENO LISTO-->
@@ -2586,7 +2609,13 @@ function calculateDatesAndCosts(forceMin = false) {
 
     // ===== EXTRAS FRONTEND =====
     if (document.getElementById("urgent_publication_switch")?.checked) {total += urgentPrice;}
-    if (document.getElementById("featured_publication_switch")?.checked) total += featuredPrice;
+    if (document.getElementById("featured_publication_switch")?.checked) {
+
+        const featuredDays =
+            parseInt(document.getElementById("featured_days")?.value) || 1;
+
+        total += featuredPrice * featuredDays;
+    }
     if (document.getElementById("premiere_publication_switch")?.checked) total += premierePrice;
     if (document.getElementById("semi_new_publication_switch")?.checked) total += semiNewPrice;
     if (document.getElementById("new_publication_switch")?.checked) total += newPrice;
@@ -2838,8 +2867,22 @@ document.addEventListener("DOMContentLoaded", () => {
         const daysInput = document.getElementById("days_active");
 
         daysInput.addEventListener("input", () => {
+
             const value = parseInt(daysInput.value);
+
             if (value >= 2) {
+
+                const featuredDaysInput = document.getElementById("featured_days");
+
+                if (featuredDaysInput) {
+
+                    featuredDaysInput.max = value;
+
+                    if (parseInt(featuredDaysInput.value) > value) {
+                        featuredDaysInput.value = value;
+                    }
+                }
+
                 calculateDatesAndCosts();
             }
         });
@@ -2895,6 +2938,48 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    const featuredSwitch = document.getElementById("featured_publication_switch");
+    const featuredDaysContainer = document.getElementById("featuredDaysContainer");
+
+    if (featuredSwitch) {
+
+        featuredSwitch.addEventListener("change", () => {
+
+            if (featuredSwitch.checked) {
+                featuredDaysContainer.classList.remove("d-none");
+            } else {
+                featuredDaysContainer.classList.add("d-none");
+            }
+
+            calculateDatesAndCosts();
+        });
+
+    }
+
+    const featuredDaysInput = document.getElementById("featured_days");
+
+    if (featuredDaysInput) {
+
+        featuredDaysInput.addEventListener("input", () => {
+
+            const daysActive =
+                parseInt(document.getElementById("days_active").value) || 2;
+
+            let featuredDays = parseInt(featuredDaysInput.value) || 1;
+
+            if (featuredDays > daysActive) {
+                featuredDaysInput.value = daysActive;
+            }
+
+            if (featuredDays < 1) {
+                featuredDaysInput.value = 1;
+            }
+
+            calculateDatesAndCosts();
+        });
+
+    }
+
     bindSwitchCalculation('urgent_publication_switch', 'urgent_publication');
     bindSwitchCalculation('premiere_publication_switch', 'premiere_publication');
     bindSwitchCalculation('semi_new_publication_switch', 'semi_new_publication');
@@ -2923,12 +3008,43 @@ document.addEventListener("DOMContentLoaded", () => {
 
         document.getElementById("days_active").value =
             adDataFromServer.days_active;
+        
+        const featuredDaysInput = document.getElementById("featured_days");
+
+        if (featuredDaysInput) {
+
+            featuredDaysInput.max = adDataFromServer.days_active;
+
+            if (parseInt(featuredDaysInput.value) > adDataFromServer.days_active) {
+                featuredDaysInput.value = adDataFromServer.days_active;
+            }
+
+        }
 
         document.getElementById("urgent_publication").checked =
             !!adDataFromServer.urgent_publication;
 
         document.getElementById("featured_publication").checked =
             !!adDataFromServer.featured_publication;
+        
+        // Mostrar días destacados si existe
+        if (adDataFromServer.featured_publication) {
+
+            const featuredDaysContainer =
+                document.getElementById("featuredDaysContainer");
+
+            if (featuredDaysContainer) {
+                featuredDaysContainer.classList.remove("d-none");
+            }
+
+            const featuredDaysInput =
+                document.getElementById("featured_days");
+
+            if (featuredDaysInput) {
+                featuredDaysInput.value =
+                    adDataFromServer.featured_days || 1;
+            }
+        }
 
         document.getElementById("premiere_publication_switch").checked =
             !!adDataFromServer.premiere_publication;

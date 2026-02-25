@@ -5,7 +5,7 @@
 <td class="content-cell" align="center" style="padding-top:25px;">
 
 <p style="font-size:14px;color:#6b7280;margin-bottom:10px;">
-© {{ date('Y') }} <strong>SuperAnuncios</strong>
+© {{ date('Y') }} <strong>Supera Anuncios</strong>
 </p>
 
 <p style="font-size:14px;color:#6b7280;margin-bottom:10px;">

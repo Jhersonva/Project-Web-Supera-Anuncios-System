@@ -320,9 +320,10 @@
             <label class="fw-semibold mt-2">Costo total</label>
             <input type="text" id="totalCost" class="form-control mb-2" value="S/. 0.00" readonly>
 
+            {{-- 
             <label class="fw-semibold mt-2">Fecha de expiración</label>
             <input type="text" id="expiresAt" class="form-control"
-                   value="{{ $ad->expires_at }}" readonly>
+                   value="{{ $ad->expires_at }}" readonly>--}}
         </div>
 
         {{-- PUBLICACIÓN URGENTE --}}
@@ -352,7 +353,7 @@
         <div class="field-card d-none" id="featuredContainer">
             <label class="fw-semibold">¿Publicación destacada?</label>
 
-            <div class="form-check form-switch">
+            <div class="form-check form-switch mb-2">
                 <input
                     class="form-check-input"
                     type="checkbox"
@@ -360,15 +361,35 @@
                     name="featured_publication"
                     value="1"
                     {{ $ad->featured_publication ? 'checked' : '' }}
+                    disabled
                 >
                 <label class="form-check-label">
                     Activar publicación como destacada
                 </label>
             </div>
 
-            <small class="text-danger fw-bold">
-                Precio por publicación destacada: S/. {{ number_format($featuredPrice, 2) }}
+            <small class="text-danger fw-bold mt-2 d-block">
+                Precio por publicación destacada:
+                S/. {{ number_format($featuredPrice, 2) }}
             </small>
+
+            {{-- DÍAS DESTACADO --}}
+            <div class="mt-2">
+                <label class="fw-semibold">Días de destacado</label>
+
+                <input
+                    type="number"
+                    class="form-control"
+                    value="{{ $ad->featured_days ?? 0 }}"
+                    readonly
+                >
+
+                <small class="text-muted">
+                    La etiqueta destacada se cobrará por cada día seleccionado.
+                </small>
+            </div>
+
+            
         </div>
 
         {{-- PUBLICACIÓN EN ESTRENO --}}
@@ -1160,7 +1181,10 @@ function recalculateEditTotal() {
     }
 
     if (document.getElementById("featured_publication")?.checked) {
-        total += featuredPrice;
+
+        const featuredDays = parseInt("{{ $ad->featured_days ?? 1 }}");
+
+        total += featuredPrice * featuredDays;
     }
 
     if (document.getElementById("premiere_publication_switch")?.checked) {
@@ -1388,7 +1412,12 @@ document.addEventListener("DOMContentLoaded", () => {
         let total = prices.base * days;
 
         if (document.getElementById("urgent_publication")?.checked) total += prices.urgent;
-        if (document.getElementById("featured_publication")?.checked) total += prices.featured;
+        if (document.getElementById("featured_publication")?.checked) {
+
+            const featuredDays = parseInt("{{ $ad->featured_days ?? 1 }}") || 1;
+
+            total += prices.featured * featuredDays;
+        }
         if (document.getElementById("premiere_publication_switch")?.checked) total += prices.premiere;
         if (document.getElementById("semi_new_publication")?.checked) total += prices.semiNew;
         if (document.getElementById("new_publication")?.checked) total += prices.new;
